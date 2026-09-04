@@ -1,0 +1,260 @@
+@import "tailwindcss";
+
+/* ===========================================================================
+   NILE ACADEMIC — design tokens
+   ---------------------------------------------------------------------------
+   Palette rationale:
+     Nile blue   institutional trust, study, the river. Carries all structure.
+     Gold        the star on the national flag; achievement, the Sahel sun.
+                 Used sparingly — active nav, honours, earned progress.
+     Green       progress and pass states (also flag). Never decorative.
+     Clay red    errors and overdue balances only. Reserved, so it means
+                 something when it appears.
+     Warm paper  neutrals are warm (#F7F8F6, not #F8FAFC) so the portal reads
+                 like registry paperwork rather than a cold SaaS console.
+
+   HARD RULE: no gradients anywhere. Depth comes from flat fills, one hairline
+   border token, and a single very soft shadow. If a surface needs to sit
+   forward, change its fill or its border — never blend two colours.
+   =========================================================================== */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+
+  /* Structure */
+  --canvas: #f7f8f6;
+  --surface: #ffffff;
+  --surface-sunken: #f1f2ef;
+  --surface-raised: #ffffff;
+
+  /* Type */
+  --ink: #0c1b2a;
+  --ink-soft: #33475b;
+  --muted: #5b6b7a;
+  --faint: #8797a5;
+
+  /* Lines — one hairline, one emphasis. That is the whole vocabulary. */
+  --line: #e2e7ec;
+  --line-strong: #c9d2db;
+
+  /* Nile blue */
+  --brand-50: #f1f7fb;
+  --brand-100: #e4eef6;
+  --brand-200: #c4dbea;
+  --brand-300: #94bed8;
+  --brand-500: #1a7bb5;
+  --brand-600: #14608f;
+  --brand-700: #0e4c77; /* primary action */
+  --brand-800: #0a3a5c;
+  --brand-900: #072a43;
+
+  /* Gold */
+  --gold-100: #fbefd6;
+  --gold-200: #f6dda8;
+  --gold-500: #e09b12;
+  --gold-600: #b57a0a;
+  --gold-700: #8c5e07;
+
+  /* Green */
+  --green-100: #dff0e9;
+  --green-600: #17795e;
+  --green-700: #14664f;
+
+  /* Clay red */
+  --red-100: #fbe6e4;
+  --red-600: #bd3128;
+  --red-700: #a32a22;
+
+  --focus: #1a7bb5;
+
+  /* Sidebar keeps its own tokens rather than reusing --brand-900, because the
+     brand ramp inverts in dark mode and a navigation rail must stay dark in
+     both themes. Deep Nile navy, flat fill, gold marker on the active item. */
+  --sidebar: #072a43;
+  --sidebar-ink: #cfe2f0;
+  --sidebar-ink-strong: #ffffff;
+  --sidebar-line: #10405f;
+  --sidebar-active: #0e4c77;
+
+  /* One shadow. Flat design still needs a whisper of elevation for popovers. */
+  --shadow-soft: 0 1px 2px rgba(12, 27, 42, 0.06), 0 1px 1px rgba(12, 27, 42, 0.04);
+  --shadow-pop: 0 4px 16px rgba(12, 27, 42, 0.1), 0 1px 2px rgba(12, 27, 42, 0.06);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --canvas: #0a141d;
+  --surface: #0f1e2b;
+  --surface-sunken: #0a141d;
+  --surface-raised: #142735;
+
+  --ink: #eaf0f5;
+  --ink-soft: #c3d0da;
+  --muted: #90a2b1;
+  --faint: #6b7f8f;
+
+  --line: #1e3244;
+  --line-strong: #2b445a;
+
+  --brand-50: #0c1c28;
+  --brand-100: #10293a;
+  --brand-200: #17405a;
+  --brand-300: #2c6f9c;
+  --brand-500: #4aa3d8;
+  --brand-600: #6bb8e4;
+  --brand-700: #8ccbee; /* primary action inverts to a light tint on dark */
+  --brand-800: #b3ddf4;
+  --brand-900: #d6ecfa;
+
+  --gold-100: #2e2410;
+  --gold-200: #4a3a16;
+  --gold-500: #e9ad35;
+  --gold-600: #f2c366;
+  --gold-700: #f7d894;
+
+  --green-100: #102a22;
+  --green-600: #4fbf9a;
+  --green-700: #6fd0b0;
+
+  --red-100: #2e1512;
+  --red-600: #f08379;
+  --red-700: #f5a49c;
+
+  --focus: #6bb8e4;
+
+  --sidebar: #06111a;
+  --sidebar-ink: #adc1d0;
+  --sidebar-ink-strong: #ffffff;
+  --sidebar-line: #15293a;
+  --sidebar-active: #143650;
+
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 4px 16px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* `inline` so utilities emit var(--token) and follow the .dark swap at runtime
+   instead of being frozen at build time. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-sunken: var(--surface-sunken);
+  --color-raised: var(--surface-raised);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+
+  --color-gold-100: var(--gold-100);
+  --color-gold-200: var(--gold-200);
+  --color-gold-500: var(--gold-500);
+  --color-gold-600: var(--gold-600);
+  --color-gold-700: var(--gold-700);
+
+  --color-green-100: var(--green-100);
+  --color-green-600: var(--green-600);
+  --color-green-700: var(--green-700);
+
+  --color-red-100: var(--red-100);
+  --color-red-600: var(--red-600);
+  --color-red-700: var(--red-700);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-ink-strong: var(--sidebar-ink-strong);
+  --color-sidebar-line: var(--sidebar-line);
+  --color-sidebar-active: var(--sidebar-active);
+
+  /* System font stack on purpose: zero webfont bytes, zero FOIT on 2G.
+     A downloaded display face would cost ~90KB before a student reads a word. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono",
+    Menlo, monospace;
+
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-pop: var(--shadow-pop);
+}
+
+/* --------------------------------------------------------------------------- */
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Visible, high-contrast focus. Non-negotiable: a lot of students will be
+   on cheap phones with imprecise touch and will tab through forms. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Tabular figures for anything that lines up in a column: fees, marks, GPA. */
+.nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Thin scrollbars so tables do not gain a chunky grey band on Windows. */
+@supports (scrollbar-width: thin) {
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
