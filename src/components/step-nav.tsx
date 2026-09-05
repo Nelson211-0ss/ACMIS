@@ -79,7 +79,7 @@ export function StepNav({
                   href={`/apply/${applicationId}/${step.slug}`}
                   aria-current={active ? "step" : undefined}
                   className={cn(
-                    "relative flex items-start gap-3 rounded-[--radius] px-3 py-2.5 transition-colors",
+                    "relative flex items-start gap-3 rounded px-3 py-2.5 transition-colors",
                     active ? "bg-brand-50" : "hover:bg-sunken",
                   )}
                 >

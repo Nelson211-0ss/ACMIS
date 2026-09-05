@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Calculator, GraduationCap, Plus, Trash2 } from "lucide-react";
 import { OfflineForm } from "@/components/offline-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
@@ -82,6 +82,7 @@ export function EducationForm({
 
       <Card>
         <CardHeader
+          icon={GraduationCap}
           title="Secondary school"
           description="Where you sat the South Sudan Certificate of Secondary Education."
         />
@@ -164,6 +165,7 @@ export function EducationForm({
 
       <Card className="mt-5">
         <CardHeader
+          icon={Calculator}
           title="Subjects and marks"
           description="Enter every subject you sat, with the mark out of 100. At least six, including English."
           action={
@@ -250,7 +252,7 @@ export function EducationForm({
                           : prev.filter((r) => r.key !== row.key),
                       )
                     }
-                    className="mt-0.5 flex h-11 w-9 shrink-0 items-center justify-center rounded-[--radius] text-muted transition-colors hover:bg-red-100 hover:text-red-700"
+                    className="mt-0.5 flex h-11 w-9 shrink-0 items-center justify-center rounded text-muted transition-colors hover:bg-red-100 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />
                   </button>

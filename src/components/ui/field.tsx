@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 const CONTROL =
-  "w-full rounded-[--radius] border border-line-strong bg-surface px-3 text-[15px] text-ink " +
+  "w-full rounded border border-line-strong bg-surface px-3 text-[15px] text-ink " +
   "placeholder:text-faint transition-colors " +
   "hover:border-brand-300 focus:border-brand-500 focus:outline-none " +
   "focus:ring-2 focus:ring-brand-500/25 " +
@@ -117,7 +117,7 @@ export function ChoiceRow({
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-[--radius] border px-3.5 py-3 transition-colors",
+        "flex cursor-pointer items-start gap-3 rounded border px-3.5 py-3 transition-colors",
         checked
           ? "border-brand-500 bg-brand-50"
           : "border-line-strong bg-surface hover:border-brand-300 hover:bg-brand-50/50",

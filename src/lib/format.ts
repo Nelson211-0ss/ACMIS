@@ -22,6 +22,17 @@ export function longDate(iso: string): string {
   });
 }
 
+/** Date and time together, for logs — the audit trail cares about the hour, not just the day. */
+export function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function relativeDays(iso: string): string {
   const days = Math.round(
     (new Date(iso).getTime() - Date.now()) / 86_400_000,

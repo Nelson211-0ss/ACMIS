@@ -6,25 +6,36 @@ import { currentSession, startSession } from "@/lib/auth";
 import {
   createApplication,
   getApplication,
+  getScheme,
+  getSystemSettings,
   setApplicationStatus,
 } from "@/lib/data/repo";
 import { canSubmit, nextIncompleteStep } from "@/lib/application";
 
 /**
- * Start an application.
+ * Start an application under a specific scheme.
  *
  * An applicant account is created implicitly if there is no session, because
  * requiring registration before someone can even see the form loses
  * applicants — they can be asked to set a password after submitting.
  */
-export async function startApplication(): Promise<void> {
+export async function startApplication(schemeId: string): Promise<void> {
+  const settings = await getSystemSettings();
+  const scheme = await getScheme(schemeId);
+  const schemeClosed =
+    !scheme || scheme.status !== "open" || new Date(scheme.closesAt).getTime() < Date.now();
+  // The scheme card that calls this is already hidden once it is closed;
+  // this is the check that matters if someone posts directly, or a scheme
+  // closes in the moment between page load and click.
+  if (!settings.applicationsOpen || schemeClosed) redirect("/apply");
+
   let session = await currentSession();
   if (!session || session.role !== "applicant") {
     session = { role: "applicant", subjectId: "usr-applicant" };
     await startSession(session);
   }
 
-  const application = await createApplication(session.subjectId);
+  const application = await createApplication(session.subjectId, scheme.id);
   revalidatePath("/apply");
   redirect(`/apply/${application.id}/personal`);
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, FileText } from "lucide-react";
+import { ArrowRight, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { ApplicationStatusBadge, Badge } from "@/components/ui/badge";
@@ -9,12 +9,13 @@ import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/ui/empty";
 import { Table, TableWrap, Td, Th, Tr } from "@/components/ui/table";
 import { currentSession } from "@/lib/auth";
-import { getApplicationsFor } from "@/lib/data/repo";
+import { getApplicationsFor, getSystemSettings, listOpenSchemes } from "@/lib/data/repo";
 import { competitiveness, programmesByFaculty } from "@/lib/data/reference";
-import { admissionCycle, institution } from "@/lib/institution";
+import { institution } from "@/lib/institution";
 import { progressPercent } from "@/lib/application";
-import { relativeDays, shortDate, ssp } from "@/lib/format";
+import { shortDate, ssp } from "@/lib/format";
 import { continueApplication, startApplication } from "./actions";
+import { SchemeCard } from "./scheme-card";
 
 export const metadata: Metadata = { title: "Apply for admission" };
 
@@ -26,9 +27,16 @@ const COMPETITIVENESS_LABEL = {
 
 export default async function ApplyPage() {
   const session = await currentSession();
-  const applications = session ? await getApplicationsFor(session.subjectId) : [];
+  const [applications, settings, openSchemes] = await Promise.all([
+    session ? getApplicationsFor(session.subjectId) : Promise.resolve([]),
+    getSystemSettings(),
+    listOpenSchemes(),
+  ]);
 
-  const closed = new Date(admissionCycle.closes).getTime() < Date.now();
+  // Two independent switches: a super admin can pause admissions site-wide,
+  // and separately, the admissions office opens and closes each scheme on its
+  // own schedule — either one closing the door is enough.
+  const closed = !settings.applicationsOpen;
   const drafts = applications.filter((a) => a.status === "draft");
   const submitted = applications.filter((a) => a.status !== "draft");
 
@@ -39,26 +47,18 @@ export default async function ApplyPage() {
           Apply for admission
         </h1>
         <p className="mt-1.5 text-[14px] text-muted">
-          {institution.academicYear} intake ·{" "}
-          {closed ? (
-            <span className="font-medium text-red-700">
-              closed {shortDate(admissionCycle.closes)}
-            </span>
-          ) : (
-            <>
-              closes {shortDate(admissionCycle.closes)} (
-              {relativeDays(admissionCycle.closes)})
-            </>
-          )}
+          {closed
+            ? "New applications are paused by the admissions office."
+            : openSchemes.length > 0
+              ? `${openSchemes.length} admission scheme${openSchemes.length === 1 ? "" : "s"} currently open`
+              : "No admission scheme is open right now."}
         </p>
       </div>
 
       {closed ? (
         <Callout tone="warning" title="Applications are closed">
-          The {institution.academicYear} cycle closed on{" "}
-          {shortDate(admissionCycle.closes)}. Applications already submitted are
-          still being processed and decisions are published by{" "}
-          {shortDate(admissionCycle.resultsBy)}.
+          New applications have been paused by the admissions office.
+          Applications already submitted are still being processed.
         </Callout>
       ) : null}
 
@@ -135,46 +135,68 @@ export default async function ApplyPage() {
         </section>
       ) : null}
 
-      {/* Start a new one */}
+      {/* Open admission schemes */}
       {!closed ? (
-        <Card>
-          <CardHeader
-            title={applications.length > 0 ? "Start another application" : "Start your application"}
-            description={`Application fee ${ssp(institution.applicationFeeSSP)}, paid by mobile money or bank deposit slip.`}
-          />
-          <CardBody>
-            {applications.length === 0 ? (
-              <EmptyState icon={FileText} title="You have no applications yet">
-                The form takes about twenty minutes. You can stop and come back
-                — everything you type is saved as you go, even if your
-                connection drops.
-              </EmptyState>
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-[15px] font-semibold text-ink">
+              {applications.length > 0 ? "Start another application" : "Choose a scheme to apply under"}
+            </h2>
+            {openSchemes.length > 0 ? (
+              <p className="mt-1 text-[13px] text-muted">
+                Each scheme has its own programmes on offer, fee and closing
+                date, set by the admissions office.
+              </p>
             ) : null}
-            <ol className="space-y-2.5 text-[13px] text-muted">
-              <Step n="1">
-                Your personal details and a parent or guardian&apos;s phone
-                number.
-              </Step>
-              <Step n="2">
-                Your SSCSE index number and the mark for each subject you sat.
-              </Step>
-              <Step n="3">Up to three programmes, ranked in order of preference.</Step>
-              <Step n="4">
-                Photographs or scans of your certificate, marksheet and a passport
-                photo.
-              </Step>
-              <Step n="5">The application fee.</Step>
-            </ol>
-          </CardBody>
-          <CardFooter>
-            <form action={startApplication}>
-              <Button type="submit" size="lg">
-                Begin application
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Button>
-            </form>
-          </CardFooter>
-        </Card>
+          </div>
+
+          {openSchemes.length === 0 ? (
+            <Card>
+              <CardBody>
+                <EmptyState icon={CalendarClock} title="No admission scheme is open">
+                  The admissions office has not published a scheme to apply
+                  under right now. Check back soon, or call{" "}
+                  {institution.supportPhone} for the next intake date.
+                </EmptyState>
+              </CardBody>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {openSchemes.map((scheme) => (
+                <SchemeCard
+                  key={scheme.id}
+                  scheme={scheme}
+                  action={startApplication.bind(null, scheme.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {applications.length === 0 && openSchemes.length > 0 ? (
+            <Card>
+              <CardBody>
+                <p className="mb-3 text-[13px] font-semibold text-ink">
+                  What to have ready
+                </p>
+                <ol className="space-y-2.5 text-[13px] text-muted">
+                  <Step n="1">
+                    Your personal details and a parent or guardian&apos;s phone
+                    number.
+                  </Step>
+                  <Step n="2">
+                    Your SSCSE index number and the mark for each subject you sat.
+                  </Step>
+                  <Step n="3">Up to three programmes, ranked in order of preference.</Step>
+                  <Step n="4">
+                    Photographs or scans of your certificate, marksheet and a
+                    passport photo.
+                  </Step>
+                  <Step n="5">The application fee.</Step>
+                </ol>
+              </CardBody>
+            </Card>
+          ) : null}
+        </section>
       ) : null}
 
       {/* Entry requirements */}
@@ -238,11 +260,11 @@ export default async function ApplyPage() {
 
       <Callout tone="info" title="Beware of fraud">
         <p>
-          No one at {institution.name} will ask you to pay for admission outside
-          this portal. The only fee is {ssp(institution.applicationFeeSSP)},
-          paid to the university&apos;s own m-GURUSH, Nilepay or bank account. If
-          someone asks for money to secure you a place, report it to the
-          admissions office on {institution.supportPhone}.
+          No one at {institution.name} will ask you to pay for admission
+          outside this portal. The only fee is the one shown on the scheme you
+          apply under, paid to the university&apos;s own m-GURUSH, Nilepay or
+          bank account. If someone asks for money to secure you a place,
+          report it to the admissions office on {institution.supportPhone}.
         </p>
       </Callout>
     </div>

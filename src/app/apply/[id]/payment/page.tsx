@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Wallet } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { PaymentStatusBadge } from "@/components/ui/badge";
-import { getApplication } from "@/lib/data/repo";
+import { getApplication, getScheme } from "@/lib/data/repo";
 import { methodName } from "@/lib/data/payments";
 import { institution } from "@/lib/institution";
 import { shortDate, ssp } from "@/lib/format";
@@ -22,6 +23,8 @@ export default async function PaymentStep({
   const application = await getApplication(id);
   if (!application) notFound();
 
+  const scheme = application.schemeId ? await getScheme(application.schemeId) : null;
+  const feeSSP = scheme?.applicationFeeSSP ?? institution.applicationFeeSSP;
   const payment = application.payment;
 
   // Already paid, or a slip is lodged and waiting on the bursary.
@@ -29,6 +32,7 @@ export default async function PaymentStep({
     return (
       <Card>
         <CardHeader
+          icon={Wallet}
           title="Application fee"
           description={`Reference ${application.reference}`}
           action={<PaymentStatusBadge status={payment.status} />}
@@ -67,7 +71,7 @@ export default async function PaymentStep({
     <PaymentForm
       action={payApplicationFee.bind(null, id)}
       applicationId={id}
-      feeSSP={institution.applicationFeeSSP}
+      feeSSP={feeSSP}
       phone={application.personal.phone}
     />
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { User } from "lucide-react";
 import { OfflineForm } from "@/components/offline-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
@@ -41,6 +42,7 @@ export function PersonalForm({
 
       <Card>
         <CardHeader
+          icon={User}
           title="Personal details"
           description="Use the spelling exactly as it appears on your SSCSE certificate. It cannot be changed after admission."
         />

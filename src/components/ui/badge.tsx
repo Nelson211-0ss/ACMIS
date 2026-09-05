@@ -78,7 +78,7 @@ export function GradeBadge({ grade }: { grade: LetterGrade }) {
   return (
     <span
       className={cn(
-        "nums inline-flex h-6 min-w-8 items-center justify-center rounded-[--radius-sm] border px-1.5 text-[12.5px] font-semibold",
+        "nums inline-flex h-6 min-w-8 items-center justify-center rounded-sm border px-1.5 text-[12.5px] font-semibold",
         TONES[tone],
       )}
     >

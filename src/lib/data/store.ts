@@ -1,14 +1,19 @@
 import type {
+  AdmissionScheme,
   Announcement,
   Application,
+  AuditEntry,
   Course,
   CourseRegistration,
   FeeItem,
   FeePayment,
   Result,
   Student,
+  StaffUser,
+  SystemSettings,
   TimetableSlot,
 } from "../types";
+import { PROGRAMMES } from "./reference";
 import { gradeFor } from "../format";
 
 /**
@@ -60,6 +65,7 @@ export const STUDENTS: Student[] = [
     lastName: "Majok",
     email: "achol.majok@student.example.ss",
     phone: "+211920114477",
+    // photoUrl: "/students/stu-1.jpg",  ← drop a file in public/students to use it
     programmeId: "prog-csc",
     yearOfStudy: 2,
     currentSemester: 1,
@@ -188,6 +194,7 @@ export const APPLICATIONS: Application[] = [
     id: "app-1",
     reference: "APP-2026-004821",
     applicantId: "usr-applicant",
+    schemeId: "scheme-2026",
     status: "under_review",
     createdAt: "2026-07-04T08:20:00.000Z",
     updatedAt: "2026-07-11T16:45:00.000Z",
@@ -247,6 +254,55 @@ export const APPLICATIONS: Application[] = [
   },
 ];
 
+// --- Admission schemes ------------------------------------------------------
+
+const ALL_PROGRAMME_IDS = PROGRAMMES.map((p) => p.id);
+
+export const ADMISSION_SCHEMES: AdmissionScheme[] = [
+  {
+    id: "scheme-2025",
+    name: "2025/2026 Undergraduate Intake",
+    code: "UG-2025",
+    description: "The previous undergraduate admission cycle, now closed.",
+    programmeIds: ALL_PROGRAMME_IDS,
+    opensAt: "2025-06-01",
+    closesAt: "2025-08-31",
+    resultsBy: "2025-09-20",
+    semesterStarts: "2025-10-05",
+    applicationFeeSSP: 15_000,
+    status: "closed",
+    createdAt: "2025-05-01T08:00:00.000Z",
+  },
+  {
+    id: "scheme-2026",
+    name: "2026/2027 Undergraduate Intake",
+    code: "UG-2026",
+    description: "Full-time Bachelor's programmes across all seven faculties.",
+    programmeIds: ALL_PROGRAMME_IDS,
+    opensAt: "2026-08-01",
+    closesAt: "2026-12-15",
+    resultsBy: "2027-01-10",
+    semesterStarts: "2027-01-20",
+    applicationFeeSSP: 15_000,
+    status: "open",
+    createdAt: "2026-07-20T09:00:00.000Z",
+  },
+  {
+    id: "scheme-diploma-2027",
+    name: "January 2027 Diploma Bridging Intake",
+    code: "DIP-2027J",
+    description: "A shorter diploma route into Computer Science or Economics, for candidates just below the Bachelor's cut-off.",
+    programmeIds: ["prog-csc", "prog-eco"],
+    opensAt: "2027-01-05",
+    closesAt: "2027-01-25",
+    resultsBy: "2027-02-05",
+    semesterStarts: "2027-02-15",
+    applicationFeeSSP: 8_000,
+    status: "draft",
+    createdAt: "2026-09-01T10:00:00.000Z",
+  },
+];
+
 /** Monotonic counter behind generated application references. */
 let referenceCounter = 4821;
 export function nextReference(): string {
@@ -262,3 +318,86 @@ export function nextId(prefix: string): string {
 
 export const CURRENT_YEAR = YEAR;
 export const PREVIOUS_YEAR = PREV_YEAR;
+
+// --- Staff, roles and system administration ---------------------------------
+
+export const STAFF_USERS: StaffUser[] = [
+  {
+    id: "staff-1",
+    name: "Grace Lueth",
+    email: "grace.lueth@uoj.example.ss",
+    staffRole: "super_admin",
+    status: "active",
+    lastActiveAt: "2026-09-04T08:10:00.000Z",
+  },
+  {
+    id: "staff-2",
+    name: "Daniel Kuek",
+    email: "daniel.kuek@uoj.example.ss",
+    staffRole: "registrar",
+    status: "active",
+    lastActiveAt: "2026-09-03T14:22:00.000Z",
+  },
+  {
+    id: "staff-3",
+    name: "Aluel Deng",
+    email: "aluel.deng@uoj.example.ss",
+    staffRole: "bursar",
+    status: "active",
+    lastActiveAt: "2026-09-02T09:05:00.000Z",
+  },
+];
+
+/**
+ * Single mutable settings object rather than one row per key. A real
+ * deployment would still keep this shape — it is one document a super admin
+ * edits as a whole, not a scatter of independent flags — and would persist it
+ * the same way a Prisma `SystemSettings` singleton row would.
+ */
+export const SYSTEM_SETTINGS: SystemSettings = {
+  maintenanceMode: false,
+  registrationOpen: true,
+  applicationsOpen: true,
+  appearance: {
+    defaultMode: "system",
+    accent: "nile",
+  },
+  rolePermissions: {
+    super_admin: [
+      "manage_users",
+      "manage_roles",
+      "manage_settings",
+      "manage_appearance",
+      "manage_announcements",
+      "manage_admissions",
+      "view_monitoring",
+      "view_audit_log",
+    ],
+    // The registrar's office runs admissions in real life, so it's the
+    // default here too.
+    registrar: ["manage_users", "manage_announcements", "manage_admissions", "view_audit_log"],
+    bursar: ["view_monitoring", "view_audit_log"],
+    viewer: ["view_monitoring"],
+  },
+};
+
+export const AUDIT_LOG: AuditEntry[] = [
+  {
+    id: "aud-1",
+    at: "2026-09-01T07:55:00.000Z",
+    actor: "Grace Lueth",
+    action: "Signed in",
+  },
+  {
+    id: "aud-2",
+    at: "2026-08-20T11:12:00.000Z",
+    actor: "Grace Lueth",
+    action: "Published 2026/2027 admission decisions",
+  },
+  {
+    id: "aud-3",
+    at: "2026-08-15T09:40:00.000Z",
+    actor: "Daniel Kuek",
+    action: "Marked registration open for Semester 1",
+  },
+];

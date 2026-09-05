@@ -48,7 +48,7 @@ export function Callout({
     <div
       role={tone === "error" ? "alert" : "status"}
       className={cn(
-        "flex items-start gap-3 rounded-[--radius] border px-3.5 py-3",
+        "flex items-start gap-3 rounded border px-3.5 py-3",
         box,
         className,
       )}

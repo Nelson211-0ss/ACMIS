@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { GraduationCap, Printer } from "lucide-react";
+import { Calculator, GraduationCap, Printer } from "lucide-react";
 import { Card, CardBody, CardHeader, Stat } from "@/components/ui/card";
 import { Badge, GradeBadge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
@@ -45,7 +45,7 @@ export default async function ResultsPage() {
           type="button"
           disabled
           title="Official transcripts are issued by the registrar"
-          className="no-print inline-flex h-9 items-center gap-1.5 rounded-[--radius] border border-line-strong bg-surface px-3 text-[13px] font-medium text-muted opacity-60"
+          className="no-print inline-flex h-9 items-center gap-1.5 rounded border border-line-strong bg-surface px-3 text-[13px] font-medium text-muted opacity-60"
         >
           <Printer className="h-4 w-4" aria-hidden />
           Official transcript
@@ -152,7 +152,7 @@ export default async function ResultsPage() {
       )}
 
       <Card>
-        <CardHeader title="How marks are calculated" />
+        <CardHeader icon={Calculator} title="How marks are calculated" />
         <CardBody>
           <p className="text-[13px] leading-relaxed text-muted">
             Each course is marked out of 100: coursework and continuous

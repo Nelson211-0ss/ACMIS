@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getApplication } from "@/lib/data/repo";
-import { programmesByFaculty } from "@/lib/data/reference";
+import { getApplication, getScheme } from "@/lib/data/repo";
+import { programmesByFacultyForScheme } from "@/lib/data/reference";
 import { saveChoices } from "../actions";
 import { ProgrammeForm } from "./form";
 import { ReadOnlyNotice } from "../read-only";
@@ -21,10 +21,12 @@ export default async function ProgrammeStep({
     return <ReadOnlyNotice applicationId={id} />;
   }
 
+  const scheme = application.schemeId ? await getScheme(application.schemeId) : null;
+
   return (
     <ProgrammeForm
       action={saveChoices.bind(null, id)}
-      grouped={programmesByFaculty()}
+      grouped={programmesByFacultyForScheme(scheme)}
       subjects={application.education.subjects}
       initial={[...application.choices]
         .sort((a, b) => a.rank - b.rank)

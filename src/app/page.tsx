@@ -8,26 +8,39 @@ import {
   Smartphone,
 } from "lucide-react";
 import { Wordmark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { admissionCycle, institution } from "@/lib/institution";
 import { PROGRAMMES } from "@/lib/data/reference";
+import { getSystemSettings } from "@/lib/data/repo";
 import { relativeDays, shortDate, ssp } from "@/lib/format";
 
-export default function LandingPage() {
+export default async function LandingPage() {
   const open = new Date(admissionCycle.closes).getTime() > Date.now();
+  const settings = await getSystemSettings();
 
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-line bg-surface">
+      <header className="sticky top-0 z-20 rounded-b-sm border-b border-line bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <Wordmark />
-          <ButtonLink href="/login" variant="secondary" size="sm">
-            Sign in
-          </ButtonLink>
+          <div className="flex shrink-0 items-center gap-2">
+            <ThemeToggle />
+            <ButtonLink href="/login" variant="secondary" size="sm">
+              Sign in
+            </ButtonLink>
+          </div>
         </div>
       </header>
+
+      {settings.maintenanceMode ? (
+        <div className="border-b border-gold-200 bg-gold-100 px-4 py-2.5 text-center text-[13px] font-medium text-gold-700 sm:px-6">
+          Scheduled maintenance is under way. Some pages may be unavailable or
+          show stale data until it finishes.
+        </div>
+      ) : null}
 
       <main id="main">
         {/* Hero. Solid navy panel — flat fill, no gradient. */}
@@ -168,7 +181,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-line bg-surface">
+      <footer className="sticky bottom-0 z-20 rounded-t-sm border-t border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-[12.5px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>
             {institution.name} · {institution.city}
@@ -200,7 +213,7 @@ function Feature({
   return (
     <Card>
       <CardBody>
-        <span className="flex h-9 w-9 items-center justify-center rounded-[--radius] border border-brand-200 bg-brand-50">
+        <span className="flex h-9 w-9 items-center justify-center rounded border border-brand-200 bg-brand-50">
           <Icon className="h-[18px] w-[18px] text-brand-700" aria-hidden />
         </span>
         <h3 className="mt-3 text-[14.5px] font-semibold text-ink">{title}</h3>
@@ -221,7 +234,7 @@ function Milestone({
 }) {
   const past = new Date(date).getTime() < Date.now();
   return (
-    <li className="relative rounded-[--radius] border border-line bg-canvas px-3.5 py-3 pl-4">
+    <li className="relative rounded border border-line bg-canvas px-3.5 py-3 pl-4">
       <span
         className={`absolute inset-y-0 left-0 w-[3px] ${past ? "bg-green-600" : "bg-line-strong"}`}
         aria-hidden

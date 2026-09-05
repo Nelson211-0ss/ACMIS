@@ -92,7 +92,7 @@ function DocumentSlot({
   const [tooBig, setTooBig] = useState<string | null>(null);
 
   return (
-    <li className="rounded-[--radius-lg] border border-line bg-surface">
+    <li className="rounded-lg border border-line bg-surface">
       <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3.5">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">

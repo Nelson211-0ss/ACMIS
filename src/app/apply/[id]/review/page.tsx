@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Pencil } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle2,
+  FileText,
+  GraduationCap,
+  type LucideIcon,
+  Pencil,
+  Send,
+  User,
+  Wallet,
+} from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { ApplicationStatusBadge, Badge, PaymentStatusBadge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
 import { ButtonLink } from "@/components/ui/button";
 import { Table, TableWrap, Td, Th, Tr } from "@/components/ui/table";
-import { getApplication } from "@/lib/data/repo";
+import { getApplication, getScheme } from "@/lib/data/repo";
 import { programmeById } from "@/lib/data/reference";
 import { methodName } from "@/lib/data/payments";
 import { aggregate, canSubmit, REQUIRED_DOCUMENTS } from "@/lib/application";
@@ -30,6 +40,10 @@ export default async function ReviewStep({
   const application = await getApplication(id);
   if (!application) notFound();
 
+  const scheme = application.schemeId ? await getScheme(application.schemeId) : null;
+  const resultsBy = scheme?.resultsBy ?? admissionCycle.resultsBy;
+  const feeSSP = scheme?.applicationFeeSSP ?? institution.applicationFeeSSP;
+
   const { personal, education, choices, documents, payment } = application;
   const isDraft = application.status === "draft";
   const { blocking } = canSubmit(application);
@@ -45,7 +59,7 @@ export default async function ReviewStep({
             A confirmation SMS has been sent to{" "}
             {personal.phone ? displayPhone(personal.phone) : "your number"}.
             Decisions for this cycle are published by{" "}
-            {shortDate(admissionCycle.resultsBy)}.
+            {shortDate(resultsBy)}.
           </p>
         </Callout>
       ) : null}
@@ -59,7 +73,7 @@ export default async function ReviewStep({
                 Submitted {application.submittedAt ? shortDate(application.submittedAt) : ""}
               </p>
               <p className="mt-1 text-[13px] text-muted">
-                Decisions are published by {shortDate(admissionCycle.resultsBy)}.
+                Decisions are published by {shortDate(resultsBy)}.
                 You will be notified by SMS on{" "}
                 {personal.phone ? displayPhone(personal.phone) : "your number"}.
               </p>
@@ -85,7 +99,7 @@ export default async function ReviewStep({
       ) : null}
 
       {/* Personal */}
-      <Section title="Personal details" editHref={isDraft ? `/apply/${id}/personal` : undefined}>
+      <Section icon={User} title="Personal details" editHref={isDraft ? `/apply/${id}/personal` : undefined}>
         <dl className="divide-y divide-line text-[13.5px]">
           <Row
             label="Full name"
@@ -120,6 +134,7 @@ export default async function ReviewStep({
 
       {/* Education */}
       <Section
+        icon={GraduationCap}
         title="Secondary results"
         editHref={isDraft ? `/apply/${id}/education` : undefined}
         action={
@@ -160,6 +175,7 @@ export default async function ReviewStep({
 
       {/* Choices */}
       <Section
+        icon={BookOpen}
         title="Programme choices"
         editHref={isDraft ? `/apply/${id}/programme` : undefined}
       >
@@ -174,7 +190,7 @@ export default async function ReviewStep({
                 return (
                   <li
                     key={choice.rank}
-                    className="relative rounded-[--radius] border border-line bg-canvas px-3.5 py-3 pl-4"
+                    className="relative rounded border border-line bg-canvas px-3.5 py-3 pl-4"
                   >
                     <span
                       className={`absolute inset-y-0 left-0 w-[3px] ${choice.rank === 1 ? "bg-gold-500" : "bg-line-strong"}`}
@@ -200,7 +216,7 @@ export default async function ReviewStep({
       </Section>
 
       {/* Documents */}
-      <Section title="Documents" editHref={isDraft ? `/apply/${id}/documents` : undefined}>
+      <Section icon={FileText} title="Documents" editHref={isDraft ? `/apply/${id}/documents` : undefined}>
         <ul className="divide-y divide-line text-[13.5px]">
           {REQUIRED_DOCUMENTS.map((spec) => {
             const uploaded = documents.find((d) => d.kind === spec.kind);
@@ -233,7 +249,7 @@ export default async function ReviewStep({
       </Section>
 
       {/* Fee */}
-      <Section title="Application fee" editHref={isDraft && !payment ? `/apply/${id}/payment` : undefined}>
+      <Section icon={Wallet} title="Application fee" editHref={isDraft && !payment ? `/apply/${id}/payment` : undefined}>
         {payment ? (
           <dl className="divide-y divide-line text-[13.5px]">
             <Row label="Amount" value={ssp(payment.amountSSP)} />
@@ -248,7 +264,7 @@ export default async function ReviewStep({
           </dl>
         ) : (
           <p className="text-[13px] text-muted">
-            The {ssp(institution.applicationFeeSSP)} fee has not been paid yet.
+            The {ssp(feeSSP)} fee has not been paid yet.
           </p>
         )}
       </Section>
@@ -257,6 +273,7 @@ export default async function ReviewStep({
       {isDraft ? (
         <Card>
           <CardHeader
+            icon={Send}
             title="Submit your application"
             description="Check every section above carefully. Nothing can be changed after submission."
           />
@@ -280,11 +297,13 @@ export default async function ReviewStep({
 }
 
 function Section({
+  icon,
   title,
   editHref,
   action,
   children,
 }: {
+  icon?: LucideIcon;
   title: string;
   editHref?: string;
   action?: React.ReactNode;
@@ -293,6 +312,7 @@ function Section({
   return (
     <Card>
       <CardHeader
+        icon={icon}
         title={title}
         action={
           <div className="flex items-center gap-2.5">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Wallet } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
@@ -32,7 +33,7 @@ export function PaymentForm({
   if (state?.ok === true) {
     return (
       <Card>
-        <CardHeader title="Application fee" />
+        <CardHeader icon={Wallet} title="Application fee" />
         <CardBody className="space-y-4">
           <Callout tone="success" title="Fee recorded">
             {state.message}
@@ -61,11 +62,12 @@ export function PaymentForm({
 
       <Card>
         <CardHeader
+          icon={Wallet}
           title="Application fee"
           description={`${ssp(feeSSP)}, charged once. It is not refundable and does not depend on the outcome.`}
         />
         <CardBody className="space-y-5">
-          <div className="flex items-baseline justify-between rounded-[--radius] border border-brand-200 bg-brand-50 px-4 py-3">
+          <div className="flex items-baseline justify-between rounded border border-brand-200 bg-brand-50 px-4 py-3">
             <span className="text-[13.5px] font-medium text-brand-900">
               Amount due
             </span>

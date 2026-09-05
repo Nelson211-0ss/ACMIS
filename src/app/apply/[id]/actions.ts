@@ -7,6 +7,7 @@ import {
   addDocument,
   attachPayment,
   getApplication,
+  getScheme,
   removeDocument,
   updateApplication,
 } from "@/lib/data/repo";
@@ -246,9 +247,14 @@ export async function payApplicationFee(
     return { ok: false, message: "Choose how you want to pay." };
   }
 
+  // The amount is decided server-side by the application's own scheme, never
+  // trusted from the form — the fee shown to the applicant is informational.
+  const scheme = guard.application.schemeId ? await getScheme(guard.application.schemeId) : null;
+  const amountSSP = scheme?.applicationFeeSSP ?? institution.applicationFeeSSP;
+
   const initiated = await initiatePayment({
     method,
-    amountSSP: institution.applicationFeeSSP,
+    amountSSP,
     phone: String(formData.get("phone") ?? ""),
     slipReference: String(formData.get("slip") ?? ""),
   });

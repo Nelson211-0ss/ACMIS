@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { GraduationCap, UserPlus } from "lucide-react";
+import { GraduationCap, ShieldCheck, UserPlus } from "lucide-react";
 import { Wordmark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, CardBody, CardFooter } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
@@ -15,9 +16,10 @@ export const metadata: Metadata = { title: "Sign in" };
 export default function LoginPage() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-3.5 sm:px-6">
+      <header className="sticky top-0 z-20 rounded-b-sm border-b border-line bg-surface">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
           <Wordmark />
+          <ThemeToggle />
         </div>
       </header>
 
@@ -61,6 +63,13 @@ export default function LoginPage() {
             <Button type="submit" variant="secondary" block>
               <UserPlus className="h-4 w-4" aria-hidden />
               {DEMO_ACCOUNTS.applicant.label}
+            </Button>
+          </form>
+          <form action={signInAsDemo}>
+            <input type="hidden" name="role" value="admin" />
+            <Button type="submit" variant="secondary" block>
+              <ShieldCheck className="h-4 w-4" aria-hidden />
+              {DEMO_ACCOUNTS.admin.label}
             </Button>
           </form>
         </div>

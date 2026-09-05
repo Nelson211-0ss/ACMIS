@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { Callout } from "@/components/ui/callout";
 import { Card, CardHeader } from "@/components/ui/card";
 import { currentStudent } from "@/lib/auth";
@@ -11,6 +12,7 @@ import {
   getFeeSummary,
   getPassedCourseIds,
   getRegisteredCourseIds,
+  getSystemSettings,
 } from "@/lib/data/repo";
 import { ssp } from "@/lib/format";
 import { saveRegistration } from "./actions";
@@ -25,11 +27,12 @@ export default async function RegistrationPage() {
   const student = await currentStudent();
   if (!student) redirect("/login");
 
-  const [available, registered, passed, fees] = await Promise.all([
+  const [available, registered, passed, fees, settings] = await Promise.all([
     getAvailableCourses(student),
     getRegisteredCourseIds(student.id),
     getPassedCourseIds(student.id),
     getFeeSummary(student.id),
+    getSystemSettings(),
   ]);
 
   const passedSet = new Set(passed);
@@ -46,6 +49,7 @@ export default async function RegistrationPage() {
   );
 
   const blocked = fees.blockingBalance > 0;
+  const closedByRegistrar = !settings.registrationOpen;
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -60,25 +64,33 @@ export default async function RegistrationPage() {
         </p>
       </div>
 
-      {blocked ? (
+      {closedByRegistrar || blocked ? (
         <>
-          <Callout tone="error" title="Registration is blocked">
-            <p>
-              {ssp(fees.blockingBalance)} of tuition and examination fees is
-              outstanding. Registration reopens as soon as the bursary confirms
-              your payment.
-            </p>
-            <Link
-              href="/portal/finance"
-              className="mt-2 inline-block font-semibold underline underline-offset-2"
-            >
-              Go to fees and payments
-            </Link>
-          </Callout>
+          {closedByRegistrar ? (
+            <Callout tone="info" title="Registration is closed">
+              The registrar has closed course registration for now. Check back
+              once it reopens for {institution.academicYear}.
+            </Callout>
+          ) : (
+            <Callout tone="error" title="Registration is blocked">
+              <p>
+                {ssp(fees.blockingBalance)} of tuition and examination fees is
+                outstanding. Registration reopens as soon as the bursary confirms
+                your payment.
+              </p>
+              <Link
+                href="/portal/finance"
+                className="mt-2 inline-block font-semibold underline underline-offset-2"
+              >
+                Go to fees and payments
+              </Link>
+            </Callout>
+          )}
 
           {/* Read-only view so the student can still see what they will take. */}
           <Card>
             <CardHeader
+              icon={BookOpen}
               title="Courses for this semester"
               description="Shown for reference. You cannot change these until the balance is cleared."
             />

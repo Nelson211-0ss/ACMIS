@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Receipt } from "lucide-react";
+import { History, Receipt, Wallet } from "lucide-react";
 import { Card, CardBody, CardHeader, Stat } from "@/components/ui/card";
 import { Badge, PaymentStatusBadge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
@@ -63,6 +63,7 @@ export default async function FinancePage() {
       <div className="grid gap-5 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader
+            icon={Receipt}
             title="Charges"
             description="Tuition and examination fees must be cleared before results are released."
           />
@@ -116,6 +117,7 @@ export default async function FinancePage() {
 
         <Card className="lg:col-span-2">
           <CardHeader
+            icon={Wallet}
             title="Make a payment"
             description={
               fees.balance > 0 ? `${ssp(fees.balance)} outstanding` : "Account cleared"
@@ -128,7 +130,7 @@ export default async function FinancePage() {
       </div>
 
       <Card>
-        <CardHeader title="Payment history" />
+        <CardHeader icon={History} title="Payment history" />
         {fees.payments.length === 0 ? (
           <EmptyState icon={Receipt} title="No payments recorded">
             Payments appear here as soon as your provider confirms them, or

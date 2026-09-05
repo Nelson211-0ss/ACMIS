@@ -6,9 +6,11 @@ import {
   BellRing,
   BookOpen,
   CalendarDays,
+  GraduationCap,
   Megaphone,
 } from "lucide-react";
 import { Card, CardBody, CardFooter, CardHeader, Stat } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
@@ -56,14 +58,27 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <div>
-        <h1 className="text-[22px] font-semibold tracking-tight text-ink">
-          Good to see you, {student.firstName}
-        </h1>
-        <p className="mt-1 text-[13.5px] text-muted lg:hidden">
-          {programme?.name} · Year {student.yearOfStudy}, Semester{" "}
-          {student.currentSemester}
-        </p>
+      <div className="flex items-center gap-4">
+        <Avatar
+          firstName={student.firstName}
+          lastName={student.lastName}
+          photoUrl={student.photoUrl}
+          size="lg"
+        />
+        <div className="min-w-0">
+          <h1 className="text-[22px] font-semibold tracking-tight text-ink">
+            Good to see you, {student.firstName}
+          </h1>
+          <p className="mt-1 text-[13.5px] text-muted lg:hidden">
+            {programme?.name} · Year {student.yearOfStudy}, Semester{" "}
+            {student.currentSemester}
+          </p>
+          {/* The strip above already carries programme and year on desktop, so
+              the student number is the more useful line to show there. */}
+          <p className="nums mt-1 hidden text-[13px] text-muted lg:block">
+            {student.studentNumber}
+          </p>
+        </div>
       </div>
 
       {/* Fees gate first: it is the one thing that can block everything else. */}
@@ -122,6 +137,7 @@ export default async function DashboardPage() {
         {/* Today's timetable */}
         <Card className="lg:col-span-3">
           <CardHeader
+            icon={CalendarDays}
             title="Today's classes"
             description={
               todaysClasses.length > 0
@@ -168,7 +184,7 @@ export default async function DashboardPage() {
 
         {/* Standing */}
         <Card className="lg:col-span-2">
-          <CardHeader title="Academic standing" />
+          <CardHeader icon={GraduationCap} title="Academic standing" />
           <CardBody className="space-y-4">
             <div>
               <p className="mb-1.5 text-[12.5px] font-medium text-muted">
@@ -207,6 +223,7 @@ export default async function DashboardPage() {
       {registered.length < compulsoryCount ? (
         <Card>
           <CardHeader
+            icon={BookOpen}
             title="Course registration is incomplete"
             description={`You have registered ${registered.length} of ${compulsoryCount} compulsory courses for this semester.`}
           />
@@ -222,6 +239,7 @@ export default async function DashboardPage() {
       {/* Announcements */}
       <Card>
         <CardHeader
+          icon={Megaphone}
           title="Notices"
           description="From the registrar and the bursary"
         />

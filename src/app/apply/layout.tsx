@@ -1,6 +1,7 @@
 import { LogOut, Phone } from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { OfflineBanner } from "@/components/offline-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { currentSession } from "@/lib/auth";
 import { institution } from "@/lib/institution";
 import { signOut } from "@/app/login/actions";
@@ -14,20 +15,23 @@ export default async function ApplyLayout({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-20 border-b border-line bg-surface">
+      <header className="sticky top-0 z-20 rounded-b-sm border-b border-line bg-surface">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Wordmark href="/" />
-          {session ? (
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-1.5 rounded-[--radius] px-2.5 py-2 text-[13px] font-medium text-muted transition-colors hover:bg-sunken hover:text-ink"
-              >
-                <LogOut className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline">Sign out</span>
-              </button>
-            </form>
-          ) : null}
+          <div className="flex shrink-0 items-center gap-1">
+            <ThemeToggle />
+            {session ? (
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 rounded px-2.5 py-2 text-[13px] font-medium text-muted transition-colors hover:bg-sunken hover:text-ink"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden />
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
+              </form>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -37,7 +41,7 @@ export default async function ApplyLayout({
         {children}
       </main>
 
-      <footer className="border-t border-line bg-surface">
+      <footer className="sticky bottom-0 z-20 rounded-t-sm border-t border-line bg-surface">
         <div className="mx-auto flex max-w-4xl flex-col gap-2 px-4 py-5 text-[12.5px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>
             {institution.name} · Admissions office, {institution.city}

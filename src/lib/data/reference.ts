@@ -1,4 +1,4 @@
-import type { Faculty, Programme } from "../types";
+import type { AdmissionScheme, Faculty, Programme } from "../types";
 
 /** The ten states plus the three administrative areas. */
 export const STATES = [
@@ -235,6 +235,22 @@ export function programmesByFaculty(): Array<{
   return FACULTIES.map((faculty) => ({
     faculty,
     programmes: PROGRAMMES.filter((p) => p.facultyId === faculty.id),
+  })).filter((g) => g.programmes.length > 0);
+}
+
+/**
+ * The same grouping, scoped to what a scheme actually offers. An application
+ * with no scheme (created before schemes existed) falls back to every
+ * programme, so nothing already in progress loses its choices.
+ */
+export function programmesByFacultyForScheme(
+  scheme: AdmissionScheme | null | undefined,
+): Array<{ faculty: Faculty; programmes: Programme[] }> {
+  if (!scheme) return programmesByFaculty();
+  const offered = new Set(scheme.programmeIds);
+  return FACULTIES.map((faculty) => ({
+    faculty,
+    programmes: PROGRAMMES.filter((p) => p.facultyId === faculty.id && offered.has(p.id)),
   })).filter((g) => g.programmes.length > 0);
 }
 

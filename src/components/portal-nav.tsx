@@ -51,7 +51,7 @@ export function SidebarNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center gap-3 rounded-[--radius] px-3 py-2.5 text-[13.5px] transition-colors",
+                  "relative flex items-center gap-3 rounded px-3 py-2.5 text-[13.5px] transition-colors",
                   active
                     ? "bg-sidebar-active font-semibold text-sidebar-ink-strong"
                     : "font-medium text-sidebar-ink hover:bg-sidebar-active/55 hover:text-sidebar-ink-strong",
@@ -86,7 +86,7 @@ export function BottomTabs() {
   return (
     <nav
       aria-label="Portal sections"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 rounded-t-sm border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="flex">
         {tabs.map(({ href, short, icon: Icon }) => {

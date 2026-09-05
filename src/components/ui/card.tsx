@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /** Flat surface, hairline border, no shadow by default. */
@@ -6,7 +7,7 @@ export function Card({ className, ...props }: ComponentProps<"section">) {
   return (
     <section
       className={cn(
-        "rounded-[--radius-lg] border border-line bg-surface",
+        "rounded-lg border border-line bg-surface",
         className,
       )}
       {...props}
@@ -15,11 +16,14 @@ export function Card({ className, ...props }: ComponentProps<"section">) {
 }
 
 export function CardHeader({
+  icon: Icon,
   title,
   description,
   action,
   className,
 }: {
+  /** Reserved for a card whose subject isn't obvious from the title alone — skip it on repeated list items. */
+  icon?: LucideIcon;
   title: ReactNode;
   description?: ReactNode;
   action?: ReactNode;
@@ -32,11 +36,18 @@ export function CardHeader({
         className,
       )}
     >
-      <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold leading-tight text-ink">{title}</h2>
-        {description ? (
-          <p className="mt-1 text-[13px] leading-snug text-muted">{description}</p>
+      <div className="flex min-w-0 items-start gap-3">
+        {Icon ? (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-brand-200 bg-brand-50">
+            <Icon className="h-4 w-4 text-brand-700" aria-hidden />
+          </span>
         ) : null}
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-semibold leading-tight text-ink">{title}</h2>
+          {description ? (
+            <p className="mt-1 text-[13px] leading-snug text-muted">{description}</p>
+          ) : null}
+        </div>
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
@@ -83,7 +94,7 @@ export function Stat({
   }[accent];
 
   return (
-    <div className="relative overflow-hidden rounded-[--radius-lg] border border-line bg-surface px-4 py-3.5 pl-5">
+    <div className="relative overflow-hidden rounded-lg border border-line bg-surface px-4 py-3.5 pl-5">
       <span className={cn("absolute inset-y-0 left-0 w-[3px]", bar)} aria-hidden />
       <p className="text-[12px] font-medium uppercase tracking-wide text-muted">
         {label}

@@ -170,7 +170,7 @@ export function RegistrationForm({
       </section>
 
       {/* Sticky footer so the load total and the save button follow the thumb. */}
-      <div className="sticky bottom-16 z-10 -mx-4 border-y border-line bg-surface px-4 py-3 sm:-mx-5 sm:px-5 lg:bottom-0 lg:rounded-[--radius-lg] lg:border">
+      <div className="sticky bottom-16 z-10 -mx-4 border-y border-line bg-surface px-4 py-3 sm:-mx-5 sm:px-5 lg:bottom-0 lg:rounded-lg lg:border">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[13px] text-muted">

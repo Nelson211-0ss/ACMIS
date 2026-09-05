@@ -31,6 +31,32 @@ export interface Programme {
   requiredSubjects: string[];
 }
 
+/**
+ * A running admission cycle the admissions office publishes — "2026/2027
+ * Undergraduate Intake", say. Applicants only ever see `open` schemes; a
+ * scheme is prepared as `draft` ahead of time and only appears on the Apply
+ * page once published, and stops taking new applications once `closed`.
+ * Applications already under review are unaffected by a scheme closing.
+ */
+export type SchemeStatus = "draft" | "open" | "closed";
+
+export interface AdmissionScheme {
+  id: Id;
+  name: string;
+  /** Short reference, e.g. "UG-2026". */
+  code: string;
+  description: string;
+  /** Which programmes an applicant may rank under this scheme. */
+  programmeIds: Id[];
+  opensAt: string;
+  closesAt: string;
+  resultsBy: string;
+  semesterStarts: string;
+  applicationFeeSSP: number;
+  status: SchemeStatus;
+  createdAt: string;
+}
+
 // --- Applicants and applications -------------------------------------------
 
 export type ApplicationStatus =
@@ -107,6 +133,9 @@ export interface Application {
   id: Id;
   reference: string; // human-quotable, e.g. APP-2026-004821
   applicantId: Id;
+  /** Which admission scheme this was opened under. Unset on applications
+   *  created before schemes existed — those see every programme, unscoped. */
+  schemeId?: Id;
   status: ApplicationStatus;
   createdAt: string;
   updatedAt: string;
@@ -152,6 +181,8 @@ export interface Student {
   lastName: string;
   email: string;
   phone: string;
+  /** Passport photo, if one was digitised. Unset records fall back to initials. */
+  photoUrl?: string;
   programmeId: Id;
   yearOfStudy: number;
   currentSemester: 1 | 2;
@@ -240,4 +271,68 @@ export interface Announcement {
   postedAt: string;
   audience: "all" | "applicants" | "students";
   priority: "normal" | "important";
+}
+
+// --- Staff, roles and system administration ---------------------------------
+
+/**
+ * Fixed set of staff roles. Real deployments will want a role editor rather
+ * than a hard-coded union, but four roles covers every seat the university
+ * actually has an opinion about, and adding a fifth is a one-line change in
+ * three places (this union, ROLE_LABELS, and the seed's default permissions).
+ */
+export type StaffRole = "super_admin" | "registrar" | "bursar" | "viewer";
+
+export interface StaffUser {
+  id: Id;
+  name: string;
+  email: string;
+  staffRole: StaffRole;
+  status: "active" | "suspended";
+  lastActiveAt?: string;
+}
+
+/** One row of the unified directory shown on the admin Users page. */
+export interface DirectoryUser {
+  id: Id;
+  name: string;
+  email: string;
+  kind: "student" | "applicant" | "staff";
+  /** e.g. "Computer Science · Year 2", "Registrar", "Applicant" */
+  roleLabel: string;
+  statusLabel: string;
+  statusTone: "green" | "gold" | "red" | "neutral";
+  /** Only students and staff can be suspended from here; see comment on the Users page. */
+  mutable: boolean;
+}
+
+export type Permission =
+  | "manage_users"
+  | "manage_roles"
+  | "manage_settings"
+  | "manage_appearance"
+  | "manage_announcements"
+  | "manage_admissions"
+  | "view_monitoring"
+  | "view_audit_log";
+
+export type AccentKey = "nile" | "forest" | "amethyst" | "slate";
+
+export interface SystemSettings {
+  maintenanceMode: boolean;
+  registrationOpen: boolean;
+  applicationsOpen: boolean;
+  appearance: {
+    defaultMode: "system" | "light" | "dark";
+    accent: AccentKey;
+  };
+  rolePermissions: Record<StaffRole, Permission[]>;
+}
+
+export interface AuditEntry {
+  id: Id;
+  at: string;
+  actor: string;
+  action: string;
+  target?: string;
 }

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { GraduationCap, IdCard, LogOut, Smartphone } from "lucide-react";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
 import { currentStudent } from "@/lib/auth";
 import { facultyById, programmeById } from "@/lib/data/reference";
-import { displayPhone, initials, shortDate } from "@/lib/format";
+import { Avatar } from "@/components/ui/avatar";
+import { displayPhone, shortDate } from "@/lib/format";
 import { institution } from "@/lib/institution";
 import { signOut } from "@/app/login/actions";
 
@@ -31,9 +32,12 @@ export default async function ProfilePage() {
 
       <Card>
         <CardBody className="flex items-center gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-700 text-lg font-semibold text-white">
-            {initials(student.firstName, student.lastName)}
-          </span>
+          <Avatar
+            firstName={student.firstName}
+            lastName={student.lastName}
+            photoUrl={student.photoUrl}
+            size="md"
+          />
           <div className="min-w-0">
             <p className="truncate text-[17px] font-semibold text-ink">
               {student.firstName} {student.lastName}
@@ -49,7 +53,7 @@ export default async function ProfilePage() {
       </Card>
 
       <Card>
-        <CardHeader title="Academic record" />
+        <CardHeader icon={GraduationCap} title="Academic record" />
         <CardBody>
           <dl className="divide-y divide-line text-[13.5px]">
             <Row label="Programme" value={programme?.name ?? "—"} />
@@ -72,6 +76,7 @@ export default async function ProfilePage() {
 
       <Card>
         <CardHeader
+          icon={IdCard}
           title="Contact details"
           description="Changes are made at the registry, not here."
         />
@@ -89,7 +94,7 @@ export default async function ProfilePage() {
       </Card>
 
       <Card>
-        <CardHeader title="Session" />
+        <CardHeader icon={Smartphone} title="Session" />
         <CardBody>
           <p className="text-[13px] text-muted">
             Signed in on this device. Sign out if you are using a shared phone

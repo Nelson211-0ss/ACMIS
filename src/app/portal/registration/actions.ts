@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { currentStudent } from "@/lib/auth";
-import { getCourse, getFeeSummary, setRegistration } from "@/lib/data/repo";
+import { getCourse, getFeeSummary, getSystemSettings, setRegistration } from "@/lib/data/repo";
 
 export type RegistrationState =
   | { ok: true; message: string; rejected: Array<{ code: string; reason: string }> }
@@ -23,6 +23,11 @@ export async function saveRegistration(
 ): Promise<RegistrationState> {
   const student = await currentStudent();
   if (!student) return { ok: false, message: "Your session has expired. Sign in again." };
+
+  const settings = await getSystemSettings();
+  if (!settings.registrationOpen) {
+    return { ok: false, message: "The registrar has closed course registration for now." };
+  }
 
   const fees = await getFeeSummary(student.id);
   if (fees.blockingBalance > 0) {

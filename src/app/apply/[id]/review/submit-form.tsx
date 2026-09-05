@@ -43,7 +43,7 @@ export function SubmitForm({
         </Callout>
       ) : null}
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-[--radius] border border-line-strong bg-surface px-3.5 py-3">
+      <label className="flex cursor-pointer items-start gap-3 rounded border border-line-strong bg-surface px-3.5 py-3">
         <input
           type="checkbox"
           checked={declared}

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { StepNav } from "@/components/step-nav";
 import { ApplicationStatusBadge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { getApplication } from "@/lib/data/repo";
+import { getApplication, getScheme } from "@/lib/data/repo";
 import { completedSteps, progressPercent } from "@/lib/application";
 
 export default async function ApplicationLayout({
@@ -16,6 +16,7 @@ export default async function ApplicationLayout({
   const application = await getApplication(id);
   if (!application) notFound();
 
+  const scheme = application.schemeId ? await getScheme(application.schemeId) : null;
   const readOnly = application.status !== "draft";
 
   return (
@@ -25,8 +26,9 @@ export default async function ApplicationLayout({
           <h1 className="text-[20px] font-semibold tracking-tight text-ink">
             {readOnly ? "Your application" : "Application form"}
           </h1>
-          <p className="nums mt-1 text-[13px] text-muted">
-            Reference {application.reference}
+          <p className="mt-1 text-[13px] text-muted">
+            <span className="nums">Reference {application.reference}</span>
+            {scheme ? ` · ${scheme.name}` : ""}
           </p>
         </div>
         <ApplicationStatusBadge status={application.status} />

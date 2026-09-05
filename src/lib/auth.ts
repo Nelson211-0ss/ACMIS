@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
-import { getStudent } from "./data/repo";
-import type { Student } from "./types";
+import { getStaff, getStudent } from "./data/repo";
+import type { StaffUser, Student } from "./types";
 
 /**
  * Mock session.
@@ -14,11 +14,11 @@ import type { Student } from "./types";
 
 const COOKIE = "ssu_session";
 
-export type Role = "student" | "applicant";
+export type Role = "student" | "applicant" | "admin";
 
 export interface Session {
   role: Role;
-  /** Student id for students, applicant account id for applicants. */
+  /** Student id for students, applicant account id for applicants, staff id for admins. */
   subjectId: string;
 }
 
@@ -26,14 +26,17 @@ export interface Session {
 export const DEMO_ACCOUNTS = {
   student: { role: "student" as const, subjectId: "stu-1", label: "Achol Majok — continuing student" },
   applicant: { role: "applicant" as const, subjectId: "usr-applicant", label: "Emmanuel Wani — applicant" },
+  admin: { role: "admin" as const, subjectId: "staff-1", label: "Grace Lueth — super administrator" },
 } as const;
+
+const ROLES: Role[] = ["student", "applicant", "admin"];
 
 export async function currentSession(): Promise<Session | null> {
   const raw = (await cookies()).get(COOKIE)?.value;
   if (!raw) return null;
   const [role, subjectId] = raw.split(":");
-  if ((role !== "student" && role !== "applicant") || !subjectId) return null;
-  return { role, subjectId };
+  if (!ROLES.includes(role as Role) || !subjectId) return null;
+  return { role: role as Role, subjectId };
 }
 
 export async function startSession(session: Session): Promise<void> {
@@ -55,4 +58,13 @@ export async function currentStudent(): Promise<Student | null> {
   const session = await currentSession();
   if (session?.role !== "student") return null;
   return getStudent(session.subjectId);
+}
+
+/** Returns null rather than redirecting, so callers choose the response. */
+export async function currentStaff(): Promise<StaffUser | null> {
+  const session = await currentSession();
+  if (session?.role !== "admin") return null;
+  const staff = await getStaff(session.subjectId);
+  if (staff?.status !== "active") return null;
+  return staff;
 }

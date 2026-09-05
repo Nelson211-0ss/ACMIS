@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
@@ -76,6 +77,7 @@ export function ProgrammeForm({
 
       <Card>
         <CardHeader
+          icon={BookOpen}
           title="Programme choices"
           description="Rank up to three. If you are not offered your first choice, you are considered for the second, then the third."
         />
@@ -125,7 +127,7 @@ export function ProgrammeForm({
                 </Field>
 
                 {programme ? (
-                  <div className="mt-2.5 rounded-[--radius] border border-line bg-canvas px-3.5 py-3">
+                  <div className="mt-2.5 rounded border border-line bg-canvas px-3.5 py-3">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px]">
                       <span className="text-muted">
                         {programme.durationYears} years ·{" "}
