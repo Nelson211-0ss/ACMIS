@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { Layers } from "lucide-react";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Callout } from "@/components/ui/callout";
 import { Field, FieldGrid, Input, Textarea } from "@/components/ui/field";
 import { Table, TableWrap, Td, Th, Tr } from "@/components/ui/table";
-import { currentStaff } from "@/lib/auth";
-import { getSystemSettings, listSchemes } from "@/lib/data/repo";
+import { listSchemes } from "@/lib/data/repo";
 import { FACULTIES, PROGRAMMES } from "@/lib/data/reference";
-import { can } from "@/lib/permissions";
 import { shortDate, ssp } from "@/lib/format";
 import type { SchemeStatus } from "@/lib/types";
 import { createSchemeAction, setSchemeStatusAction } from "./actions";
@@ -31,18 +27,6 @@ const NEXT_ACTION: Record<SchemeStatus, { label: string; next: SchemeStatus } | 
 };
 
 export default async function AdmissionSchemesPage() {
-  const staff = await currentStaff();
-  if (!staff) redirect("/login");
-
-  const settings = await getSystemSettings();
-  if (!can(staff.staffRole, "manage_admissions", settings)) {
-    return (
-      <Callout tone="warning" title="Restricted">
-        Your role ({staff.staffRole}) does not include admissions.
-      </Callout>
-    );
-  }
-
   const schemes = await listSchemes();
 
   return (

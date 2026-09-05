@@ -1,8 +1,6 @@
 import {
   Activity,
-  Inbox,
   KeyRound,
-  Layers,
   LayoutDashboard,
   Megaphone,
   Palette,
@@ -30,8 +28,6 @@ export interface AdminNavItem {
 
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/admissions", label: "Admissions queue", icon: Inbox, permission: "manage_admissions" },
-  { href: "/admin/schemes", label: "Admission schemes", icon: Layers, permission: "manage_admissions" },
   { href: "/admin/users", label: "Users", icon: Users, permission: "manage_users" },
   { href: "/admin/roles", label: "Roles & permissions", icon: KeyRound, permission: "manage_roles" },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone, permission: "manage_announcements" },

@@ -74,6 +74,14 @@ export default function LoginPage() {
           </form>
         </div>
 
+        <p className="mt-4 text-center text-[12.5px] text-muted">
+          Work in the Admissions Office?{" "}
+          <Link href="/admissions/login" className="font-medium text-brand-700 underline underline-offset-2">
+            Sign in there instead
+          </Link>
+          .
+        </p>
+
         <Card className="mt-8">
           <CardBody>
             <h2 className="text-[14px] font-semibold text-ink">

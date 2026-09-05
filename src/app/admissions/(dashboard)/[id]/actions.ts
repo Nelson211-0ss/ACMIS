@@ -23,9 +23,9 @@ const DECISION_STATUSES: ApplicationStatus[] = [
 
 async function requireManageAdmissions() {
   const staff = await currentStaff();
-  if (!staff) redirect("/login");
+  if (!staff) redirect("/admissions/login");
   const settings = await getSystemSettings();
-  if (!can(staff.staffRole, "manage_admissions", settings)) redirect("/admin");
+  if (!can(staff.staffRole, "manage_admissions", settings)) redirect("/admissions/login");
   return staff;
 }
 
@@ -44,8 +44,8 @@ export async function saveDecision(applicationId: string, formData: FormData): P
     await logAudit(actor.name, `Recorded admissions decision: ${status}`, application.reference);
   }
 
-  revalidatePath(`/admin/admissions/${applicationId}`);
-  revalidatePath("/admin/admissions");
+  revalidatePath(`/admissions/${applicationId}`);
+  revalidatePath("/admissions");
   // The applicant sees their decision on the same review page they submitted from.
   revalidatePath(`/apply/${applicationId}`, "layout");
   revalidatePath("/apply");
@@ -62,5 +62,5 @@ export async function changeDocumentStatus(applicationId: string, formData: Form
   if (application) {
     await logAudit(actor.name, `Marked a document "${status}"`, application.reference);
   }
-  revalidatePath(`/admin/admissions/${applicationId}`);
+  revalidatePath(`/admissions/${applicationId}`);
 }

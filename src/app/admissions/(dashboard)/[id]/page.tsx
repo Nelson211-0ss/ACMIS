@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import {
   BadgeCheck,
   BookOpen,
@@ -14,18 +14,11 @@ import {
   Badge,
   PaymentStatusBadge,
 } from "@/components/ui/badge";
-import { Callout } from "@/components/ui/callout";
 import { Button } from "@/components/ui/button";
 import { Field, Select, Textarea } from "@/components/ui/field";
-import { currentStaff } from "@/lib/auth";
-import {
-  getApplication,
-  getScheme,
-  getSystemSettings,
-} from "@/lib/data/repo";
+import { getApplication, getScheme } from "@/lib/data/repo";
 import { programmeById } from "@/lib/data/reference";
 import { aggregate, checkEligibility, REQUIRED_DOCUMENTS } from "@/lib/application";
-import { can } from "@/lib/permissions";
 import { displayPhone, shortDate, ssp } from "@/lib/format";
 import { methodName } from "@/lib/data/payments";
 import { changeDocumentStatus, saveDecision } from "./actions";
@@ -37,18 +30,6 @@ export default async function AdmissionsReviewPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const staff = await currentStaff();
-  if (!staff) redirect("/login");
-
-  const settings = await getSystemSettings();
-  if (!can(staff.staffRole, "manage_admissions", settings)) {
-    return (
-      <Callout tone="warning" title="Restricted">
-        Your role ({staff.staffRole}) does not include admissions.
-      </Callout>
-    );
-  }
-
   const { id } = await params;
   const application = await getApplication(id);
   if (!application) notFound();

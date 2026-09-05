@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { Inbox } from "lucide-react";
+import { CheckCircle2, Clock, Hourglass, Inbox, XCircle } from "lucide-react";
 import { Card, CardHeader, Stat } from "@/components/ui/card";
 import { ApplicationStatusBadge } from "@/components/ui/badge";
-import { Callout } from "@/components/ui/callout";
 import { EmptyState } from "@/components/ui/empty";
 import { Table, TableWrap, Td, Th, Tr } from "@/components/ui/table";
-import { currentStaff } from "@/lib/auth";
-import { getScheme, getSystemSettings, listApplicationsForReview } from "@/lib/data/repo";
+import { getScheme, listApplicationsForReview } from "@/lib/data/repo";
 import { programmeById } from "@/lib/data/reference";
-import { can } from "@/lib/permissions";
 import { shortDate } from "@/lib/format";
 import type { ApplicationStatus } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -32,18 +28,6 @@ export default async function AdmissionsQueuePage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const staff = await currentStaff();
-  if (!staff) redirect("/login");
-
-  const settings = await getSystemSettings();
-  if (!can(staff.staffRole, "manage_admissions", settings)) {
-    return (
-      <Callout tone="warning" title="Restricted">
-        Your role ({staff.staffRole}) does not include admissions.
-      </Callout>
-    );
-  }
-
   const { status } = await searchParams;
   const applications = await listApplicationsForReview();
 
@@ -79,10 +63,10 @@ export default async function AdmissionsQueuePage({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Awaiting decision" value={awaiting} accent="gold" />
-        <Stat label="Admitted" value={admitted} accent="green" />
-        <Stat label="Waitlisted" value={waitlisted} accent="gold" />
-        <Stat label="Rejected" value={rejected} accent="red" />
+        <Stat icon={Clock} label="Awaiting decision" value={awaiting} accent="gold" />
+        <Stat icon={CheckCircle2} label="Admitted" value={admitted} accent="green" />
+        <Stat icon={Hourglass} label="Waitlisted" value={waitlisted} accent="gold" />
+        <Stat icon={XCircle} label="Rejected" value={rejected} accent="red" />
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -91,7 +75,7 @@ export default async function AdmissionsQueuePage({
           return (
             <Link
               key={f.value}
-              href={f.value === "all" ? "/admin/admissions" : `/admin/admissions?status=${f.value}`}
+              href={f.value === "all" ? "/admissions" : `/admissions?status=${f.value}`}
               className={cn(
                 "rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors",
                 active
@@ -143,7 +127,7 @@ export default async function AdmissionsQueuePage({
                     </Td>
                     <Td>
                       <Link
-                        href={`/admin/admissions/${a.id}`}
+                        href={`/admissions/${a.id}`}
                         className="text-[12.5px] font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:decoration-brand-700"
                       >
                         Review

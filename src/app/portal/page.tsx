@@ -8,6 +8,7 @@ import {
   CalendarDays,
   GraduationCap,
   Megaphone,
+  Wallet,
 } from "lucide-react";
 import { Card, CardBody, CardFooter, CardHeader, Stat } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -108,24 +109,28 @@ export default async function DashboardPage() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat
+          icon={GraduationCap}
           label="Cumulative GPA"
           value={cgpa === null ? "—" : cgpa.toFixed(2)}
           note={cgpa === null ? "No published results yet" : "Across all semesters"}
           accent="gold"
         />
         <Stat
+          icon={BookOpen}
           label="Registered credits"
           value={registeredCredits}
           note={`${registered.length} of ${available.length} courses on offer`}
           accent="brand"
         />
         <Stat
+          icon={Wallet}
           label="Fee balance"
           value={fees.balance === 0 ? "Cleared" : ssp(fees.balance)}
           note={`${ssp(fees.paid)} paid of ${ssp(fees.charged)}`}
           accent={fees.balance === 0 ? "green" : "red"}
         />
         <Stat
+          icon={CalendarDays}
           label="Academic year"
           value={institution.academicYear}
           note={`Semester ${student.currentSemester}`}

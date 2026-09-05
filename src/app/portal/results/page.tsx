@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calculator, GraduationCap, Printer } from "lucide-react";
+import { BookOpen, Calculator, GraduationCap, Printer, RotateCcw } from "lucide-react";
 import { Card, CardBody, CardHeader, Stat } from "@/components/ui/card";
 import { Badge, GradeBadge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
@@ -70,18 +70,21 @@ export default async function ResultsPage() {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat
+          icon={GraduationCap}
           label="Cumulative GPA"
           value={cgpa === null ? "—" : cgpa.toFixed(2)}
           note={cgpa === null ? "Nothing published yet" : classification(cgpa)}
           accent="gold"
         />
         <Stat
+          icon={BookOpen}
           label="Credits earned"
           value={totalCredits}
           note={`Across ${semesters.length} semester${semesters.length === 1 ? "" : "s"}`}
           accent="brand"
         />
         <Stat
+          icon={RotateCcw}
           label="Courses to retake"
           value={failed.length}
           note={failed.length === 0 ? "Nothing outstanding" : failed.map((f) => f.course.code).join(", ")}

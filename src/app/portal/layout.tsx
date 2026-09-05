@@ -25,7 +25,7 @@ export default async function PortalLayout({
     <div className="min-h-dvh lg:flex">
       {/* Desktop rail. Flat navy, hairline divider, no gradient. */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-line bg-sidebar lg:sticky lg:top-0 lg:flex lg:h-dvh">
-        <div className="border-b border-sidebar-line px-4 py-4">
+        <div className="px-4 pb-3 pt-4">
           <Wordmark href="/portal" tone="dark" />
         </div>
 

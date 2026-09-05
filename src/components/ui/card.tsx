@@ -75,11 +75,13 @@ export function CardFooter({ className, ...props }: ComponentProps<"div">) {
  * the flat-design substitute for a coloured gradient header.
  */
 export function Stat({
+  icon: Icon,
   label,
   value,
   note,
   accent = "brand",
 }: {
+  icon?: LucideIcon;
   label: string;
   value: ReactNode;
   note?: ReactNode;
@@ -96,9 +98,12 @@ export function Stat({
   return (
     <div className="relative overflow-hidden rounded-lg border border-line bg-surface px-4 py-3.5 pl-5">
       <span className={cn("absolute inset-y-0 left-0 w-[3px]", bar)} aria-hidden />
-      <p className="text-[12px] font-medium uppercase tracking-wide text-muted">
-        {label}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[12px] font-medium uppercase tracking-wide text-muted">
+          {label}
+        </p>
+        {Icon ? <Icon className="h-4 w-4 shrink-0 text-faint" aria-hidden /> : null}
+      </div>
       <p className="nums mt-1 text-2xl font-semibold leading-none text-ink">{value}</p>
       {note ? <p className="mt-1.5 text-[12.5px] text-muted">{note}</p> : null}
     </div>

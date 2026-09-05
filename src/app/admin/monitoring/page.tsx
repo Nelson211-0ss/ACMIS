@@ -1,6 +1,17 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Activity, CheckCircle2, CircleDashed } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  CircleDashed,
+  Clock,
+  Cpu,
+  Gauge,
+  MemoryStick,
+  Timer,
+  TrendingUp,
+} from "lucide-react";
 import { Card, CardBody, CardHeader, Stat } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
@@ -91,10 +102,10 @@ export default async function AdminMonitoringPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Process uptime" value={formatUptime(process.uptime())} note="Live" accent="green" />
-        <Stat label="Memory (RSS)" value={formatBytes(mem.rss)} note="Live" accent="green" />
-        <Stat label="Node version" value={process.version} note={process.env.NODE_ENV ?? "development"} accent="none" />
-        <Stat label="Server time" value={new Date().toLocaleTimeString()} note="Live" accent="green" />
+        <Stat icon={Timer} label="Process uptime" value={formatUptime(process.uptime())} note="Live" accent="green" />
+        <Stat icon={MemoryStick} label="Memory (RSS)" value={formatBytes(mem.rss)} note="Live" accent="green" />
+        <Stat icon={Cpu} label="Node version" value={process.version} note={process.env.NODE_ENV ?? "development"} accent="none" />
+        <Stat icon={Clock} label="Server time" value={new Date().toLocaleTimeString()} note="Live" accent="green" />
       </div>
 
       <Card>
@@ -116,9 +127,9 @@ export default async function AdminMonitoringPage() {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Avg response time" value="118 ms" note="Sample data" accent="none" />
-        <Stat label="Error rate" value="0.4%" note="Sample data" accent="none" />
-        <Stat label="Requests today" value={week[week.length - 1]} note="Sample data" accent="none" />
+        <Stat icon={Gauge} label="Avg response time" value="118 ms" note="Sample data" accent="none" />
+        <Stat icon={AlertTriangle} label="Error rate" value="0.4%" note="Sample data" accent="none" />
+        <Stat icon={TrendingUp} label="Requests today" value={week[week.length - 1]} note="Sample data" accent="none" />
       </div>
 
       <Card>

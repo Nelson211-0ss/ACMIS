@@ -9,9 +9,9 @@ import type { SchemeStatus } from "@/lib/types";
 
 async function requireManageAdmissions() {
   const staff = await currentStaff();
-  if (!staff) redirect("/login");
+  if (!staff) redirect("/admissions/login");
   const settings = await getSystemSettings();
-  if (!can(staff.staffRole, "manage_admissions", settings)) redirect("/admin");
+  if (!can(staff.staffRole, "manage_admissions", settings)) redirect("/admissions/login");
   return staff;
 }
 
@@ -32,7 +32,7 @@ export async function createSchemeAction(formData: FormData): Promise<void> {
     // A hand-crafted form request missing required fields is simply dropped —
     // the real form always fills these in, and this route has no untrusted
     // public caller.
-    redirect("/admin/schemes");
+    redirect("/admissions/schemes");
   }
 
   const scheme = await createScheme({
@@ -48,7 +48,7 @@ export async function createSchemeAction(formData: FormData): Promise<void> {
   });
 
   await logAudit(actor.name, "Created an admission scheme (draft)", scheme.name);
-  revalidatePath("/admin/schemes");
+  revalidatePath("/admissions/schemes");
 }
 
 export async function setSchemeStatusAction(formData: FormData): Promise<void> {
@@ -61,6 +61,6 @@ export async function setSchemeStatusAction(formData: FormData): Promise<void> {
   if (scheme) {
     await logAudit(actor.name, `Set scheme status to "${status}"`, scheme.name);
   }
-  revalidatePath("/admin/schemes");
+  revalidatePath("/admissions/schemes");
   revalidatePath("/apply");
 }

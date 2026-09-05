@@ -8,9 +8,13 @@ import type { SignInState } from "./actions";
 
 export function SignInForm({
   action,
+  emailLabel = "Email address or student number",
+  emailPlaceholder = "achol.majok@student.example.ss",
   className,
 }: {
   action: (prev: SignInState, formData: FormData) => Promise<SignInState>;
+  emailLabel?: string;
+  emailPlaceholder?: string;
   className?: string;
 }) {
   const [state, formAction, pending] = useActionState<SignInState, FormData>(
@@ -27,7 +31,7 @@ export function SignInForm({
       ) : null}
 
       <div className="space-y-4">
-        <Field label="Email address or student number" name="email" required>
+        <Field label={emailLabel} name="email" required>
           <Input
             id="email"
             name="email"
@@ -36,7 +40,7 @@ export function SignInForm({
             autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}
-            placeholder="achol.majok@student.example.ss"
+            placeholder={emailPlaceholder}
             required
           />
         </Field>

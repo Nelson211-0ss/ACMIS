@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { History, Receipt, Wallet } from "lucide-react";
+import { CheckCircle2, History, Receipt, Wallet } from "lucide-react";
 import { Card, CardBody, CardHeader, Stat } from "@/components/ui/card";
 import { Badge, PaymentStatusBadge } from "@/components/ui/badge";
 import { Callout } from "@/components/ui/callout";
@@ -46,9 +46,10 @@ export default async function FinancePage() {
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Stat label="Charged this semester" value={ssp(fees.charged)} accent="none" />
-        <Stat label="Paid" value={ssp(fees.paid)} accent="green" />
+        <Stat icon={Receipt} label="Charged this semester" value={ssp(fees.charged)} accent="none" />
+        <Stat icon={CheckCircle2} label="Paid" value={ssp(fees.paid)} accent="green" />
         <Stat
+          icon={Wallet}
           label="Balance"
           value={fees.balance === 0 ? "Cleared" : ssp(fees.balance)}
           note={
