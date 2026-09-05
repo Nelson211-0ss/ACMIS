@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { institution } from "@/lib/institution";
 import { accentStyleTag, themeInitScript } from "@/lib/theme";
 import { getSystemSettings } from "@/lib/data/repo";
+import { inter } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -32,7 +33,7 @@ export default async function RootLayout({
   return (
     // The theme script writes to <html> before React hydrates, so the class
     // list legitimately differs from what the server rendered.
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
         <style dangerouslySetInnerHTML={{ __html: accentStyleTag(settings.appearance.accent) }} />
       </head>

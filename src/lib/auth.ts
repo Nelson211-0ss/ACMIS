@@ -22,12 +22,22 @@ export interface Session {
   subjectId: string;
 }
 
-/** The seeded accounts offered on the login screen. */
+/**
+ * The seeded accounts offered on the login screen.
+ *
+ * `registrar` shares the same session role as `admin` — one staff cookie
+ * shape for everyone — but is a distinct entry here because it signs in to a
+ * different place (see DEMO_REDIRECT in login/actions.ts).
+ */
 export const DEMO_ACCOUNTS = {
   student: { role: "student" as const, subjectId: "stu-1", label: "Achol Majok — continuing student" },
   applicant: { role: "applicant" as const, subjectId: "usr-applicant", label: "Emmanuel Wani — applicant" },
   admin: { role: "admin" as const, subjectId: "staff-1", label: "Grace Lueth — super administrator" },
+  registrar: { role: "admin" as const, subjectId: "staff-2", label: "Daniel Kuek — Registrar" },
+  lecturer: { role: "admin" as const, subjectId: "staff-4", label: "Dr. Peter Lado — Lecturer" },
 } as const;
+
+export type DemoAccountKey = keyof typeof DEMO_ACCOUNTS;
 
 const ROLES: Role[] = ["student", "applicant", "admin"];
 

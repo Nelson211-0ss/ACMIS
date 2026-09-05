@@ -13,7 +13,7 @@ import { saveRolePermissions } from "./actions";
 
 export const metadata: Metadata = { title: "Roles & permissions" };
 
-const EDITABLE_ROLES: Exclude<StaffRole, "super_admin">[] = ["registrar", "bursar", "viewer"];
+const EDITABLE_ROLES: Exclude<StaffRole, "super_admin">[] = ["registrar", "bursar", "lecturer", "viewer"];
 
 export default async function AdminRolesPage() {
   const staff = await currentStaff();

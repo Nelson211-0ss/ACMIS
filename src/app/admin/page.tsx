@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, ClipboardCheck, GraduationCap, Inbox, UserPlus, Wallet } from "lucide-react";
+import { ArrowUpRight, ClipboardCheck, GraduationCap, Inbox, Presentation, UserPlus, Wallet } from "lucide-react";
 import { Card, CardBody, Stat } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ADMIN_NAV } from "@/lib/admin-nav";
@@ -41,14 +41,12 @@ export default async function AdminOverviewPage() {
           label="Applications pending"
           value={stats.pendingApplications}
           note="Submitted, under review or interview"
-          accent="gold"
         />
         <Stat
           icon={Wallet}
           label="Fees outstanding"
           value={ssp(stats.outstandingFeesSSP)}
           note="Across all students, this year"
-          accent={stats.outstandingFeesSSP > 0 ? "red" : "green"}
         />
       </div>
 
@@ -76,30 +74,47 @@ export default async function AdminOverviewPage() {
         </CardBody>
       </Card>
 
-      {/* A separate portal, not another item in the grid below — the
-          Admissions Office signs in and works at its own URL. */}
-      <Link href="/admissions">
-        <Card className="relative overflow-hidden transition-colors hover:border-brand-300">
-          <span className="absolute inset-y-0 left-0 w-[3px] bg-gold-500" aria-hidden />
-          <CardBody className="flex items-center gap-3 pl-5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-brand-200 bg-brand-50">
-              <ClipboardCheck className="h-[18px] w-[18px] text-brand-700" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[13.5px] font-medium text-ink">Admissions Office</span>
-              <span className="block text-[12px] text-muted">
-                Its own dashboard — schemes, applications, decisions
+      {/* Separate portals, not more items in the grid below — each department
+          signs in and works at its own URL. */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link href="/admissions">
+          <Card interactive className="h-full">
+            <CardBody className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-brand-200 bg-brand-50">
+                <ClipboardCheck className="h-[18px] w-[18px] text-brand-700" aria-hidden />
               </span>
-            </span>
-            <ArrowUpRight className="h-4 w-4 shrink-0 text-faint" aria-hidden />
-          </CardBody>
-        </Card>
-      </Link>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-medium text-ink">Admissions Office</span>
+                <span className="block text-[12px] text-muted">
+                  Its own dashboard — schemes, applications, decisions
+                </span>
+              </span>
+              <ArrowUpRight className="h-4 w-4 shrink-0 text-faint" aria-hidden />
+            </CardBody>
+          </Card>
+        </Link>
+        <Link href="/teaching">
+          <Card interactive className="h-full">
+            <CardBody className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-brand-200 bg-brand-50">
+                <Presentation className="h-[18px] w-[18px] text-brand-700" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13.5px] font-medium text-ink">Teaching</span>
+                <span className="block text-[12px] text-muted">
+                  Its own dashboard — courses, rosters, marks and publishing
+                </span>
+              </span>
+              <ArrowUpRight className="h-4 w-4 shrink-0 text-faint" aria-hidden />
+            </CardBody>
+          </Card>
+        </Link>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <Link key={item.href} href={item.href}>
-            <Card className="h-full transition-colors hover:border-brand-300">
+            <Card interactive className="h-full">
               <CardBody className="flex items-center gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-brand-200 bg-brand-50">
                   <item.icon className="h-[18px] w-[18px] text-brand-700" aria-hidden />

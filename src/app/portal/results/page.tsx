@@ -74,21 +74,18 @@ export default async function ResultsPage() {
           label="Cumulative GPA"
           value={cgpa === null ? "—" : cgpa.toFixed(2)}
           note={cgpa === null ? "Nothing published yet" : classification(cgpa)}
-          accent="gold"
         />
         <Stat
           icon={BookOpen}
           label="Credits earned"
           value={totalCredits}
           note={`Across ${semesters.length} semester${semesters.length === 1 ? "" : "s"}`}
-          accent="brand"
         />
         <Stat
           icon={RotateCcw}
           label="Courses to retake"
           value={failed.length}
           note={failed.length === 0 ? "Nothing outstanding" : failed.map((f) => f.course.code).join(", ")}
-          accent={failed.length === 0 ? "green" : "red"}
         />
       </div>
 

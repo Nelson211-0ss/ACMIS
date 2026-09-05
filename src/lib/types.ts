@@ -202,6 +202,8 @@ export interface Course {
   /** Compulsory courses are pre-selected and cannot be dropped. */
   compulsory: boolean;
   lecturer: string;
+  /** Set only when the named lecturer has a staff account — most don't yet. */
+  lecturerStaffId?: Id;
   /** Course ids that must be passed first. */
   prerequisites: Id[];
 }
@@ -277,11 +279,11 @@ export interface Announcement {
 
 /**
  * Fixed set of staff roles. Real deployments will want a role editor rather
- * than a hard-coded union, but four roles covers every seat the university
- * actually has an opinion about, and adding a fifth is a one-line change in
+ * than a hard-coded union, but five roles covers every seat the university
+ * actually has an opinion about, and adding a sixth is a one-line change in
  * three places (this union, ROLE_LABELS, and the seed's default permissions).
  */
-export type StaffRole = "super_admin" | "registrar" | "bursar" | "viewer";
+export type StaffRole = "super_admin" | "registrar" | "bursar" | "lecturer" | "viewer";
 
 export interface StaffUser {
   id: Id;
@@ -313,6 +315,7 @@ export type Permission =
   | "manage_appearance"
   | "manage_announcements"
   | "manage_admissions"
+  | "manage_results"
   | "view_monitoring"
   | "view_audit_log";
 

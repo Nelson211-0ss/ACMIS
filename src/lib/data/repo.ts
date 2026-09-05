@@ -18,7 +18,7 @@ import type {
   TimetableSlot,
   UploadedDocument,
 } from "../types";
-import { gpa } from "../format";
+import { gpa, gradeFor } from "../format";
 import {
   ADMISSION_SCHEMES,
   ANNOUNCEMENTS,
@@ -37,6 +37,9 @@ import {
   nextId,
   nextReference,
 } from "./store";
+
+/** The academic year in progress — re-exported so callers needn't reach past this seam into ./store. */
+export { CURRENT_YEAR } from "./store";
 
 /**
  * The one seam between the UI and storage.
@@ -215,6 +218,101 @@ export async function getCgpa(studentId: string): Promise<number | null> {
       s.rows.map((r) => ({ points: r.points, creditHours: r.course.creditHours })),
     ),
   );
+}
+
+// --- Teaching (lecturer) -----------------------------------------------------
+
+export async function getCoursesForLecturer(staffId: string): Promise<Course[]> {
+  return COURSES.filter((c) => c.lecturerStaffId === staffId);
+}
+
+export interface RosterRow {
+  student: Student;
+  result: Result | null;
+}
+
+/**
+ * Students currently registered in one course, each paired with their result
+ * for that offering if marks have been entered yet (published or not).
+ */
+export async function getCourseRoster(
+  courseId: string,
+  academicYear = CURRENT_YEAR,
+): Promise<RosterRow[]> {
+  const course = COURSES.find((c) => c.id === courseId);
+  const semester = course?.semester ?? 1;
+
+  return REGISTRATIONS.filter(
+    (r) => r.courseId === courseId && r.academicYear === academicYear,
+  )
+    .map((r) => STUDENTS.find((s) => s.id === r.studentId))
+    .filter((s): s is Student => s !== undefined)
+    .map((student) => ({
+      student,
+      result:
+        RESULTS.find(
+          (r) =>
+            r.studentId === student.id &&
+            r.courseId === courseId &&
+            r.academicYear === academicYear &&
+            r.semester === semester,
+        ) ?? null,
+    }));
+}
+
+/**
+ * Create or update one student's marks for a course offering.
+ *
+ * Editing an already-published result keeps it published — a correction
+ * shouldn't have to go through "publish" again. Only a brand new entry starts
+ * as an unpublished draft, invisible to the student until the lecturer
+ * publishes the class.
+ */
+export async function upsertResult(input: {
+  studentId: string;
+  courseId: string;
+  academicYear: string;
+  semester: 1 | 2;
+  coursework: number;
+  exam: number;
+}): Promise<Result> {
+  const total = input.coursework + input.exam;
+  const { grade, points } = gradeFor(total);
+  const existing = RESULTS.find(
+    (r) =>
+      r.studentId === input.studentId &&
+      r.courseId === input.courseId &&
+      r.academicYear === input.academicYear &&
+      r.semester === input.semester,
+  );
+  if (existing) {
+    existing.coursework = input.coursework;
+    existing.exam = input.exam;
+    existing.total = total;
+    existing.grade = grade;
+    existing.points = points;
+    return existing;
+  }
+  const created: Result = { ...input, total, grade, points, published: false };
+  RESULTS.push(created);
+  return created;
+}
+
+/** Publish or withdraw every entered result for one course offering at once. */
+export async function setCourseResultsPublished(
+  courseId: string,
+  academicYear: string,
+  semester: 1 | 2,
+  published: boolean,
+): Promise<number> {
+  let count = 0;
+  for (const r of RESULTS) {
+    if (r.courseId === courseId && r.academicYear === academicYear && r.semester === semester) {
+      r.published = published;
+      count += 1;
+    }
+  }
+  return count;
 }
 
 // --- Fees ------------------------------------------------------------------

@@ -102,10 +102,10 @@ export default async function AdminMonitoringPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Timer} label="Process uptime" value={formatUptime(process.uptime())} note="Live" accent="green" />
-        <Stat icon={MemoryStick} label="Memory (RSS)" value={formatBytes(mem.rss)} note="Live" accent="green" />
-        <Stat icon={Cpu} label="Node version" value={process.version} note={process.env.NODE_ENV ?? "development"} accent="none" />
-        <Stat icon={Clock} label="Server time" value={new Date().toLocaleTimeString()} note="Live" accent="green" />
+        <Stat icon={Timer} label="Process uptime" value={formatUptime(process.uptime())} note="Live" />
+        <Stat icon={MemoryStick} label="Memory (RSS)" value={formatBytes(mem.rss)} note="Live" />
+        <Stat icon={Cpu} label="Node version" value={process.version} note={process.env.NODE_ENV ?? "development"} />
+        <Stat icon={Clock} label="Server time" value={new Date().toLocaleTimeString()} note="Live" />
       </div>
 
       <Card>
@@ -127,9 +127,9 @@ export default async function AdminMonitoringPage() {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat icon={Gauge} label="Avg response time" value="118 ms" note="Sample data" accent="none" />
-        <Stat icon={AlertTriangle} label="Error rate" value="0.4%" note="Sample data" accent="none" />
-        <Stat icon={TrendingUp} label="Requests today" value={week[week.length - 1]} note="Sample data" accent="none" />
+        <Stat icon={Gauge} label="Avg response time" value="118 ms" note="Sample data" />
+        <Stat icon={AlertTriangle} label="Error rate" value="0.4%" note="Sample data" />
+        <Stat icon={TrendingUp} label="Requests today" value={week[week.length - 1]} note="Sample data" />
       </div>
 
       <Card>

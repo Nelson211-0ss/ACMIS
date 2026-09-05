@@ -31,7 +31,8 @@ const SIZES: Record<Size, string> = {
 
 const BASE =
   "inline-flex items-center justify-center rounded border font-medium " +
-  "transition-colors duration-100 select-none " +
+  "transition-[color,background-color,border-color,transform] duration-100 select-none " +
+  "motion-safe:active:scale-[0.97] " +
   "disabled:opacity-50 disabled:pointer-events-none " +
   "aria-disabled:opacity-50 aria-disabled:pointer-events-none";
 

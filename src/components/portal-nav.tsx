@@ -57,12 +57,13 @@ export function SidebarNav() {
                     : "font-medium text-sidebar-ink hover:bg-sidebar-active/55 hover:text-sidebar-ink-strong",
                 )}
               >
-                {active ? (
-                  <span
-                    className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r bg-gold-500"
-                    aria-hidden
-                  />
-                ) : null}
+                <span
+                  className={cn(
+                    "absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r bg-gold-500 transition-transform duration-200 motion-reduce:transition-none",
+                    active ? "scale-y-100" : "scale-y-0",
+                  )}
+                  aria-hidden
+                />
                 <Icon className="h-[17px] w-[17px] shrink-0" aria-hidden />
                 <span className="truncate">{label}</span>
               </Link>
@@ -101,9 +102,13 @@ export function BottomTabs() {
                   active ? "text-brand-700" : "text-muted",
                 )}
               >
-                {active ? (
-                  <span className="absolute inset-x-3 top-0 h-[2px] bg-gold-500" aria-hidden />
-                ) : null}
+                <span
+                  className={cn(
+                    "absolute inset-x-3 top-0 h-[2px] bg-gold-500 transition-transform duration-200 motion-reduce:transition-none",
+                    active ? "scale-x-100" : "scale-x-0",
+                  )}
+                  aria-hidden
+                />
                 <Icon className="h-[19px] w-[19px]" aria-hidden />
                 <span>{short}</span>
               </Link>

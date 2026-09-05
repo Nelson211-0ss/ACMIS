@@ -7,7 +7,7 @@ import { getSystemSettings, logAudit, updateSystemSettings } from "@/lib/data/re
 import { ALL_PERMISSIONS, can } from "@/lib/permissions";
 import type { Permission, StaffRole } from "@/lib/types";
 
-const EDITABLE_ROLES: Exclude<StaffRole, "super_admin">[] = ["registrar", "bursar", "viewer"];
+const EDITABLE_ROLES: Exclude<StaffRole, "super_admin">[] = ["registrar", "bursar", "lecturer", "viewer"];
 
 export async function saveRolePermissions(formData: FormData): Promise<void> {
   const actor = await currentStaff();

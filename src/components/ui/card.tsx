@@ -2,12 +2,26 @@ import type { ComponentProps, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-/** Flat surface, hairline border, no shadow by default. */
-export function Card({ className, ...props }: ComponentProps<"section">) {
+/**
+ * Flat surface, hairline border, no shadow by default — a static card never
+ * lifts, because nothing happens when you touch it.
+ *
+ * `interactive` is for the ones that are actually a link or button in
+ * disguise (a nav tile, a course card): a one-step border shift plus the
+ * single soft shadow the design already reserves for popovers, so a whole
+ * card reads as "pressable" the same way a button does.
+ */
+export function Card({
+  interactive,
+  className,
+  ...props
+}: ComponentProps<"section"> & { interactive?: boolean }) {
   return (
     <section
       className={cn(
         "rounded-lg border border-line bg-surface",
+        interactive &&
+          "transition-[border-color,box-shadow,transform] duration-150 hover:border-brand-300 hover:shadow-soft motion-safe:hover:-translate-y-px",
         className,
       )}
       {...props}
@@ -70,34 +84,20 @@ export function CardFooter({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
-/**
- * Single figure with a label. The accent bar on the left is a solid 3px fill —
- * the flat-design substitute for a coloured gradient header.
- */
+/** Single figure with a label — the icon at top right is the only accent. */
 export function Stat({
   icon: Icon,
   label,
   value,
   note,
-  accent = "brand",
 }: {
   icon?: LucideIcon;
   label: string;
   value: ReactNode;
   note?: ReactNode;
-  accent?: "brand" | "gold" | "green" | "red" | "none";
 }) {
-  const bar = {
-    brand: "bg-brand-700",
-    gold: "bg-gold-500",
-    green: "bg-green-600",
-    red: "bg-red-600",
-    none: "bg-line-strong",
-  }[accent];
-
   return (
-    <div className="relative overflow-hidden rounded-lg border border-line bg-surface px-4 py-3.5 pl-5">
-      <span className={cn("absolute inset-y-0 left-0 w-[3px]", bar)} aria-hidden />
+    <div className="rounded-lg border border-line bg-surface px-4 py-3.5">
       <div className="flex items-start justify-between gap-2">
         <p className="text-[12px] font-medium uppercase tracking-wide text-muted">
           {label}

@@ -181,10 +181,10 @@
   --color-sidebar-line: var(--sidebar-line);
   --color-sidebar-active: var(--sidebar-active);
 
-  /* System font stack on purpose: zero webfont bytes, zero FOIT on 2G.
-     A downloaded display face would cost ~90KB before a student reads a word. */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  /* Inter, self-hosted (three weights, Latin only — see src/app/fonts.ts),
+     with the old system-font stack kept as the fallback if it fails to load. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono",
     Menlo, monospace;
 
@@ -228,6 +228,22 @@ body {
 .nums {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+/* Every layout's content lands in the same #main (it's also the skip-link
+   target), so one rule here gives every page — and every client-side
+   navigation between them — the same short settle-in instead of a hard cut. */
+@media (prefers-reduced-motion: no-preference) {
+  #main {
+    animation: page-enter 260ms ease-out both;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
 }
 
 /* Thin scrollbars so tables do not gain a chunky grey band on Windows. */

@@ -97,7 +97,7 @@ export default async function LandingPage() {
             <Feature
               icon={Smartphone}
               title="Built for a phone on 3G"
-              body="Pages are rendered on the server and ship almost no JavaScript. No web fonts, no heavy images."
+              body="Pages are rendered on the server and ship almost no JavaScript. One small self-hosted font, no heavy images."
             />
             <Feature
               icon={ShieldCheck}

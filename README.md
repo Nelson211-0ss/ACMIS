@@ -36,8 +36,11 @@ will use this on an Android phone over a 2G or 3G connection that drops.
   cheap VPS. This matters: Vercel bills egress in USD on a card, which is
   awkward from Juba. Host it in a Nairobi or Kampala region instead and latency
   stays under 100 ms.
-- **No web fonts.** The system font stack is used deliberately — a display face
-  would cost ~90 KB before a student reads a word.
+- **One self-hosted font.** Inter, three weights (400/500/600, no bold, no
+  italic), Latin subset only — about 72 KB total, fetched once from
+  `src/app/fonts/` via `next/font/local` and cached forever, not loaded live
+  from a third party on every visit. Files came from Cloudflare's cdnjs
+  mirror of Fontsource; see `src/app/fonts.ts` and `src/app/fonts/LICENSE.md`.
 - **Tailwind v4** needs no config file and compiles the design tokens straight
   from CSS.
 

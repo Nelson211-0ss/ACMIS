@@ -34,19 +34,19 @@ const PREV_YEAR = "2025/2026";
 
 export const COURSES: Course[] = [
   // Year 1, Semester 1
-  { id: "c-csc111", code: "CSC 111", title: "Introduction to Computer Science", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Dr. Peter Lado", prerequisites: [] },
+  { id: "c-csc111", code: "CSC 111", title: "Introduction to Computer Science", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Dr. Peter Lado", lecturerStaffId: "staff-4", prerequisites: [] },
   { id: "c-mat111", code: "MAT 111", title: "Calculus I", creditHours: 4, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Prof. Mary Aluel", prerequisites: [] },
   { id: "c-eng111", code: "ENG 111", title: "Academic Writing in English", creditHours: 2, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Ms. Rebecca Ayen", prerequisites: [] },
   { id: "c-phy111", code: "PHY 111", title: "Physics for Computing", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 1, compulsory: false, lecturer: "Dr. James Wani", prerequisites: [] },
 
   // Year 1, Semester 2
-  { id: "c-csc121", code: "CSC 121", title: "Programming Fundamentals", creditHours: 4, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Dr. Peter Lado", prerequisites: ["c-csc111"] },
+  { id: "c-csc121", code: "CSC 121", title: "Programming Fundamentals", creditHours: 4, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Dr. Peter Lado", lecturerStaffId: "staff-4", prerequisites: ["c-csc111"] },
   { id: "c-mat121", code: "MAT 121", title: "Discrete Mathematics", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Prof. Mary Aluel", prerequisites: ["c-mat111"] },
   { id: "c-csc122", code: "CSC 122", title: "Computer Organisation", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Mr. Simon Tut", prerequisites: ["c-csc111"] },
   { id: "c-cit121", code: "CIT 121", title: "Citizenship and Ethics", creditHours: 2, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Dr. Grace Nyandeng", prerequisites: [] },
 
   // Year 2, Semester 1 — the current registration window
-  { id: "c-csc211", code: "CSC 211", title: "Data Structures and Algorithms", creditHours: 4, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Dr. Peter Lado", prerequisites: ["c-csc121"] },
+  { id: "c-csc211", code: "CSC 211", title: "Data Structures and Algorithms", creditHours: 4, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Dr. Peter Lado", lecturerStaffId: "staff-4", prerequisites: ["c-csc121"] },
   { id: "c-csc212", code: "CSC 212", title: "Object-Oriented Programming", creditHours: 4, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Mr. Simon Tut", prerequisites: ["c-csc121"] },
   { id: "c-csc213", code: "CSC 213", title: "Database Systems", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Ms. Nyakuma Bol", prerequisites: ["c-csc121"] },
   { id: "c-mat211", code: "MAT 211", title: "Linear Algebra", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Prof. Mary Aluel", prerequisites: ["c-mat121"] },
@@ -346,6 +346,17 @@ export const STAFF_USERS: StaffUser[] = [
     status: "active",
     lastActiveAt: "2026-09-02T09:05:00.000Z",
   },
+  {
+    id: "staff-4",
+    // The same Dr. Peter Lado already seeded as the student's academic
+    // advisor and as the named lecturer on his three courses below — one
+    // person, one record, instead of a second unrelated "Lado" appearing.
+    name: "Dr. Peter Lado",
+    email: "peter.lado@uoj.example.ss",
+    staffRole: "lecturer",
+    status: "active",
+    lastActiveAt: "2026-09-04T11:30:00.000Z",
+  },
 ];
 
 /**
@@ -370,6 +381,7 @@ export const SYSTEM_SETTINGS: SystemSettings = {
       "manage_appearance",
       "manage_announcements",
       "manage_admissions",
+      "manage_results",
       "view_monitoring",
       "view_audit_log",
     ],
@@ -377,6 +389,8 @@ export const SYSTEM_SETTINGS: SystemSettings = {
     // default here too.
     registrar: ["manage_users", "manage_announcements", "manage_admissions", "view_audit_log"],
     bursar: ["view_monitoring", "view_audit_log"],
+    // A lecturer's only business here is entering marks for their own courses.
+    lecturer: ["manage_results"],
     viewer: ["view_monitoring"],
   },
 };

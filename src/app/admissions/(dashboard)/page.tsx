@@ -63,10 +63,10 @@ export default async function AdmissionsQueuePage({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Clock} label="Awaiting decision" value={awaiting} accent="gold" />
-        <Stat icon={CheckCircle2} label="Admitted" value={admitted} accent="green" />
-        <Stat icon={Hourglass} label="Waitlisted" value={waitlisted} accent="gold" />
-        <Stat icon={XCircle} label="Rejected" value={rejected} accent="red" />
+        <Stat icon={Clock} label="Awaiting decision" value={awaiting} />
+        <Stat icon={CheckCircle2} label="Admitted" value={admitted} />
+        <Stat icon={Hourglass} label="Waitlisted" value={waitlisted} />
+        <Stat icon={XCircle} label="Rejected" value={rejected} />
       </div>
 
       <div className="flex flex-wrap gap-1.5">

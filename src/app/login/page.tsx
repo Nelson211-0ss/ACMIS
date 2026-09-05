@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { GraduationCap, ShieldCheck, UserPlus } from "lucide-react";
+import { ClipboardCheck, GraduationCap, Presentation, ShieldCheck, UserPlus } from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -72,12 +72,26 @@ export default function LoginPage() {
               {DEMO_ACCOUNTS.admin.label}
             </Button>
           </form>
+          <form action={signInAsDemo}>
+            <input type="hidden" name="role" value="registrar" />
+            <Button type="submit" variant="secondary" block>
+              <ClipboardCheck className="h-4 w-4" aria-hidden />
+              {DEMO_ACCOUNTS.registrar.label}
+            </Button>
+          </form>
+          <form action={signInAsDemo}>
+            <input type="hidden" name="role" value="lecturer" />
+            <Button type="submit" variant="secondary" block>
+              <Presentation className="h-4 w-4" aria-hidden />
+              {DEMO_ACCOUNTS.lecturer.label}
+            </Button>
+          </form>
         </div>
 
         <p className="mt-4 text-center text-[12.5px] text-muted">
-          Work in the Admissions Office?{" "}
+          Admissions Office also has its{" "}
           <Link href="/admissions/login" className="font-medium text-brand-700 underline underline-offset-2">
-            Sign in there instead
+            own dedicated sign-in
           </Link>
           .
         </p>
