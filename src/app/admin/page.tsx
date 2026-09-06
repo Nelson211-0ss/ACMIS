@@ -34,19 +34,21 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={GraduationCap} label="Students" value={stats.totalStudents} note="Enrolled and active" />
-        <Stat icon={UserPlus} label="Applicants" value={stats.totalApplicants} note="Have started an application" />
+        <Stat icon={GraduationCap} label="Students" value={stats.totalStudents} note="Enrolled and active" tone="brand" />
+        <Stat icon={UserPlus} label="Applicants" value={stats.totalApplicants} note="Have started an application" tone="brand" />
         <Stat
           icon={Inbox}
           label="Applications pending"
           value={stats.pendingApplications}
           note="Submitted, under review or interview"
+          tone="gold"
         />
         <Stat
           icon={Wallet}
           label="Fees outstanding"
           value={ssp(stats.outstandingFeesSSP)}
           note="Across all students, this year"
+          tone="red"
         />
       </div>
 

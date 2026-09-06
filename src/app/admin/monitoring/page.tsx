@@ -127,9 +127,9 @@ export default async function AdminMonitoringPage() {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat icon={Gauge} label="Avg response time" value="118 ms" note="Sample data" />
-        <Stat icon={AlertTriangle} label="Error rate" value="0.4%" note="Sample data" />
-        <Stat icon={TrendingUp} label="Requests today" value={week[week.length - 1]} note="Sample data" />
+        <Stat icon={Gauge} label="Avg response time" value="118 ms" note="Sample data" tone="brand" />
+        <Stat icon={AlertTriangle} label="Error rate" value="0.4%" note="Sample data" tone="red" />
+        <Stat icon={TrendingUp} label="Requests today" value={week[week.length - 1]} note="Sample data" tone="brand" />
       </div>
 
       <Card>

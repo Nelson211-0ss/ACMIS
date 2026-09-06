@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
+import type { Tone } from "@/components/ui/badge";
 
 /**
  * Flat surface, hairline border, no shadow by default — a static card never
@@ -84,17 +85,34 @@ export function CardFooter({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
-/** Single figure with a label — the icon at top right is the only accent. */
+/**
+ * Icon-chip border per tone — same palette Badge uses, so "red" here means
+ * exactly what it means on a PaymentStatusBadge or an ApplicationStatusBadge:
+ * something needs attention (an overdue balance, a rejected application, an
+ * error rate), never a decorative accent. Pick the tone from what the number
+ * actually says, not to add variety to a row of cards.
+ */
+const STAT_ICON_TONES: Record<Tone, string> = {
+  neutral: "border-line-strong bg-sunken text-ink-soft",
+  brand: "border-brand-200 bg-brand-50 text-brand-700",
+  gold: "border-gold-200 bg-gold-100 text-gold-700",
+  green: "border-green-600/25 bg-green-100 text-green-700",
+  red: "border-red-600/25 bg-red-100 text-red-700",
+};
+
+/** Single figure with a label — the bordered icon chip is the only accent. */
 export function Stat({
   icon: Icon,
   label,
   value,
   note,
+  tone = "neutral",
 }: {
   icon?: LucideIcon;
   label: string;
   value: ReactNode;
   note?: ReactNode;
+  tone?: Tone;
 }) {
   return (
     <div className="rounded-lg border border-line bg-surface px-4 py-3.5">
@@ -102,7 +120,16 @@ export function Stat({
         <p className="text-[12px] font-medium uppercase tracking-wide text-muted">
           {label}
         </p>
-        {Icon ? <Icon className="h-4 w-4 shrink-0 text-faint" aria-hidden /> : null}
+        {Icon ? (
+          <span
+            className={cn(
+              "flex h-7 w-7 shrink-0 items-center justify-center rounded border",
+              STAT_ICON_TONES[tone],
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" aria-hidden />
+          </span>
+        ) : null}
       </div>
       <p className="nums mt-1 text-2xl font-semibold leading-none text-ink">{value}</p>
       {note ? <p className="mt-1.5 text-[12.5px] text-muted">{note}</p> : null}

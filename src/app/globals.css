@@ -10,12 +10,22 @@
      Green       progress and pass states (also flag). Never decorative.
      Clay red    errors and overdue balances only. Reserved, so it means
                  something when it appears.
+     Flame red   the flag's red band. Identity only — the flag rule, section
+                 marks. Never state; that is clay red's job and only its job.
      Warm paper  neutrals are warm (#F7F8F6, not #F8FAFC) so the portal reads
                  like registry paperwork rather than a cold SaaS console.
 
-   HARD RULE: no gradients anywhere. Depth comes from flat fills, one hairline
-   border token, and a single very soft shadow. If a surface needs to sit
-   forward, change its fill or its border — never blend two colours.
+   HARD RULE: no gradients on UI surfaces. Depth on a card, button or panel
+   comes from flat fills, one hairline border token, and a single very soft
+   shadow. If a surface needs to sit forward, change its fill or its border —
+   never blend two colours.
+
+   ONE NAMED EXCEPTION: a scrim over a real photograph (the landing-page hero),
+   so the copy sitting on top of someone's photo stays legible. That is
+   reading aid, not decoration — it never appears over a flat fill, and the
+   scrim colour is always a token already in this file (usually --sidebar),
+   never an invented colour. See src/app/page.tsx for the one place this is
+   used.
    =========================================================================== */
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -67,6 +77,21 @@
   --red-600: #bd3128;
   --red-700: #a32a22;
 
+  /* Flame red — the red band of the national flag. IDENTITY ONLY.
+     Deliberately a separate family from the clay red above, not a second use
+     of it: clay red means "something is wrong" (invalid field, overdue
+     balance, destructive action), and that meaning only survives if red is
+     never *also* decorative. Flame is cooler and more saturated than clay so
+     the two never read as the same ink.
+
+     HARD RULE, alongside the no-gradient one: flame never encodes state. If
+     it is telling the user something is wrong, it is the wrong token. */
+  --flame-100: #fdeaee;
+  --flame-200: #f7c9d3;
+  --flame-500: #d81e41;
+  --flame-600: #b81736;
+  --flame-700: #96122c;
+
   --focus: #1a7bb5;
 
   /* Sidebar keeps its own tokens rather than reusing --brand-900, because the
@@ -93,7 +118,9 @@
 
      Depth is a flat lightness ladder, same order the light theme uses:
        sidebar/canvas #000 < sunken #0a < surface #121212 < raised #1c1c1c
-     No gradients here either — the HARD RULE above holds in both themes. */
+     No gradients on UI surfaces here either — the HARD RULE above holds in
+     both themes. The hero scrim exception holds too: it's still --sidebar,
+     just this theme's black instead of the light theme's navy. */
   --canvas: #000000;
   --surface: #121212;
   --surface-sunken: #0a0a0a;
@@ -136,6 +163,14 @@
   --red-100: #260f0d;
   --red-600: #f08379;
   --red-700: #f5a49c;
+
+  /* Flame inverts like every other accent. Kept pink-leaning against clay
+     red’s salmon so the two stay tellable apart on the black ground. */
+  --flame-100: #2c0f17;
+  --flame-200: #4a1626;
+  --flame-500: #f0526f;
+  --flame-600: #f47f95;
+  --flame-700: #f8a5b4;
 
   --focus: #6bb8e4;
 
@@ -191,6 +226,12 @@
   --color-red-100: var(--red-100);
   --color-red-600: var(--red-600);
   --color-red-700: var(--red-700);
+
+  --color-flame-100: var(--flame-100);
+  --color-flame-200: var(--flame-200);
+  --color-flame-500: var(--flame-500);
+  --color-flame-600: var(--flame-600);
+  --color-flame-700: var(--flame-700);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-ink: var(--sidebar-ink);

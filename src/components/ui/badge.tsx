@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import type { ApplicationStatus, LetterGrade, PaymentStatus } from "@/lib/types";
 
-type Tone = "neutral" | "brand" | "gold" | "green" | "red";
+export type Tone = "neutral" | "brand" | "gold" | "green" | "red";
 
 const TONES: Record<Tone, string> = {
   neutral: "bg-sunken text-ink-soft border-line-strong",

@@ -113,18 +113,21 @@ export default async function DashboardPage() {
           label="Cumulative GPA"
           value={cgpa === null ? "—" : cgpa.toFixed(2)}
           note={cgpa === null ? "No published results yet" : "Across all semesters"}
+          tone="brand"
         />
         <Stat
           icon={BookOpen}
           label="Registered credits"
           value={registeredCredits}
           note={`${registered.length} of ${available.length} courses on offer`}
+          tone="brand"
         />
         <Stat
           icon={Wallet}
           label="Fee balance"
           value={fees.balance === 0 ? "Cleared" : ssp(fees.balance)}
           note={`${ssp(fees.paid)} paid of ${ssp(fees.charged)}`}
+          tone={fees.balance === 0 ? "green" : "red"}
         />
         <Stat
           icon={CalendarDays}

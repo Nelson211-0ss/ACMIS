@@ -46,8 +46,8 @@ export default async function FinancePage() {
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Stat icon={Receipt} label="Charged this semester" value={ssp(fees.charged)} />
-        <Stat icon={CheckCircle2} label="Paid" value={ssp(fees.paid)} />
+        <Stat icon={Receipt} label="Charged this semester" value={ssp(fees.charged)} tone="brand" />
+        <Stat icon={CheckCircle2} label="Paid" value={ssp(fees.paid)} tone="green" />
         <Stat
           icon={Wallet}
           label="Balance"
@@ -57,6 +57,7 @@ export default async function FinancePage() {
               ? `Next due ${relativeDays(fees.nextDue.dueDate)}`
               : undefined
           }
+          tone={fees.balance === 0 ? "green" : "red"}
         />
       </div>
 
