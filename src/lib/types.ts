@@ -181,7 +181,7 @@ export interface Student {
   lastName: string;
   email: string;
   phone: string;
-  /** Passport photo, if one was digitised. Unset records fall back to initials. */
+  /** Passport photo, if one was digitised. Unset records show a person mark. */
   photoUrl?: string;
   programmeId: Id;
   yearOfStudy: number;

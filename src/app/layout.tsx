@@ -20,7 +20,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   // Zoom stays available — students read marksheets on 5-inch screens.
   maximumScale: 5,
-  themeColor: "#0e4c77",
+  // Media-aware so the mobile browser chrome matches the theme: Nile blue in
+  // light, the same true black as --canvas in dark. A single value left the
+  // address bar navy on a black page.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0e4c77" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export default async function RootLayout({

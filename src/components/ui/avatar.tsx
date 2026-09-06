@@ -1,24 +1,26 @@
 import Image from "next/image";
+import { User } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { initials } from "@/lib/format";
 
 type AvatarSize = "sm" | "md" | "lg" | "xl";
 
-/** Box, type scale and intrinsic pixel width per step. */
-const SIZES: Record<AvatarSize, { box: string; text: string; px: number }> = {
-  sm: { box: "h-9 w-9", text: "text-[13px]", px: 36 },
-  md: { box: "h-14 w-14", text: "text-[18px]", px: 56 },
-  lg: { box: "h-20 w-20", text: "text-[26px]", px: 80 },
-  xl: { box: "h-28 w-28", text: "text-[34px]", px: 112 },
+/** Box, icon scale and intrinsic pixel width per step. */
+const SIZES: Record<AvatarSize, { box: string; icon: string; px: number }> = {
+  sm: { box: "h-9 w-9", icon: "h-[18px] w-[18px]", px: 36 },
+  md: { box: "h-14 w-14", icon: "h-7 w-7", px: 56 },
+  lg: { box: "h-20 w-20", icon: "h-10 w-10", px: 80 },
+  xl: { box: "h-28 w-28", icon: "h-14 w-14", px: 112 },
 };
 
 /**
- * Student avatar: the photograph on file, or initials when there is none.
+ * Student avatar: the photograph on file, or a neutral person mark when there
+ * is none.
  *
  * No photograph is the normal case rather than an error state — admissions
  * collects passport photos on paper, and a record digitised from a paper file
- * has no image at all. So the initials tile is a first-class rendering, not a
- * placeholder waiting to be replaced.
+ * has no image at all. So the placeholder is a first-class rendering, not
+ * something waiting to be replaced: a sunken tile with the same hairline every
+ * other surface uses, rather than a loud brand-filled block.
  */
 export function Avatar({
   firstName,
@@ -33,14 +35,14 @@ export function Avatar({
   size?: AvatarSize;
   className?: string;
 }) {
-  const { box, text, px } = SIZES[size];
+  const { box, icon, px } = SIZES[size];
 
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brand-700 font-semibold text-white",
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-lg",
+        photoUrl ? "bg-sunken" : "border border-line bg-sunken text-muted",
         box,
-        text,
         className,
       )}
     >
@@ -53,7 +55,13 @@ export function Avatar({
           className="h-full w-full object-cover"
         />
       ) : (
-        initials(firstName, lastName)
+        <>
+          <User className={cn(icon, "shrink-0")} strokeWidth={1.75} aria-hidden />
+          {/* UserMenu hides the name below `sm`, leaving the avatar as the
+              link's only content — without this the link would have no
+              accessible name at all on a phone. */}
+          <span className="sr-only">{`${firstName} ${lastName}`}</span>
+        </>
       )}
     </span>
   );
