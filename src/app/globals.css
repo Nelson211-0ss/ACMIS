@@ -20,12 +20,16 @@
    shadow. If a surface needs to sit forward, change its fill or its border —
    never blend two colours.
 
-   ONE NAMED EXCEPTION: a scrim over a real photograph (the landing-page hero),
-   so the copy sitting on top of someone's photo stays legible. That is
-   reading aid, not decoration — it never appears over a flat fill, and the
-   scrim colour is always a token already in this file (usually --sidebar),
-   never an invented colour. See src/app/page.tsx for the one place this is
-   used.
+   ONE NAMED EXCEPTION: the landing-page hero's own background, a decorative
+   diagonal gradient across --sidebar, --sidebar-active and --sidebar-line
+   only. Those three never invert to a light colour in dark mode (unlike
+   --brand-700+, which deliberately flips pale for button contrast) — so the
+   gradient stays a safe dark tone in both themes instead of breaking the
+   white hero text sitting on it. This is the one surface in the app that is
+   decorative rather than a reading aid, and it is still built only from
+   tokens already in this file, never an invented colour. A photo on that
+   hero (see src/app/page.tsx) sits beside the copy in its own card, not
+   behind it, so it never needed a legibility scrim of its own.
    =========================================================================== */
 
 @custom-variant dark (&:where(.dark, .dark *));
