@@ -45,7 +45,7 @@ export default async function FinancePage() {
         </Callout>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Stat icon={Receipt} label="Charged this semester" value={ssp(fees.charged)} tone="brand" />
         <Stat icon={CheckCircle2} label="Paid" value={ssp(fees.paid)} tone="green" />
         <Stat

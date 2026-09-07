@@ -101,7 +101,7 @@ export default async function AdminMonitoringPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Stat icon={Timer} label="Process uptime" value={formatUptime(process.uptime())} note="Live" />
         <Stat icon={MemoryStick} label="Memory (RSS)" value={formatBytes(mem.rss)} note="Live" />
         <Stat icon={Cpu} label="Node version" value={process.version} note={process.env.NODE_ENV ?? "development"} />
@@ -126,7 +126,7 @@ export default async function AdminMonitoringPage() {
         </CardBody>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <Stat icon={Gauge} label="Avg response time" value="118 ms" note="Sample data" tone="brand" />
         <Stat icon={AlertTriangle} label="Error rate" value="0.4%" note="Sample data" tone="red" />
         <Stat icon={TrendingUp} label="Requests today" value={week[week.length - 1]} note="Sample data" tone="brand" />

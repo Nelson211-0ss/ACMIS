@@ -33,7 +33,7 @@ export default async function AdminOverviewPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Stat icon={GraduationCap} label="Students" value={stats.totalStudents} note="Enrolled and active" tone="brand" />
         <Stat icon={UserPlus} label="Applicants" value={stats.totalApplicants} note="Have started an application" tone="brand" />
         <Stat
@@ -113,7 +113,7 @@ export default async function AdminOverviewPage() {
         </Link>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {items.map((item) => (
           <Link key={item.href} href={item.href}>
             <Card interactive className="h-full">

@@ -67,7 +67,7 @@ export default async function AdminFinancePage({
         </Callout>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Stat
           icon={Inbox}
           label="Slips awaiting clearance"

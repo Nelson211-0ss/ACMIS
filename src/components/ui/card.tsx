@@ -115,24 +115,31 @@ export function Stat({
   tone?: Tone;
 }) {
   return (
-    <div className="rounded-lg border border-line bg-surface px-4 py-3.5">
+    // Slightly tighter below `sm`: these sit two to a row on a phone (every
+    // call site now sets `grid-cols-2`), so the padding and value size back
+    // off a step to keep a pair of cards from reading as cramped or, worse,
+    // wrapping the value onto a second line and growing the row taller than
+    // the single-column layout it replaced.
+    <div className="rounded-lg border border-line bg-surface px-3.5 py-3 sm:px-4 sm:py-3.5">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[12px] font-medium uppercase tracking-wide text-muted">
+        <p className="text-[11.5px] font-medium uppercase tracking-wide text-muted sm:text-[12px]">
           {label}
         </p>
         {Icon ? (
           <span
             className={cn(
-              "flex h-7 w-7 shrink-0 items-center justify-center rounded border",
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded border sm:h-7 sm:w-7",
               STAT_ICON_TONES[tone],
             )}
           >
-            <Icon className="h-3.5 w-3.5" aria-hidden />
+            <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
           </span>
         ) : null}
       </div>
-      <p className="nums mt-1 text-2xl font-semibold leading-none text-ink">{value}</p>
-      {note ? <p className="mt-1.5 text-[12.5px] text-muted">{note}</p> : null}
+      <p className="nums mt-1 text-xl font-semibold leading-none text-ink sm:text-2xl">
+        {value}
+      </p>
+      {note ? <p className="mt-1.5 text-[12px] text-muted sm:text-[12.5px]">{note}</p> : null}
     </div>
   );
 }
