@@ -202,7 +202,11 @@ export interface Course {
   /** Compulsory courses are pre-selected and cannot be dropped. */
   compulsory: boolean;
   lecturer: string;
-  /** Set only when the named lecturer has a staff account — most don't yet. */
+  /**
+   * Set when the named lecturer has a staff account, which every seeded
+   * lecturer now does. Still optional: a course can be created against a
+   * visiting lecturer who has not been given a dashboard login.
+   */
   lecturerStaffId?: Id;
   /** Course ids that must be passed first. */
   prerequisites: Id[];
@@ -325,6 +329,24 @@ export interface SystemSettings {
   maintenanceMode: boolean;
   registrationOpen: boolean;
   applicationsOpen: boolean;
+  /**
+   * Who this deployment says it is. Seeded from the NEXT_PUBLIC_INSTITUTION_*
+   * environment variables so an untouched install still reads correctly, then
+   * editable by a super administrator without a redeploy — which is the point,
+   * since one build is meant to serve Juba, Upper Nile, Rumbek or Wau.
+   */
+  branding: {
+    name: string;
+    short: string;
+    city: string;
+    /**
+     * Uploaded logo, held as a data URI. Unset means the built-in SVG crest.
+     * A data URI rather than a file on disk because there is no object store
+     * here and a standalone deploy's public/ is a build artefact — writing
+     * into it at runtime would not survive the next deploy.
+     */
+    logo?: string;
+  };
   appearance: {
     defaultMode: "system" | "light" | "dark";
     accent: AccentKey;

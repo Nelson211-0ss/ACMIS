@@ -4,13 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentStaff } from "@/lib/auth";
 import {
+  addStaff,
   getSystemSettings,
   logAudit,
   setStaffRole,
   setStaffStatus,
   setStudentStatus,
 } from "@/lib/data/repo";
-import { can } from "@/lib/permissions";
+import { can, STAFF_ROLES } from "@/lib/permissions";
 import type { StaffRole, Student } from "@/lib/types";
 
 async function requireManageUsers() {
@@ -57,5 +58,41 @@ export async function changeStaffRole(formData: FormData): Promise<void> {
 
   const staff = await setStaffRole(id, staffRole);
   if (staff) await logAudit(actor.name, `Changed staff role to "${staffRole}"`, staff.name);
+  revalidatePath("/admin/users");
+}
+
+/**
+ * Creates a staff account. Students and applicants are not created here —
+ * they arrive through admissions, and inventing one by hand would produce a
+ * student number with no application behind it.
+ */
+export async function createStaffUser(formData: FormData): Promise<void> {
+  const actor = await requireManageUsers();
+
+  const name = String(formData.get("name") ?? "");
+  const email = String(formData.get("email") ?? "");
+  const staffRole = String(formData.get("staffRole") ?? "") as StaffRole;
+
+  if (!STAFF_ROLES.includes(staffRole)) {
+    redirect("/admin/users?error=" + encodeURIComponent("Choose a role for the new account."));
+  }
+
+  // Only a super administrator can mint another one. Any other role holding
+  // manage_users could otherwise grant itself every permission by creating a
+  // super admin and signing in as them — the ceiling has to stay a ceiling.
+  if (staffRole === "super_admin" && actor.staffRole !== "super_admin") {
+    redirect("/admin/users?error=" + encodeURIComponent("Only a super administrator can create another super administrator."));
+  }
+
+  const result = await addStaff({ name, email, staffRole });
+  if ("error" in result) {
+    redirect("/admin/users?error=" + encodeURIComponent(result.error));
+  }
+
+  await logAudit(
+    actor.name,
+    `Created staff account with role "${staffRole}"`,
+    result.staff.name,
+  );
   revalidatePath("/admin/users");
 }

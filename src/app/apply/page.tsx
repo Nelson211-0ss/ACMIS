@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarClock } from "lucide-react";
+import { ArrowRight, CalendarClock, FileText, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { ApplicationStatusBadge, Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/ui/empty";
 import { Table, TableWrap, Td, Th, Tr } from "@/components/ui/table";
 import { currentSession } from "@/lib/auth";
-import { getApplicationsFor, getSystemSettings, listOpenSchemes } from "@/lib/data/repo";
+import { getApplicationsFor, getBranding, getSystemSettings, listOpenSchemes } from "@/lib/data/repo";
 import { competitiveness, programmesByFaculty } from "@/lib/data/reference";
 import { institution } from "@/lib/institution";
 import { progressPercent } from "@/lib/application";
@@ -32,6 +32,7 @@ export default async function ApplyPage() {
     getSystemSettings(),
     listOpenSchemes(),
   ]);
+  const branding = await getBranding();
 
   // Two independent switches: a super admin can pause admissions site-wide,
   // and separately, the admissions office opens and closes each scheme on its
@@ -41,18 +42,25 @@ export default async function ApplyPage() {
   const submitted = applications.filter((a) => a.status !== "draft");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-[24px] font-semibold tracking-tight text-ink">
-          Apply for admission
-        </h1>
-        <p className="mt-1.5 text-[14px] text-muted">
-          {closed
-            ? "New applications are paused by the admissions office."
-            : openSchemes.length > 0
-              ? `${openSchemes.length} admission scheme${openSchemes.length === 1 ? "" : "s"} currently open`
-              : "No admission scheme is open right now."}
-        </p>
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-[26px] font-semibold tracking-tight text-ink sm:text-[30px]">
+            Apply for admission
+          </h1>
+          <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-muted">
+            {closed
+              ? "New applications are paused by the admissions office. Anything already submitted is still being processed."
+              : openSchemes.length > 0
+                ? "Pick the scheme you want to apply under, then fill the form in any order — it saves as you go, on your own device."
+                : "No admission scheme is open right now. The admissions office publishes each intake when it opens."}
+          </p>
+        </div>
+        {!closed && openSchemes.length > 0 ? (
+          <Badge tone="green" className="shrink-0">
+            {openSchemes.length} scheme{openSchemes.length === 1 ? "" : "s"} open
+          </Badge>
+        ) : null}
       </div>
 
       {closed ? (
@@ -65,7 +73,10 @@ export default async function ApplyPage() {
       {/* Existing applications */}
       {applications.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-[15px] font-semibold text-ink">My applications</h2>
+          <SectionHeading
+            title="My applications"
+            sub={`${applications.length} on this account`}
+          />
 
           {[...drafts, ...submitted].map((app) => {
             const percent = progressPercent(app);
@@ -73,20 +84,25 @@ export default async function ApplyPage() {
               <Card key={app.id}>
                 <CardBody>
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="nums text-[13px] font-semibold text-brand-700">
-                        {app.reference}
-                      </p>
-                      <p className="mt-0.5 text-[13.5px] text-ink">
-                        {app.personal.firstName || app.personal.lastName
-                          ? `${app.personal.firstName} ${app.personal.lastName}`.trim()
-                          : "Unnamed draft"}
-                      </p>
-                      <p className="mt-0.5 text-[12.5px] text-muted">
-                        {app.submittedAt
-                          ? `Submitted ${shortDate(app.submittedAt)}`
-                          : `Started ${shortDate(app.createdAt)}`}
-                      </p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-brand-200 bg-brand-50">
+                        <FileText className="h-[18px] w-[18px] text-brand-700" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-semibold text-ink">
+                          {app.personal.firstName || app.personal.lastName
+                            ? `${app.personal.firstName} ${app.personal.lastName}`.trim()
+                            : "Unnamed draft"}
+                        </p>
+                        <p className="nums mt-0.5 text-[12.5px] font-medium text-brand-700">
+                          {app.reference}
+                        </p>
+                        <p className="mt-0.5 text-[12.5px] text-muted">
+                          {app.submittedAt
+                            ? `Submitted ${shortDate(app.submittedAt)}`
+                            : `Started ${shortDate(app.createdAt)}`}
+                        </p>
+                      </div>
                     </div>
                     <ApplicationStatusBadge status={app.status} />
                   </div>
@@ -138,17 +154,14 @@ export default async function ApplyPage() {
       {/* Open admission schemes */}
       {!closed ? (
         <section className="space-y-3">
-          <div>
-            <h2 className="text-[15px] font-semibold text-ink">
-              {applications.length > 0 ? "Start another application" : "Choose a scheme to apply under"}
-            </h2>
-            {openSchemes.length > 0 ? (
-              <p className="mt-1 text-[13px] text-muted">
-                Each scheme has its own programmes on offer, fee and closing
-                date, set by the admissions office.
-              </p>
-            ) : null}
-          </div>
+          <SectionHeading
+            title={applications.length > 0 ? "Start another application" : "Choose a scheme to apply under"}
+            sub={
+              openSchemes.length > 0
+                ? "Each scheme sets its own programmes, fee and closing date."
+                : undefined
+            }
+          />
 
           {openSchemes.length === 0 ? (
             <Card>
@@ -175,7 +188,8 @@ export default async function ApplyPage() {
           {applications.length === 0 && openSchemes.length > 0 ? (
             <Card>
               <CardBody>
-                <p className="mb-3 text-[13px] font-semibold text-ink">
+                <p className="mb-3.5 flex items-center gap-2 text-[13.5px] font-semibold text-ink">
+                  <ListChecks className="h-4 w-4 shrink-0 text-brand-700" aria-hidden />
                   What to have ready
                 </p>
                 <ol className="space-y-2.5 text-[13px] text-muted">
@@ -201,13 +215,10 @@ export default async function ApplyPage() {
 
       {/* Entry requirements */}
       <section className="space-y-3">
-        <div>
-          <h2 className="text-[15px] font-semibold text-ink">Entry requirements</h2>
-          <p className="mt-1 text-[13px] text-muted">
-            Minimum aggregate is the average of your best six SSCSE subjects.
-            Meeting it makes you eligible; it does not guarantee a place.
-          </p>
-        </div>
+        <SectionHeading
+          title="Entry requirements"
+          sub="Minimum aggregate is the average of your best six SSCSE subjects. Meeting it makes you eligible; it does not guarantee a place."
+        />
 
         {programmesByFaculty().map(({ faculty, programmes }) => (
           <Card key={faculty.id}>
@@ -260,13 +271,23 @@ export default async function ApplyPage() {
 
       <Callout tone="info" title="Beware of fraud">
         <p>
-          No one at {institution.name} will ask you to pay for admission
+          No one at {branding.name} will ask you to pay for admission
           outside this portal. The only fee is the one shown on the scheme you
           apply under, paid to the university&apos;s own m-GURUSH, Nilepay or
           bank account. If someone asks for money to secure you a place,
           report it to the admissions office on {institution.supportPhone}.
         </p>
       </Callout>
+    </div>
+  );
+}
+
+/** Section heading used across this page, so every band starts the same way. */
+function SectionHeading({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <div>
+      <h2 className="text-[16px] font-semibold tracking-tight text-ink">{title}</h2>
+      {sub ? <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-muted">{sub}</p> : null}
     </div>
   );
 }

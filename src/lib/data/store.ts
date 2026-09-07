@@ -15,6 +15,7 @@ import type {
 } from "../types";
 import { PROGRAMMES } from "./reference";
 import { gradeFor } from "../format";
+import { institution } from "../institution";
 
 /**
  * In-memory store, seeded on module load.
@@ -24,40 +25,54 @@ import { gradeFor } from "../format";
  * and each `next dev` recompile may reset them. The repository in `repo.ts` is
  * the only thing that touches this object, so swapping in Prisma means
  * rewriting that one file. See README "Swapping in Postgres".
+ *
+ * Everything below is built inside `createStore()` and pinned onto
+ * `globalThis` (see the bottom of this file) rather than exported directly as
+ * top-level `const`s. Next's dev server does not guarantee one module
+ * instance per process — different routes can each get their own fresh copy
+ * of a plain top-level singleton, so a mutation made from one page (say,
+ * saving a name on the Settings page) would silently vanish the moment a
+ * different page (the dashboard sidebar, the public site) read the same
+ * "singleton" from its own separate copy. `globalThis` is the one thing that
+ * is genuinely shared across every module instance in the same Node process,
+ * which is what makes the seed data actually mutable in dev. See the actual
+ * repro of this in the git history of this file's PR description if it's
+ * ever in doubt again — three separate requests, three different random ids,
+ * from what should have been "the same" object.
  */
-
-const YEAR = "2026/2027";
+function createStore() {
+  const YEAR = "2026/2027";
 const PREV_YEAR = "2025/2026";
 
 // --- Courses ---------------------------------------------------------------
 // Computer Science, years 1–2. Enough to make registration and results real.
 
-export const COURSES: Course[] = [
+const COURSES: Course[] = [
   // Year 1, Semester 1
   { id: "c-csc111", code: "CSC 111", title: "Introduction to Computer Science", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Dr. Peter Lado", lecturerStaffId: "staff-4", prerequisites: [] },
-  { id: "c-mat111", code: "MAT 111", title: "Calculus I", creditHours: 4, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Prof. Mary Aluel", prerequisites: [] },
-  { id: "c-eng111", code: "ENG 111", title: "Academic Writing in English", creditHours: 2, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Ms. Rebecca Ayen", prerequisites: [] },
-  { id: "c-phy111", code: "PHY 111", title: "Physics for Computing", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 1, compulsory: false, lecturer: "Dr. James Wani", prerequisites: [] },
+  { id: "c-mat111", code: "MAT 111", title: "Calculus I", creditHours: 4, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Prof. Mary Aluel", lecturerStaffId: "staff-5", prerequisites: [] },
+  { id: "c-eng111", code: "ENG 111", title: "Academic Writing in English", creditHours: 2, programmeId: "prog-csc", year: 1, semester: 1, compulsory: true, lecturer: "Ms. Rebecca Ayen", lecturerStaffId: "staff-9", prerequisites: [] },
+  { id: "c-phy111", code: "PHY 111", title: "Physics for Computing", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 1, compulsory: false, lecturer: "Dr. James Wani", lecturerStaffId: "staff-10", prerequisites: [] },
 
   // Year 1, Semester 2
   { id: "c-csc121", code: "CSC 121", title: "Programming Fundamentals", creditHours: 4, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Dr. Peter Lado", lecturerStaffId: "staff-4", prerequisites: ["c-csc111"] },
-  { id: "c-mat121", code: "MAT 121", title: "Discrete Mathematics", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Prof. Mary Aluel", prerequisites: ["c-mat111"] },
-  { id: "c-csc122", code: "CSC 122", title: "Computer Organisation", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Mr. Simon Tut", prerequisites: ["c-csc111"] },
-  { id: "c-cit121", code: "CIT 121", title: "Citizenship and Ethics", creditHours: 2, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Dr. Grace Nyandeng", prerequisites: [] },
+  { id: "c-mat121", code: "MAT 121", title: "Discrete Mathematics", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Prof. Mary Aluel", lecturerStaffId: "staff-5", prerequisites: ["c-mat111"] },
+  { id: "c-csc122", code: "CSC 122", title: "Computer Organisation", creditHours: 3, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Mr. Simon Tut", lecturerStaffId: "staff-6", prerequisites: ["c-csc111"] },
+  { id: "c-cit121", code: "CIT 121", title: "Citizenship and Ethics", creditHours: 2, programmeId: "prog-csc", year: 1, semester: 2, compulsory: true, lecturer: "Dr. Grace Nyandeng", lecturerStaffId: "staff-11", prerequisites: [] },
 
   // Year 2, Semester 1 — the current registration window
   { id: "c-csc211", code: "CSC 211", title: "Data Structures and Algorithms", creditHours: 4, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Dr. Peter Lado", lecturerStaffId: "staff-4", prerequisites: ["c-csc121"] },
-  { id: "c-csc212", code: "CSC 212", title: "Object-Oriented Programming", creditHours: 4, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Mr. Simon Tut", prerequisites: ["c-csc121"] },
-  { id: "c-csc213", code: "CSC 213", title: "Database Systems", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Ms. Nyakuma Bol", prerequisites: ["c-csc121"] },
-  { id: "c-mat211", code: "MAT 211", title: "Linear Algebra", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Prof. Mary Aluel", prerequisites: ["c-mat121"] },
-  { id: "c-csc214", code: "CSC 214", title: "Web Technologies", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: false, lecturer: "Ms. Nyakuma Bol", prerequisites: ["c-csc121"] },
-  { id: "c-sta211", code: "STA 211", title: "Probability and Statistics", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: false, lecturer: "Dr. Emmanuel Kur", prerequisites: ["c-mat111"] },
-  { id: "c-csc215", code: "CSC 215", title: "Operating Systems", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: false, lecturer: "Mr. Simon Tut", prerequisites: ["c-csc122"] },
+  { id: "c-csc212", code: "CSC 212", title: "Object-Oriented Programming", creditHours: 4, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Mr. Simon Tut", lecturerStaffId: "staff-6", prerequisites: ["c-csc121"] },
+  { id: "c-csc213", code: "CSC 213", title: "Database Systems", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Ms. Nyakuma Bol", lecturerStaffId: "staff-7", prerequisites: ["c-csc121"] },
+  { id: "c-mat211", code: "MAT 211", title: "Linear Algebra", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: true, lecturer: "Prof. Mary Aluel", lecturerStaffId: "staff-5", prerequisites: ["c-mat121"] },
+  { id: "c-csc214", code: "CSC 214", title: "Web Technologies", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: false, lecturer: "Ms. Nyakuma Bol", lecturerStaffId: "staff-7", prerequisites: ["c-csc121"] },
+  { id: "c-sta211", code: "STA 211", title: "Probability and Statistics", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: false, lecturer: "Dr. Emmanuel Kur", lecturerStaffId: "staff-8", prerequisites: ["c-mat111"] },
+  { id: "c-csc215", code: "CSC 215", title: "Operating Systems", creditHours: 3, programmeId: "prog-csc", year: 2, semester: 1, compulsory: false, lecturer: "Mr. Simon Tut", lecturerStaffId: "staff-6", prerequisites: ["c-csc122"] },
 ];
 
 // --- Students --------------------------------------------------------------
 
-export const STUDENTS: Student[] = [
+const STUDENTS: Student[] = [
   {
     id: "stu-1",
     studentNumber: "UOJ/SCI/2024/0142",
@@ -100,7 +115,7 @@ function seedResult(
   };
 }
 
-export const RESULTS: Result[] = [
+const RESULTS: Result[] = [
   seedResult("c-csc111", PREV_YEAR, 1, 34, 48),
   seedResult("c-mat111", PREV_YEAR, 1, 30, 41),
   seedResult("c-eng111", PREV_YEAR, 1, 32, 45),
@@ -113,7 +128,7 @@ export const RESULTS: Result[] = [
 
 // --- Current registration (compulsory courses pre-registered) -------------
 
-export const REGISTRATIONS: CourseRegistration[] = [
+const REGISTRATIONS: CourseRegistration[] = [
   "c-csc211",
   "c-csc212",
   "c-csc213",
@@ -128,7 +143,7 @@ export const REGISTRATIONS: CourseRegistration[] = [
 
 // --- Fees ------------------------------------------------------------------
 
-export const FEE_ITEMS: FeeItem[] = [
+const FEE_ITEMS: FeeItem[] = [
   { id: "fee-1", studentId: "stu-1", academicYear: YEAR, semester: 1, description: "Tuition — Semester 1", amountSSP: 260_000, dueDate: "2026-10-15", blocking: true },
   { id: "fee-2", studentId: "stu-1", academicYear: YEAR, semester: 1, description: "Registration and examination", amountSSP: 35_000, dueDate: "2026-10-05", blocking: true },
   { id: "fee-3", studentId: "stu-1", academicYear: YEAR, semester: 1, description: "Library and computer laboratory", amountSSP: 18_000, dueDate: "2026-10-15", blocking: false },
@@ -139,7 +154,7 @@ export const FEE_ITEMS: FeeItem[] = [
 // cleared. That leaves registration open and results visible — the ordinary
 // state — while the non-blocking library and union fees stay outstanding so the
 // Finance page still has a live balance to pay against.
-export const FEE_PAYMENTS: FeePayment[] = [
+const FEE_PAYMENTS: FeePayment[] = [
   { id: "pay-1", studentId: "stu-1", amountSSP: 160_000, method: "mgurush", reference: "MG7K4Q281D", paidAt: "2026-09-22T10:31:00.000Z", status: "confirmed" },
   { id: "pay-2", studentId: "stu-1", amountSSP: 100_000, method: "mgurush", reference: "MG9B2X0473", paidAt: "2026-09-26T08:15:00.000Z", status: "confirmed" },
   { id: "pay-3", studentId: "stu-1", amountSSP: 35_000, method: "bank_slip", reference: "IVB-0092447", paidAt: "2026-09-30T14:02:00.000Z", status: "confirmed" },
@@ -147,7 +162,7 @@ export const FEE_PAYMENTS: FeePayment[] = [
 
 // --- Timetable -------------------------------------------------------------
 
-export const TIMETABLE: TimetableSlot[] = [
+const TIMETABLE: TimetableSlot[] = [
   { id: "t-1", courseId: "c-csc211", day: "Mon", startsAt: "08:00", endsAt: "10:00", venue: "Lecture Hall B2", kind: "lecture" },
   { id: "t-2", courseId: "c-mat211", day: "Mon", startsAt: "10:30", endsAt: "12:00", venue: "Lecture Hall A1", kind: "lecture" },
   { id: "t-3", courseId: "c-csc212", day: "Tue", startsAt: "08:00", endsAt: "10:00", venue: "Lecture Hall B2", kind: "lecture" },
@@ -160,7 +175,7 @@ export const TIMETABLE: TimetableSlot[] = [
 
 // --- Announcements ---------------------------------------------------------
 
-export const ANNOUNCEMENTS: Announcement[] = [
+const ANNOUNCEMENTS: Announcement[] = [
   {
     id: "ann-1",
     title: "Semester 1 registration closes 10 October",
@@ -189,7 +204,7 @@ export const ANNOUNCEMENTS: Announcement[] = [
 
 // --- Applications ----------------------------------------------------------
 
-export const APPLICATIONS: Application[] = [
+const APPLICATIONS: Application[] = [
   {
     id: "app-1",
     reference: "APP-2026-004821",
@@ -258,7 +273,7 @@ export const APPLICATIONS: Application[] = [
 
 const ALL_PROGRAMME_IDS = PROGRAMMES.map((p) => p.id);
 
-export const ADMISSION_SCHEMES: AdmissionScheme[] = [
+const ADMISSION_SCHEMES: AdmissionScheme[] = [
   {
     id: "scheme-2025",
     name: "2025/2026 Undergraduate Intake",
@@ -305,57 +320,156 @@ export const ADMISSION_SCHEMES: AdmissionScheme[] = [
 
 /** Monotonic counter behind generated application references. */
 let referenceCounter = 4821;
-export function nextReference(): string {
+function nextReference(): string {
   referenceCounter += 1;
   return `APP-2026-${String(referenceCounter).padStart(6, "0")}`;
 }
 
 let idCounter = 1000;
-export function nextId(prefix: string): string {
+function nextId(prefix: string): string {
   idCounter += 1;
   return `${prefix}-${idCounter}`;
 }
 
-export const CURRENT_YEAR = YEAR;
-export const PREVIOUS_YEAR = PREV_YEAR;
+const CURRENT_YEAR = YEAR;
+const PREVIOUS_YEAR = PREV_YEAR;
 
 // --- Staff, roles and system administration ---------------------------------
 
-export const STAFF_USERS: StaffUser[] = [
+const STAFF_USERS: StaffUser[] = [
+  // --- Administration ------------------------------------------------------
   {
     id: "staff-1",
     name: "Grace Lueth",
     email: "grace.lueth@uoj.example.ss",
     staffRole: "super_admin",
     status: "active",
-    lastActiveAt: "2026-09-04T08:10:00.000Z",
+    lastActiveAt: "2026-09-06T08:10:00.000Z",
   },
+  {
+    id: "staff-12",
+    name: "Santino Machar",
+    email: "santino.machar@uoj.example.ss",
+    staffRole: "super_admin",
+    status: "active",
+    lastActiveAt: "2026-09-05T16:40:00.000Z",
+  },
+
+  // --- Registry ------------------------------------------------------------
   {
     id: "staff-2",
     name: "Daniel Kuek",
     email: "daniel.kuek@uoj.example.ss",
     staffRole: "registrar",
     status: "active",
-    lastActiveAt: "2026-09-03T14:22:00.000Z",
+    lastActiveAt: "2026-09-06T14:22:00.000Z",
   },
+  {
+    id: "staff-13",
+    name: "Martha Ajak",
+    email: "martha.ajak@uoj.example.ss",
+    staffRole: "registrar",
+    status: "active",
+    lastActiveAt: "2026-09-04T10:05:00.000Z",
+  },
+
+  // --- Bursary -------------------------------------------------------------
   {
     id: "staff-3",
     name: "Aluel Deng",
     email: "aluel.deng@uoj.example.ss",
     staffRole: "bursar",
     status: "active",
-    lastActiveAt: "2026-09-02T09:05:00.000Z",
+    lastActiveAt: "2026-09-05T09:05:00.000Z",
   },
   {
+    id: "staff-14",
+    name: "John Kuol",
+    email: "john.kuol@uoj.example.ss",
+    staffRole: "bursar",
+    status: "active",
+    lastActiveAt: "2026-09-03T11:48:00.000Z",
+  },
+
+  // --- Teaching staff ------------------------------------------------------
+  // One account per lecturer already named on a course above, so the person
+  // marking CSC 211 is the same record the student sees as their advisor —
+  // not a second unrelated "Lado".
+  {
     id: "staff-4",
-    // The same Dr. Peter Lado already seeded as the student's academic
-    // advisor and as the named lecturer on his three courses below — one
-    // person, one record, instead of a second unrelated "Lado" appearing.
     name: "Dr. Peter Lado",
     email: "peter.lado@uoj.example.ss",
     staffRole: "lecturer",
     status: "active",
-    lastActiveAt: "2026-09-04T11:30:00.000Z",
+    lastActiveAt: "2026-09-06T11:30:00.000Z",
+  },
+  {
+    id: "staff-5",
+    name: "Prof. Mary Aluel",
+    email: "mary.aluel@uoj.example.ss",
+    staffRole: "lecturer",
+    status: "active",
+    lastActiveAt: "2026-09-05T13:15:00.000Z",
+  },
+  {
+    id: "staff-6",
+    name: "Mr. Simon Tut",
+    email: "simon.tut@uoj.example.ss",
+    staffRole: "lecturer",
+    status: "active",
+    lastActiveAt: "2026-09-06T07:52:00.000Z",
+  },
+  {
+    id: "staff-7",
+    name: "Ms. Nyakuma Bol",
+    email: "nyakuma.bol@uoj.example.ss",
+    staffRole: "lecturer",
+    status: "active",
+    lastActiveAt: "2026-09-04T15:36:00.000Z",
+  },
+  {
+    id: "staff-8",
+    name: "Dr. Emmanuel Kur",
+    email: "emmanuel.kur@uoj.example.ss",
+    staffRole: "lecturer",
+    status: "active",
+    lastActiveAt: "2026-09-02T09:20:00.000Z",
+  },
+  {
+    id: "staff-9",
+    name: "Ms. Rebecca Ayen",
+    email: "rebecca.ayen@uoj.example.ss",
+    staffRole: "lecturer",
+    status: "active",
+    lastActiveAt: "2026-09-01T12:04:00.000Z",
+  },
+  {
+    id: "staff-10",
+    name: "Dr. James Wani",
+    email: "james.wani@uoj.example.ss",
+    staffRole: "lecturer",
+    // Suspended rather than deleted: marks he entered last year still have to
+    // resolve to a real person, so the account stays and simply cannot sign in.
+    status: "suspended",
+    lastActiveAt: "2026-06-18T10:12:00.000Z",
+  },
+  {
+    id: "staff-11",
+    name: "Dr. Grace Nyandeng",
+    email: "grace.nyandeng@uoj.example.ss",
+    staffRole: "lecturer",
+    status: "active",
+    lastActiveAt: "2026-09-03T08:45:00.000Z",
+  },
+
+  // --- Read-only -----------------------------------------------------------
+  {
+    id: "staff-15",
+    name: "Nyibol Garang",
+    email: "nyibol.garang@uoj.example.ss",
+    staffRole: "viewer",
+    status: "active",
+    lastActiveAt: "2026-09-05T17:02:00.000Z",
   },
 ];
 
@@ -365,10 +479,17 @@ export const STAFF_USERS: StaffUser[] = [
  * edits as a whole, not a scatter of independent flags — and would persist it
  * the same way a Prisma `SystemSettings` singleton row would.
  */
-export const SYSTEM_SETTINGS: SystemSettings = {
+const SYSTEM_SETTINGS: SystemSettings = {
   maintenanceMode: false,
   registrationOpen: true,
   applicationsOpen: true,
+  // Seeded from the environment so a fresh install already says the right
+  // thing; a super administrator can then override it at runtime.
+  branding: {
+    name: institution.name,
+    short: institution.short,
+    city: institution.city,
+  },
   appearance: {
     defaultMode: "system",
     accent: "nile",
@@ -395,7 +516,7 @@ export const SYSTEM_SETTINGS: SystemSettings = {
   },
 };
 
-export const AUDIT_LOG: AuditEntry[] = [
+const AUDIT_LOG: AuditEntry[] = [
   {
     id: "aud-1",
     at: "2026-09-01T07:55:00.000Z",
@@ -415,3 +536,55 @@ export const AUDIT_LOG: AuditEntry[] = [
     action: "Marked registration open for Semester 1",
   },
 ];
+
+  return {
+    COURSES,
+    STUDENTS,
+    RESULTS,
+    REGISTRATIONS,
+    FEE_ITEMS,
+    FEE_PAYMENTS,
+    TIMETABLE,
+    ANNOUNCEMENTS,
+    APPLICATIONS,
+    ADMISSION_SCHEMES,
+    nextReference,
+    nextId,
+    CURRENT_YEAR,
+    PREVIOUS_YEAR,
+    STAFF_USERS,
+    SYSTEM_SETTINGS,
+    AUDIT_LOG,
+  };
+}
+
+declare global {
+  var __acmisStore: ReturnType<typeof createStore> | undefined;
+}
+
+// The `?? (globalThis.__acmisStore = ...)` — not a top-level `const store =
+// createStore()` — is the whole point: whichever module instance runs first
+// creates it, and every later instance (this same file, re-evaluated by a
+// different route's compilation) finds it already sitting on `globalThis`
+// and reuses it instead of seeding a second, disconnected copy.
+const store = globalThis.__acmisStore ?? (globalThis.__acmisStore = createStore());
+
+export const {
+  COURSES,
+  STUDENTS,
+  RESULTS,
+  REGISTRATIONS,
+  FEE_ITEMS,
+  FEE_PAYMENTS,
+  TIMETABLE,
+  ANNOUNCEMENTS,
+  APPLICATIONS,
+  ADMISSION_SCHEMES,
+  nextReference,
+  nextId,
+  CURRENT_YEAR,
+  PREVIOUS_YEAR,
+  STAFF_USERS,
+  SYSTEM_SETTINGS,
+  AUDIT_LOG,
+} = store;

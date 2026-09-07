@@ -22,6 +22,9 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS) as Permission[];
 
+/** Every assignable staff role, in the order they read as a hierarchy. */
+export const STAFF_ROLES = Object.keys(STAFF_ROLE_LABELS) as StaffRole[];
+
 /** super_admin always has every permission, regardless of what the matrix says — the one role that can't lock itself out. */
 export function can(
   staffRole: StaffRole,

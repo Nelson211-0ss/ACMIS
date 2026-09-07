@@ -594,6 +594,41 @@ export async function listStaff(): Promise<StaffUser[]> {
   return STAFF_USERS;
 }
 
+/**
+ * Adds a staff account. Email is the natural key — a duplicate is rejected
+ * rather than silently creating a second account someone could sign in to,
+ * since the demo sign-in resolves an account by email.
+ *
+ * `lastActiveAt` is deliberately left unset: a new account has never signed
+ * in, and stamping "now" would claim otherwise on the users table.
+ */
+export async function addStaff(input: {
+  name: string;
+  email: string;
+  staffRole: StaffRole;
+}): Promise<{ staff: StaffUser } | { error: string }> {
+  const name = input.name.trim();
+  const email = input.email.trim().toLowerCase();
+
+  if (!name) return { error: "Enter the person's full name." };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "Enter a valid email address." };
+  }
+  if (STAFF_USERS.some((s) => s.email.toLowerCase() === email)) {
+    return { error: `${email} already has a staff account.` };
+  }
+
+  const staff: StaffUser = {
+    id: `staff-${Date.now().toString(36)}`,
+    name,
+    email,
+    staffRole: input.staffRole,
+    status: "active",
+  };
+  STAFF_USERS.push(staff);
+  return { staff };
+}
+
 export async function setStaffRole(id: string, staffRole: StaffRole): Promise<StaffUser | null> {
   const staff = STAFF_USERS.find((s) => s.id === id);
   if (!staff) return null;
@@ -685,17 +720,29 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 }
 
 export async function updateSystemSettings(
-  patch: Partial<Omit<SystemSettings, "appearance" | "rolePermissions">> & {
+  patch: Partial<Omit<SystemSettings, "branding" | "appearance" | "rolePermissions">> & {
+    branding?: Partial<SystemSettings["branding"]>;
     appearance?: Partial<SystemSettings["appearance"]>;
     rolePermissions?: SystemSettings["rolePermissions"];
   },
 ): Promise<SystemSettings> {
   Object.assign(SYSTEM_SETTINGS, {
     ...patch,
+    branding: { ...SYSTEM_SETTINGS.branding, ...patch.branding },
     appearance: { ...SYSTEM_SETTINGS.appearance, ...patch.appearance },
     rolePermissions: patch.rolePermissions ?? SYSTEM_SETTINGS.rolePermissions,
   });
   return SYSTEM_SETTINGS;
+}
+
+/**
+ * Who this deployment says it is. Every piece of chrome that used to read the
+ * `institution` constant directly goes through here instead, so a super
+ * administrator's edit reaches the wordmark, the page titles and the public
+ * site without a redeploy.
+ */
+export async function getBranding(): Promise<SystemSettings["branding"]> {
+  return SYSTEM_SETTINGS.branding;
 }
 
 // --- Audit log --------------------------------------------------------------

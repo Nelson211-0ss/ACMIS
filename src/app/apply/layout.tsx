@@ -4,6 +4,7 @@ import { OfflineBanner } from "@/components/offline-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { currentSession } from "@/lib/auth";
 import { institution } from "@/lib/institution";
+import { getBranding } from "@/lib/data/repo";
 import { signOut } from "@/app/login/actions";
 
 export default async function ApplyLayout({
@@ -12,6 +13,7 @@ export default async function ApplyLayout({
   children: React.ReactNode;
 }) {
   const session = await currentSession();
+  const branding = await getBranding();
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -37,14 +39,16 @@ export default async function ApplyLayout({
 
       <OfflineBanner />
 
-      <main id="main" className="mx-auto w-full max-w-4xl flex-1 px-4 py-5 sm:px-6">
+      <main id="main" className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         {children}
       </main>
 
-      <footer className="sticky bottom-0 z-20 rounded-t-sm border-t border-line bg-surface">
+      {/* Static, not sticky: a form this long should not spend ~60px of a
+          phone screen on a phone number wanted once, at the end. */}
+      <footer className="border-t border-line bg-surface">
         <div className="mx-auto flex max-w-4xl flex-col gap-2 px-4 py-5 text-[12.5px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>
-            {institution.name} · Admissions office, {institution.city}
+            {branding.name} · Admissions office, {branding.city}
           </p>
           <p className="flex items-center gap-1.5">
             <Phone className="h-3.5 w-3.5" aria-hidden />

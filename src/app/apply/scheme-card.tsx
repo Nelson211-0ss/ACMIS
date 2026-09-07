@@ -1,4 +1,5 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CalendarClock, GraduationCap, Layers, Wallet } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Card, CardBody, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,10 @@ import { relativeDays, shortDate, ssp } from "@/lib/format";
 /**
  * One published admission scheme, as a prospective applicant sees it.
  *
- * The gold accent bar matches the same "flat fill, no gradient" language used
- * for Stat tiles elsewhere — a scheme is exactly that: one figure (its
- * closing date) with supporting detail, not a generic content card.
+ * Led by an icon chip rather than an accent bar down the edge: the four facts
+ * that decide whether to apply — how many programmes, what it costs, when it
+ * shuts, when you would start — each get their own labelled cell instead of
+ * being a run of rows to read top to bottom.
  */
 export function SchemeCard({
   scheme,
@@ -22,28 +24,48 @@ export function SchemeCard({
   const closesSoon = new Date(scheme.closesAt).getTime() - Date.now() < 7 * 86_400_000;
 
   return (
-    <Card className="relative flex h-full flex-col overflow-hidden">
-      <span className="absolute inset-y-0 left-0 w-[3px] bg-gold-500" aria-hidden />
-      <CardBody className="flex-1 pl-5">
+    <Card className="flex h-full flex-col">
+      <CardBody className="flex-1">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[15px] font-semibold leading-snug text-ink">{scheme.name}</p>
-            <p className="nums mt-0.5 text-[11.5px] font-medium uppercase tracking-wide text-muted">
-              {scheme.code}
-            </p>
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-700">
+              <GraduationCap className="h-5 w-5 text-white" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[15px] font-semibold leading-snug text-ink">
+                {scheme.name}
+              </p>
+              <p className="nums mt-0.5 text-[11.5px] font-medium uppercase tracking-wide text-faint">
+                {scheme.code}
+              </p>
+            </div>
           </div>
           <Badge tone={closesSoon ? "red" : "gold"} className="shrink-0">
             Closes {relativeDays(scheme.closesAt)}
           </Badge>
         </div>
 
-        <p className="mt-2.5 text-[13px] leading-snug text-muted">{scheme.description}</p>
+        <p className="mt-3 text-[13px] leading-relaxed text-muted">
+          {scheme.description}
+        </p>
 
-        <dl className="mt-3.5 space-y-1.5 border-t border-line pt-3 text-[12.5px]">
-          <Row label="Programmes offered" value={String(scheme.programmeIds.length)} />
-          <Row label="Application fee" value={ssp(scheme.applicationFeeSSP)} />
-          <Row label="Closing date" value={shortDate(scheme.closesAt)} />
-          <Row label="Semester begins" value={shortDate(scheme.semesterStarts)} />
+        <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4">
+          <Fact
+            icon={Layers}
+            label="Programmes"
+            value={String(scheme.programmeIds.length)}
+          />
+          <Fact icon={Wallet} label="Fee" value={ssp(scheme.applicationFeeSSP)} />
+          <Fact
+            icon={CalendarClock}
+            label="Closing date"
+            value={shortDate(scheme.closesAt)}
+          />
+          <Fact
+            icon={GraduationCap}
+            label="Semester begins"
+            value={shortDate(scheme.semesterStarts)}
+          />
         </dl>
       </CardBody>
       <CardFooter>
@@ -58,11 +80,24 @@ export function SchemeCard({
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Fact({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-muted">{label}</dt>
-      <dd className="nums font-medium text-ink-soft">{value}</dd>
+    <div className="min-w-0">
+      <dt className="flex items-center gap-1.5 text-[11.5px] text-muted">
+        <Icon className="h-3.5 w-3.5 shrink-0 text-faint" aria-hidden />
+        {label}
+      </dt>
+      <dd className="nums mt-0.5 truncate text-[13.5px] font-semibold text-ink">
+        {value}
+      </dd>
     </div>
   );
 }

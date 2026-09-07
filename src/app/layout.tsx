@@ -1,19 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { institution } from "@/lib/institution";
 import { accentStyleTag, themeInitScript } from "@/lib/theme";
-import { getSystemSettings } from "@/lib/data/repo";
+import { getBranding, getSystemSettings } from "@/lib/data/repo";
 import { inter } from "./fonts";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: `${institution.short} Portal`,
-    template: `%s · ${institution.short} Portal`,
-  },
-  description: `Student portal and admissions application portal for ${institution.name}, ${institution.city}.`,
-  applicationName: `${institution.short} Portal`,
-  formatDetection: { telephone: true },
-};
+/**
+ * Generated rather than static so the browser tab follows the name a super
+ * administrator set on the Settings page, not the one baked in at build.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const { name, short, city } = await getBranding();
+  return {
+    title: {
+      default: `${short} Portal`,
+      template: `%s · ${short} Portal`,
+    },
+    description: `Student portal and admissions application portal for ${name}, ${city}.`,
+    applicationName: `${short} Portal`,
+    formatDetection: { telephone: true },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

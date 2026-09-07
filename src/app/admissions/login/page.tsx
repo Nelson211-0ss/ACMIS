@@ -5,7 +5,7 @@ import { Crest } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
-import { institution } from "@/lib/institution";
+import { getBranding } from "@/lib/data/repo";
 import { signInAdmissions, signInAdmissionsDemo } from "./actions";
 import { SignInForm } from "@/app/login/form";
 
@@ -16,7 +16,9 @@ export const metadata: Metadata = { title: "Admissions Office sign-in" };
  * general staff/student sign-in at `/login`, so the people who run intake do
  * not share a screen (or a mental model) with IT administration.
  */
-export default function AdmissionsLoginPage() {
+export default async function AdmissionsLoginPage() {
+  const branding = await getBranding();
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-20 rounded-b-sm border-b border-line bg-surface">
@@ -25,7 +27,7 @@ export default function AdmissionsLoginPage() {
             <Crest className="shrink-0" />
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-[14.5px] font-semibold text-ink">
-                {institution.name}
+                {branding.name}
               </span>
               <span className="block truncate text-[11.5px] text-muted">
                 Admissions Office

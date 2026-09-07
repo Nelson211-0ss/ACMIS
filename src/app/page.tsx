@@ -15,13 +15,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink } from "@/components/ui/button";
 import { admissionCycle, institution } from "@/lib/institution";
 import { FACULTIES, PROGRAMMES } from "@/lib/data/reference";
-import { getSystemSettings } from "@/lib/data/repo";
+import { getBranding, getSystemSettings } from "@/lib/data/repo";
 import { heroPhotoSrc } from "@/lib/hero-image";
 import { relativeDays, shortDate, ssp } from "@/lib/format";
 
 export default async function LandingPage() {
   const open = new Date(admissionCycle.closes).getTime() > Date.now();
   const settings = await getSystemSettings();
+  const branding = await getBranding();
   const heroPhoto = heroPhotoSrc();
 
   // Derived from the same reference data the application form reads, so these
@@ -208,10 +209,10 @@ export default async function LandingPage() {
             above, restated as the thing a first-time visitor scans for. */}
         <section className="mx-auto max-w-6xl px-4 py-14 text-center sm:px-6 sm:py-16">
           <h2 className="text-[24px] font-semibold tracking-tight text-ink sm:text-[28px]">
-            What makes {institution.short} Portal different
+            What makes {branding.short} Portal different
           </h2>
           <p className="mx-auto mt-2 max-w-lg text-[14.5px] text-muted">
-            Built specifically for {institution.name}, not adapted from a
+            Built specifically for {branding.name}, not adapted from a
             generic student-information system.
           </p>
           <div className="mt-8 grid gap-8 sm:grid-cols-3">
@@ -277,7 +278,7 @@ export default async function LandingPage() {
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-[12.5px] text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>
-            {institution.name} · {institution.city}
+            {branding.name} · {branding.city}
           </p>
           <p>
             Admissions office:{" "}

@@ -190,24 +190,35 @@ export default async function ReviewStep({
                 return (
                   <li
                     key={choice.rank}
-                    className="relative rounded border border-line bg-canvas px-3.5 py-3 pl-4"
+                    className="flex items-start gap-3 rounded-lg border border-line bg-canvas px-3.5 py-3"
                   >
+                    {/* The rank is the point of this list, so it carries the
+                        emphasis — first choice filled, the rest outlined. */}
                     <span
-                      className={`absolute inset-y-0 left-0 w-[3px] ${choice.rank === 1 ? "bg-gold-500" : "bg-line-strong"}`}
+                      className={
+                        "nums flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold " +
+                        (choice.rank === 1
+                          ? "bg-gold-500 text-brand-900"
+                          : "border border-line-strong bg-surface text-muted")
+                      }
                       aria-hidden
-                    />
-                    <p className="text-[11.5px] font-semibold uppercase tracking-wide text-faint">
-                      Choice {choice.rank}
-                    </p>
-                    <p className="mt-0.5 text-[13.5px] font-medium text-ink">
-                      {programme?.name ?? "Unknown programme"}
-                    </p>
-                    {programme ? (
-                      <p className="nums mt-0.5 text-[12.5px] text-muted">
-                        {programme.code} · {programme.durationYears} years ·{" "}
-                        {ssp(programme.tuitionPerSemesterSSP)} per semester
+                    >
+                      {choice.rank}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[11.5px] font-semibold uppercase tracking-wide text-faint">
+                        Choice {choice.rank}
                       </p>
-                    ) : null}
+                      <p className="mt-0.5 text-[13.5px] font-medium text-ink">
+                        {programme?.name ?? "Unknown programme"}
+                      </p>
+                      {programme ? (
+                        <p className="nums mt-0.5 text-[12.5px] text-muted">
+                          {programme.code} · {programme.durationYears} years ·{" "}
+                          {ssp(programme.tuitionPerSemesterSSP)} per semester
+                        </p>
+                      ) : null}
+                    </div>
                   </li>
                 );
               })}

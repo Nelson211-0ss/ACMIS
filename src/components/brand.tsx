@@ -1,21 +1,43 @@
 import Link from "next/link";
-import { institution } from "@/lib/institution";
+import { getBranding } from "@/lib/data/repo";
 import { cn } from "@/lib/cn";
 
 /**
- * Wordmark. An inline SVG crest rather than an image file — it is under 400
- * bytes, needs no request, and stays sharp on every screen density.
+ * Wordmark and crest. Both read the live branding a super administrator set on
+ * the Settings page rather than the build-time `institution` constant, so
+ * renaming the university or uploading a logo takes effect everywhere the
+ * chrome appears without a redeploy.
  *
- * The mark is an open book under a five-pointed star: the star from the
- * national flag, the book for the institution. Flat fills, no gradient.
+ * Async server components: every call site is a server component (checked),
+ * and the alternative — threading branding through as props — would touch
+ * eight layouts to say the same thing.
  */
-export function Crest({ className }: { className?: string }) {
+
+/**
+ * The uploaded logo if there is one, otherwise the built-in mark: an open book
+ * under a five-pointed star, the star from the national flag and the book for
+ * the institution. Inline SVG, under 400 bytes, no request, flat fills.
+ */
+export async function Crest({ className }: { className?: string }) {
+  const branding = await getBranding();
+
+  if (branding.logo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={branding.logo}
+        alt={`${branding.short} logo`}
+        className={cn("h-8 w-8 rounded-md object-contain", className)}
+      />
+    );
+  }
+
   return (
     <svg
       viewBox="0 0 32 32"
       className={cn("h-8 w-8", className)}
       role="img"
-      aria-label={`${institution.short} crest`}
+      aria-label={`${branding.short} crest`}
     >
       <rect width="32" height="32" rx="7" fill="var(--brand-700)" />
       <path
@@ -32,7 +54,7 @@ export function Crest({ className }: { className?: string }) {
   );
 }
 
-export function Wordmark({
+export async function Wordmark({
   href = "/",
   tone = "light",
   className,
@@ -42,6 +64,8 @@ export function Wordmark({
   tone?: "light" | "dark";
   className?: string;
 }) {
+  const branding = await getBranding();
+
   return (
     <Link
       href={href}
@@ -55,7 +79,7 @@ export function Wordmark({
             tone === "dark" ? "text-sidebar-ink-strong" : "text-ink",
           )}
         >
-          {institution.name}
+          {branding.name}
         </span>
         <span
           className={cn(

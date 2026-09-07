@@ -8,12 +8,15 @@ import { Card, CardBody, CardFooter } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
 import { DEMO_ACCOUNTS } from "@/lib/auth";
 import { institution } from "@/lib/institution";
+import { getBranding } from "@/lib/data/repo";
 import { signIn, signInAsDemo } from "./actions";
 import { SignInForm } from "./form";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const branding = await getBranding();
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-20 rounded-b-sm border-b border-line bg-surface">
@@ -31,7 +34,7 @@ export default function LoginPage() {
           Sign in
         </h1>
         <p className="mt-1.5 text-[13.5px] text-muted">
-          Use the email address registered with {institution.short}, or your
+          Use the email address registered with {branding.short}, or your
           student number.
         </p>
 

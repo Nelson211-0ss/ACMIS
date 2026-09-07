@@ -10,6 +10,7 @@ import { facultyById, programmeById } from "@/lib/data/reference";
 import { Avatar } from "@/components/ui/avatar";
 import { displayPhone, shortDate } from "@/lib/format";
 import { institution } from "@/lib/institution";
+import { getBranding } from "@/lib/data/repo";
 import { signOut } from "@/app/login/actions";
 
 export const metadata: Metadata = { title: "My profile" };
@@ -18,6 +19,7 @@ export default async function ProfilePage() {
   const student = await currentStudent();
   if (!student) redirect("/login");
 
+  const branding = await getBranding();
   const programme = programmeById(student.programmeId);
   const faculty = programme ? facultyById(programme.facultyId) : undefined;
   const expectedGraduation = programme
@@ -112,7 +114,7 @@ export default async function ProfilePage() {
       </Card>
 
       <p className="pb-2 text-center text-[12px] text-faint">
-        {institution.name} · {institution.city} · Portal build{" "}
+        {branding.name} · {branding.city} · Portal build{" "}
         {shortDate(new Date().toISOString())}
       </p>
     </div>
