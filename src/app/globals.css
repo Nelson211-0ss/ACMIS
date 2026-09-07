@@ -276,6 +276,14 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  /* A backstop, not a licence. Wide content still has to scroll inside its own
+     container (see .scroll-thin and TableWrap) — this only stops one stray
+     decorative overhang from giving the whole page a sideways scrollbar on a
+     360px screen, which is the width most of this portal's users are on.
+     `clip` rather than `hidden`: `hidden` makes the body a scroll container
+     and silently breaks every `position: sticky` header in the app. */
+  overflow-x: clip;
 }
 
 /* Visible, high-contrast focus. Non-negotiable: a lot of students will be

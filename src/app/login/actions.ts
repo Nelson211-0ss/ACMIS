@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { endSession, startSession } from "@/lib/auth";
 import { verifyPassword } from "@/lib/crypto";
 import { findCredentialByEmail, getStaff, logAudit } from "@/lib/data/repo";
-import { DEMO_ACCOUNTS, DEMO_PASSWORD, type DemoAccountKey } from "@/lib/demo-accounts";
+import { DEMO_PASSWORD } from "@/lib/demo-accounts";
 import type { StaffRole } from "@/lib/types";
 
 /** Where a staff member lands after signing in — their own desk if they have
@@ -82,16 +82,22 @@ export async function signIn(
   redirect("/apply");
 }
 
+/**
+ * One-click entry to a seeded account.
+ *
+ * Takes an email and submits it through `signIn` with the shared demo
+ * password — which grants nothing a visitor could not do by typing the same
+ * two values into the form above. It is a convenience, not a bypass, so a
+ * suspended account still refuses and a changed password still fails.
+ */
 export async function signInAsDemo(formData: FormData): Promise<void> {
-  const requested = String(formData.get("role") ?? "") as DemoAccountKey;
-  const key: DemoAccountKey = requested in DEMO_ACCOUNTS ? requested : "applicant";
+  const email = String(formData.get("email") ?? "").trim();
 
   const demo = new FormData();
-  demo.set("email", DEMO_ACCOUNTS[key].email);
+  demo.set("email", email);
   demo.set("password", DEMO_PASSWORD);
 
-  // Goes through the same password check as a typed sign-in; `signIn`
-  // redirects on success, so anything returned here is a real failure.
+  // `signIn` redirects on success, so anything returned here is a real failure.
   const result = await signIn(undefined, demo);
   if (result?.error) redirect(`/login?error=${encodeURIComponent(result.error)}`);
 }

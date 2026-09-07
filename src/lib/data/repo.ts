@@ -952,6 +952,67 @@ export async function getBranding(): Promise<SystemSettings["branding"]> {
   return SYSTEM_SETTINGS.branding;
 }
 
+export interface SeededAccount {
+  name: string;
+  email: string;
+  /** "Super administrator", "Continuing student", "Applicant"… */
+  role: string;
+  group: "Students and applicants" | "Administration" | "Academic" | "Support";
+  suspended: boolean;
+}
+
+const STAFF_GROUP: Record<StaffRole, SeededAccount["group"]> = {
+  super_admin: "Administration",
+  registrar: "Administration",
+  bursar: "Administration",
+  head_of_department: "Academic",
+  lecturer: "Academic",
+  it_support: "Support",
+  viewer: "Support",
+};
+
+/**
+ * Every account the seed created, for the sign-in screen to offer.
+ *
+ * Built from the store rather than a hand-kept list: there were 20 seeded
+ * accounts and a hardcoded list of 9, so the other 11 could only be reached
+ * by finding an email in the users table and guessing the shared password.
+ * Deriving it means the two can never drift apart again.
+ */
+export async function listSeededAccounts(): Promise<SeededAccount[]> {
+  const students: SeededAccount[] = STUDENTS.map((s) => ({
+    name: `${s.firstName} ${s.lastName}`,
+    email: s.email,
+    role: s.status === "graduated" ? "Alumna / alumnus" : "Continuing student",
+    group: "Students and applicants",
+    suspended: s.status === "suspended",
+  }));
+
+  const applicants: SeededAccount[] = APPLICANT_ACCOUNTS.map((a) => {
+    const application = APPLICATIONS.find((app) => app.applicantId === a.id);
+    const person = application
+      ? `${application.personal.firstName} ${application.personal.lastName}`.trim()
+      : a.email;
+    return {
+      name: person || a.email,
+      email: a.email,
+      role: "Applicant",
+      group: "Students and applicants" as const,
+      suspended: a.status === "suspended",
+    };
+  });
+
+  const staff: SeededAccount[] = STAFF_USERS.map((s) => ({
+    name: s.name,
+    email: s.email,
+    role: s.staffRole,
+    group: STAFF_GROUP[s.staffRole],
+    suspended: s.status !== "active",
+  }));
+
+  return [...students, ...applicants, ...staff];
+}
+
 // --- Accounts and credentials ------------------------------------------------
 
 export async function getApplicantAccount(

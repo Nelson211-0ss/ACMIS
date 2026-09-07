@@ -105,7 +105,72 @@ export default async function AdminFinancePage({
               </EmptyState>
             </CardBody>
           ) : (
-            <TableWrap>
+            <>
+              {/* Phone: one card per slip. Confirm/reject are the point of
+                  this screen, so they get full-width targets rather than
+                  being the last column of a sideways-scrolling table. */}
+              <ul className="space-y-2.5 px-4 py-4 sm:hidden">
+                {pending.map(({ payment, student }) => (
+                  <li
+                    key={`m-${payment.id}`}
+                    className="rounded-lg border border-line bg-canvas p-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-[14px] font-medium text-ink">
+                          {student
+                            ? `${student.firstName} ${student.lastName}`
+                            : "Unknown student"}
+                        </p>
+                        <p className="nums truncate text-[12px] text-muted">
+                          {student?.studentNumber ?? payment.studentId}
+                        </p>
+                      </div>
+                      <span className="nums shrink-0 text-[15px] font-semibold text-ink">
+                        {ssp(payment.amountSSP)}
+                      </span>
+                    </div>
+
+                    <dl className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]">
+                      <dt className="text-muted">Reference</dt>
+                      <dd className="nums text-right text-ink-soft">{payment.reference}</dd>
+                      <dt className="text-muted">Method</dt>
+                      <dd className="text-right text-ink-soft">{methodName(payment.method)}</dd>
+                      <dt className="text-muted">Submitted</dt>
+                      <dd className="nums text-right text-ink-soft">
+                        {shortDate(payment.paidAt)}
+                      </dd>
+                    </dl>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <form action={decidePayment}>
+                        <input type="hidden" name="paymentId" value={payment.id} />
+                        <input type="hidden" name="outcome" value="confirmed" />
+                        <button
+                          type="submit"
+                          className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-green-600/40 bg-green-100 text-[13px] font-medium text-green-700 transition-colors hover:bg-green-600 hover:text-white"
+                        >
+                          <Check className="h-4 w-4" aria-hidden />
+                          Confirm
+                        </button>
+                      </form>
+                      <form action={decidePayment}>
+                        <input type="hidden" name="paymentId" value={payment.id} />
+                        <input type="hidden" name="outcome" value="failed" />
+                        <button
+                          type="submit"
+                          className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-line-strong bg-surface text-[13px] font-medium text-ink-soft transition-colors hover:border-red-600/40 hover:bg-red-100 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" aria-hidden />
+                          Reject
+                        </button>
+                      </form>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+            <TableWrap className="hidden sm:block">
               <Table>
                 <thead>
                   <tr>
@@ -172,6 +237,7 @@ export default async function AdminFinancePage({
                 </tbody>
               </Table>
             </TableWrap>
+            </>
           )}
         </Card>
       ) : null}
@@ -258,7 +324,37 @@ export default async function AdminFinancePage({
           title="Fee balances"
           description="Every student on the roll, largest balance first."
         />
-        <TableWrap>
+        {/* Phone: the balance is the number that matters, so it leads. */}
+        <ul className="space-y-2.5 px-4 py-4 sm:hidden">
+          {balances.map(({ student, charged, paid, balance }) => (
+            <li
+              key={`m-${student.id}`}
+              className="flex items-start justify-between gap-3 rounded-lg border border-line bg-canvas p-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-[14px] font-medium text-ink">
+                  {student.firstName} {student.lastName}
+                </p>
+                <p className="nums truncate text-[12px] text-muted">
+                  {student.studentNumber}
+                </p>
+                <p className="nums mt-1 text-[12px] text-muted">
+                  {ssp(paid)} paid of {ssp(charged)}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="nums text-[15px] font-semibold text-ink">
+                  {balance === 0 ? "—" : ssp(balance)}
+                </p>
+                <Badge tone={balance > 0 ? "red" : "green"} className="mt-1">
+                  {balance > 0 ? "Owing" : "Cleared"}
+                </Badge>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <TableWrap className="hidden sm:block">
           <Table>
             <thead>
               <tr>

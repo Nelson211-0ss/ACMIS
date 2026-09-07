@@ -112,7 +112,71 @@ export default async function AdminAccountsPage({
           title="Locked and active accounts"
           description="Unlock someone who has been suspended, or lock an account that is being misused."
         />
-        <TableWrap>
+        {/* Phone: one card per account, lock/unlock as a full-width target. */}
+        <ul className="space-y-2.5 px-4 py-4 sm:hidden">
+          {lockable.map((row) => {
+            const suspended = row.statusLabel === "suspended";
+            const isSelf = row.kind === "staff" && row.id === staff.id;
+            return (
+              <li
+                key={`m-${row.kind}-${row.id}`}
+                className="rounded-lg border border-line bg-canvas p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-[14px] font-medium text-ink">{row.name}</p>
+                    <p className="truncate text-[12px] text-muted">{row.email}</p>
+                    <p className="mt-0.5 text-[12px] capitalize text-faint">{row.kind}</p>
+                  </div>
+                  <Badge tone={row.statusTone} className="shrink-0">
+                    {row.statusLabel}
+                  </Badge>
+                </div>
+
+                <div className="mt-3">
+                  {isSelf ? (
+                    <p className="text-[12.5px] text-faint">
+                      This is you — use another account to change it.
+                    </p>
+                  ) : (
+                    <form action={setAccountStatus}>
+                      <input type="hidden" name="kind" value={row.kind} />
+                      <input type="hidden" name="id" value={row.id} />
+                      <input
+                        type="hidden"
+                        name="status"
+                        value={suspended ? "active" : "suspended"}
+                      />
+                      <button
+                        type="submit"
+                        className={
+                          "inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border text-[13px] font-medium transition-colors " +
+                          (suspended
+                            ? "border-green-600/40 bg-green-100 text-green-700 hover:bg-green-600 hover:text-white"
+                            : "border-line-strong bg-surface text-ink-soft hover:border-red-600/40 hover:bg-red-100 hover:text-red-700")
+                        }
+                      >
+                        {suspended ? (
+                          <>
+                            <LockOpen className="h-4 w-4" aria-hidden />
+                            Unlock this account
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="h-4 w-4" aria-hidden />
+                            Lock this account
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        <TableWrap className="hidden sm:block">
           <Table>
             <thead>
               <tr>

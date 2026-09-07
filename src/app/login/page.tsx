@@ -1,42 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  Award,
-  Banknote,
-  ClipboardCheck,
-  GraduationCap,
-  LifeBuoy,
-  Presentation,
-  ShieldCheck,
-  Stamp,
-  UserPlus,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { Card, CardBody, CardFooter } from "@/components/ui/card";
 import { Callout } from "@/components/ui/callout";
-import { DEMO_ACCOUNTS, DEMO_PASSWORD, type DemoAccountKey } from "@/lib/demo-accounts";
+import { DEMO_PASSWORD } from "@/lib/demo-accounts";
 import { institution } from "@/lib/institution";
-import { getBranding } from "@/lib/data/repo";
-import { signIn, signInAsDemo } from "./actions";
+import { getBranding, listSeededAccounts } from "@/lib/data/repo";
+import { signIn } from "./actions";
+import { SeededAccountList } from "./accounts";
 import { SignInForm } from "./form";
 
 export const metadata: Metadata = { title: "Sign in" };
-
-/** Icon per seeded account, in the order they read as a hierarchy. */
-const DEMO_ICONS: Array<{ key: DemoAccountKey; icon: LucideIcon }> = [
-  { key: "student", icon: GraduationCap },
-  { key: "applicant", icon: UserPlus },
-  { key: "alumni", icon: Award },
-  { key: "admin", icon: ShieldCheck },
-  { key: "registrar", icon: ClipboardCheck },
-  { key: "head_of_department", icon: Stamp },
-  { key: "lecturer", icon: Presentation },
-  { key: "bursar", icon: Banknote },
-  { key: "it_support", icon: LifeBuoy },
-];
 
 export default async function LoginPage({
   searchParams,
@@ -44,7 +20,10 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const branding = await getBranding();
+  const [branding, accounts] = await Promise.all([
+    getBranding(),
+    listSeededAccounts(),
+  ]);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -92,24 +71,13 @@ export default async function LoginPage({
         </div>
 
         <Callout tone="info" className="mb-4" title="Demonstration data">
-          Every seeded account below uses the password{" "}
-          <span className="nums font-semibold">{DEMO_PASSWORD}</span>, and these
-          buttons sign in with it through the same password check as the form
-          above. Seed accounts belong in a demo only — a real deployment starts
-          with none.
+          All {accounts.length} seeded accounts use the password{" "}
+          <span className="nums font-semibold">{DEMO_PASSWORD}</span>. Tapping
+          one signs in with it through the same check as the form above — no
+          shortcut. A real deployment starts with no seeded accounts at all.
         </Callout>
 
-        <div className="space-y-2.5">
-          {DEMO_ICONS.map(({ key, icon: Icon }) => (
-            <form action={signInAsDemo} key={key}>
-              <input type="hidden" name="role" value={key} />
-              <Button type="submit" variant="secondary" block>
-                <Icon className="h-4 w-4" aria-hidden />
-                {DEMO_ACCOUNTS[key].label}
-              </Button>
-            </form>
-          ))}
-        </div>
+        <SeededAccountList accounts={accounts} />
 
         <p className="mt-4 text-center text-[12.5px] text-muted">
           Admissions Office also has its{" "}

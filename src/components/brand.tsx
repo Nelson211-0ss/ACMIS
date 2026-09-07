@@ -81,9 +81,13 @@ export async function Wordmark({
         >
           {branding.name}
         </span>
+        {/* Hidden below `sm`. On a 360px screen the institution's own name is
+            the thing worth the width, and leaving the strapline in meant both
+            lines truncated to fit beside the theme toggle and sign-in button —
+            two half-readable lines instead of one whole one. */}
         <span
           className={cn(
-            "block truncate text-[11.5px]",
+            "hidden truncate text-[11.5px] sm:block",
             tone === "dark" ? "text-sidebar-ink" : "text-muted",
           )}
         >

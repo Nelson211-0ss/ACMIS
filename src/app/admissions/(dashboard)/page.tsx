@@ -96,7 +96,57 @@ export default async function AdmissionsQueuePage({
             No applications match this filter.
           </EmptyState>
         ) : (
-          <TableWrap>
+          <>
+          {/* Phone: one tappable card per application. Seven columns is a
+              reasonable queue on a laptop and a sideways scroll on a phone,
+              and the whole row is really one link. */}
+          <ul className="space-y-2.5 px-4 py-4 sm:hidden">
+            {rows.map(({ application: a, scheme, programme }) => (
+              <li key={`m-${a.id}`}>
+                <Link
+                  href={`/admissions/${a.id}`}
+                  className="block rounded-lg border border-line bg-canvas p-3 transition-[border-color,box-shadow] duration-150 hover:border-brand-300 hover:shadow-soft"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-[14px] font-medium text-ink">
+                        {[a.personal.firstName, a.personal.lastName]
+                          .filter(Boolean)
+                          .join(" ") || "Unnamed"}
+                      </p>
+                      <p className="nums truncate text-[12px] font-medium text-brand-700">
+                        {a.reference}
+                      </p>
+                    </div>
+                    <ApplicationStatusBadge status={a.status} />
+                  </div>
+
+                  <dl className="mt-2.5 space-y-1 text-[12px]">
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted">First choice</dt>
+                      <dd className="truncate text-right text-ink-soft">
+                        {programme?.name ?? "—"}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted">Scheme</dt>
+                      <dd className="truncate text-right text-ink-soft">
+                        {scheme?.name ?? "—"}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted">Submitted</dt>
+                      <dd className="nums text-right text-ink-soft">
+                        {a.submittedAt ? shortDate(a.submittedAt) : "—"}
+                      </dd>
+                    </div>
+                  </dl>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <TableWrap className="hidden sm:block">
             <Table>
               <thead>
                 <tr>
@@ -138,6 +188,7 @@ export default async function AdmissionsQueuePage({
               </tbody>
             </Table>
           </TableWrap>
+          </>
         )}
       </Card>
     </div>

@@ -351,7 +351,12 @@ function GlanceFact({ label, value }: { label: string; value: string }) {
  */
 function DeviceMock() {
   return (
-    <div className="relative mx-auto w-full max-w-xs">
+    // `max-w-[17rem]` on a phone rather than `max-w-xs` (20rem): the fee card
+    // below overhangs the right edge, and at 20rem inside the section's own
+    // padding that overhang runs past a 360px viewport and gives the whole
+    // page a horizontal scrollbar. Narrowing the frame buys the overhang its
+    // room instead of clipping it.
+    <div className="relative mx-auto w-full max-w-[17rem] sm:max-w-xs">
       <div className="rounded-[2rem] border border-line-strong bg-canvas p-3 shadow-pop">
         <div className="rounded-[1.4rem] border border-line bg-surface p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-faint">

@@ -114,7 +114,10 @@ export async function verifyPassword(
  * balancer would reject each other's cookies. In dev a per-boot random key is
  * fine and saves setting up an env file to click around.
  */
-let devSecret: string | null = null;
+declare global {
+  var __acmisDevSecret: string | undefined;
+}
+
 function sessionSecret(): string {
   const fromEnv = process.env.SESSION_SECRET;
   if (fromEnv && fromEnv.length >= 32) return fromEnv;
@@ -124,8 +127,16 @@ function sessionSecret(): string {
       "SESSION_SECRET must be set to at least 32 characters in production.",
     );
   }
-  devSecret ??= randomBytes(32).toString("hex");
-  return devSecret;
+
+  // Pinned to globalThis, not a module-level `let`, for the same reason the
+  // store is (see src/lib/data/store.ts): Next's dev server does not
+  // guarantee one module instance per process, so a plain module variable
+  // gets a *different* random secret per route. Signing a cookie on /login
+  // and verifying it on /admin would then use two different keys, and the
+  // session would be rejected seemingly at random — which reads as "the
+  // account does not work" rather than as a key mismatch.
+  globalThis.__acmisDevSecret ??= randomBytes(32).toString("hex");
+  return globalThis.__acmisDevSecret;
 }
 
 export function sign(value: string): string {
