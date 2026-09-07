@@ -2,7 +2,6 @@ import Image from "next/image";
 import {
   ArrowRight,
   Building2,
-  CalendarClock,
   CheckCircle2,
   GraduationCap,
   ShieldCheck,
@@ -97,18 +96,29 @@ export default async function LandingPage() {
                 </BulletLight>
               </ul>
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/apply" variant="gold" size="lg">
-                  Apply for admission
-                  <ArrowRight className="h-4 w-4" aria-hidden />
+              {/* Side by side at every width, not stacked below `sm`: two
+                  short labels in a row read better on a phone than two full
+                  sentences stacked into two rows. The full phrasing comes
+                  back at `sm`, where there is room for it. */}
+              <div className="mt-7 flex flex-row gap-2 sm:gap-3">
+                <ButtonLink
+                  href="/apply"
+                  variant="gold"
+                  size="lg"
+                  className="flex-1 sm:flex-none"
+                >
+                  <span className="sm:hidden">Apply now</span>
+                  <span className="hidden sm:inline">Apply for admission</span>
+                  <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
                 </ButtonLink>
                 <ButtonLink
                   href="/login"
                   size="lg"
-                  className="border-sidebar-line bg-transparent text-white hover:border-brand-300 hover:bg-white/5"
+                  className="flex-1 border-sidebar-line bg-transparent text-white hover:border-brand-300 hover:bg-white/5 sm:flex-none"
                 >
-                  <GraduationCap className="h-4 w-4" aria-hidden />
-                  Continuing student sign-in
+                  <GraduationCap className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="sm:hidden">Sign in</span>
+                  <span className="hidden sm:inline">Continuing student sign-in</span>
                 </ButtonLink>
               </div>
 
@@ -234,21 +244,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* Admission cycle */}
-        <section className="border-t border-line bg-surface px-4 py-10 sm:px-6 sm:py-12">
-          <div className="mx-auto max-w-6xl">
-            <SectionHeading icon={CalendarClock}>
-              {institution.academicYear} admission cycle
-            </SectionHeading>
-            <ol className="mt-5 grid gap-3 sm:grid-cols-4">
-              <Milestone step={1} label="Applications open" date={admissionCycle.opens} />
-              <Milestone step={2} label="Applications close" date={admissionCycle.closes} />
-              <Milestone step={3} label="Decisions published" date={admissionCycle.resultsBy} />
-              <Milestone step={4} label="Semester begins" date={admissionCycle.semesterStarts} />
-            </ol>
-          </div>
-        </section>
-
         {/* Closing call to action. Everything above this line has been
             informational; this is the one place the page asks for the click a
             second time, right before the reader would otherwise leave. */}
@@ -292,25 +287,6 @@ export default async function LandingPage() {
         </div>
       </footer>
     </div>
-  );
-}
-
-function SectionHeading({
-  children,
-  icon: Icon,
-}: {
-  children: React.ReactNode;
-  icon?: LucideIcon;
-}) {
-  return (
-    <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
-      {Icon ? (
-        <Icon className="h-[18px] w-[18px] shrink-0 text-brand-700" aria-hidden />
-      ) : (
-        <span className="h-4 w-[3px] shrink-0 rounded-full bg-flame-500" aria-hidden />
-      )}
-      {children}
-    </h2>
   );
 }
 
@@ -411,33 +387,5 @@ function Differentiator({
       <h3 className="mt-4 text-[15px] font-semibold text-ink">{title}</h3>
       <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted">{body}</p>
     </div>
-  );
-}
-
-function Milestone({
-  step,
-  label,
-  date,
-}: {
-  step: number;
-  label: string;
-  date: string;
-}) {
-  const past = new Date(date).getTime() < Date.now();
-  return (
-    <li className="overflow-hidden rounded-lg border border-line bg-canvas">
-      <span className={`block h-1 w-full ${past ? "bg-green-600" : "bg-line-strong"}`} aria-hidden />
-      <div className="p-3.5">
-        <span
-          className={`nums flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-semibold ${
-            past ? "bg-green-600 text-white" : "border border-line-strong text-muted"
-          }`}
-        >
-          {step}
-        </span>
-        <p className="mt-2.5 text-[13.5px] font-medium text-ink">{label}</p>
-        <p className="nums mt-0.5 text-[12.5px] text-muted">{shortDate(date)}</p>
-      </div>
-    </li>
   );
 }
