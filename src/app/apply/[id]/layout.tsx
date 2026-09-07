@@ -4,6 +4,7 @@ import { ApplicationStatusBadge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { getApplication, getScheme } from "@/lib/data/repo";
 import { completedSteps, progressPercent } from "@/lib/application";
+import { currentSession } from "@/lib/auth";
 
 export default async function ApplicationLayout({
   children,
@@ -15,6 +16,14 @@ export default async function ApplicationLayout({
   const { id } = await params;
   const application = await getApplication(id);
   if (!application) notFound();
+
+  // An application holds a national ID number, a guardian's phone and a full
+  // set of exam marks. Reading one is gated on owning it — `notFound` rather
+  // than a redirect so the page cannot be used to confirm which ids exist.
+  const session = await currentSession();
+  if (session?.role !== "applicant" || session.subjectId !== application.applicantId) {
+    notFound();
+  }
 
   const scheme = application.schemeId ? await getScheme(application.schemeId) : null;
   const readOnly = application.status !== "draft";

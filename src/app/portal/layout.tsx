@@ -31,7 +31,7 @@ export default async function PortalLayout({
 
         {/* Identity and sign-out now live top right — see the context strip. */}
         <div className="flex-1 overflow-y-auto scroll-thin">
-          <SidebarNav />
+          <SidebarNav status={student.status} />
         </div>
       </aside>
 
@@ -86,7 +86,7 @@ export default async function PortalLayout({
         </main>
       </div>
 
-      <BottomTabs />
+      <BottomTabs status={student.status} />
     </div>
   );
 }

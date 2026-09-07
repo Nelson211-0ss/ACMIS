@@ -1,18 +1,32 @@
 import { cookies } from "next/headers";
-import { getStaff, getStudent } from "./data/repo";
-import type { StaffUser, Student } from "./types";
+import { getApplicantAccount, getStaff, getStudent } from "./data/repo";
+import { sign, verifySignature } from "./crypto";
+import type { ApplicantAccount, StaffUser, Student } from "./types";
 
 /**
- * Mock session.
+ * Session cookie: `<base64url(role:subjectId:expiry)>.<hmac>`.
  *
- * A signed cookie holding a role and a subject id. There is no password check
- * and no signature — this is a development stand-in so the portal is walkable
- * end to end. Replace with Auth.js before this touches a real student record;
- * the call sites (`currentSession`, `requireStudent`, `requireApplicant`) are
- * the only surface that has to keep working. See README "Replacing mock auth".
+ * The signature is the whole point. Before it, the cookie was plain text, so
+ * anyone could set `ssu_session=admin:staff-1` in devtools and be a super
+ * administrator — no password, no forgery needed. The payload is still
+ * readable (it is not encrypted, and does not need to be: a role and an id
+ * are not secrets), but it can no longer be altered without the server key.
+ *
+ * The payload is base64url-encoded rather than written raw because a cookie
+ * value goes through percent-encoding on the way out: raw `:` separators come
+ * back as `%3A` and the split silently fails to find any fields. base64url
+ * has no characters that survive a round trip differently, so what is signed
+ * is exactly what is verified.
+ *
+ * Sessions carry their own expiry rather than trusting the cookie's maxAge,
+ * which the client controls.
+ *
+ * Still missing for a real deployment: server-side session revocation (a
+ * stolen cookie stays valid until it expires), rate limiting, and 2FA.
  */
 
 const COOKIE = "ssu_session";
+const SESSION_HOURS = 12;
 
 export type Role = "student" | "applicant" | "admin";
 
@@ -22,40 +36,45 @@ export interface Session {
   subjectId: string;
 }
 
-/**
- * The seeded accounts offered on the login screen.
- *
- * `registrar` shares the same session role as `admin` — one staff cookie
- * shape for everyone — but is a distinct entry here because it signs in to a
- * different place (see DEMO_REDIRECT in login/actions.ts).
- */
-export const DEMO_ACCOUNTS = {
-  student: { role: "student" as const, subjectId: "stu-1", label: "Achol Majok — continuing student" },
-  applicant: { role: "applicant" as const, subjectId: "usr-applicant", label: "Emmanuel Wani — applicant" },
-  admin: { role: "admin" as const, subjectId: "staff-1", label: "Grace Lueth — super administrator" },
-  registrar: { role: "admin" as const, subjectId: "staff-2", label: "Daniel Kuek — Registrar" },
-  lecturer: { role: "admin" as const, subjectId: "staff-4", label: "Dr. Peter Lado — Lecturer" },
-} as const;
-
-export type DemoAccountKey = keyof typeof DEMO_ACCOUNTS;
-
 const ROLES: Role[] = ["student", "applicant", "admin"];
 
 export async function currentSession(): Promise<Session | null> {
   const raw = (await cookies()).get(COOKIE)?.value;
   if (!raw) return null;
-  const [role, subjectId] = raw.split(":");
-  if (!ROLES.includes(role as Role) || !subjectId) return null;
+
+  const dot = raw.lastIndexOf(".");
+  if (dot < 1) return null;
+
+  const encoded = raw.slice(0, dot);
+  const signature = raw.slice(dot + 1);
+  // Verify against the encoded form — the exact bytes that were signed.
+  if (!verifySignature(encoded, signature)) return null;
+
+  let payload: string;
+  try {
+    payload = Buffer.from(encoded, "base64url").toString("utf8");
+  } catch {
+    return null;
+  }
+
+  const [role, subjectId, expiresAt] = payload.split(":");
+  if (!ROLES.includes(role as Role) || !subjectId || !expiresAt) return null;
+  if (Number(expiresAt) < Date.now()) return null;
+
   return { role: role as Role, subjectId };
 }
 
 export async function startSession(session: Session): Promise<void> {
-  (await cookies()).set(COOKIE, `${session.role}:${session.subjectId}`, {
+  const expiresAt = Date.now() + SESSION_HOURS * 60 * 60 * 1000;
+  const payload = `${session.role}:${session.subjectId}:${expiresAt}`;
+  const encoded = Buffer.from(payload, "utf8").toString("base64url");
+
+  (await cookies()).set(COOKIE, `${encoded}.${sign(encoded)}`, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 12,
+    maxAge: SESSION_HOURS * 60 * 60,
   });
 }
 
@@ -67,7 +86,10 @@ export async function endSession(): Promise<void> {
 export async function currentStudent(): Promise<Student | null> {
   const session = await currentSession();
   if (session?.role !== "student") return null;
-  return getStudent(session.subjectId);
+  const student = await getStudent(session.subjectId);
+  // A suspended student keeps their record but loses the portal.
+  if (student?.status === "suspended") return null;
+  return student;
 }
 
 /** Returns null rather than redirecting, so callers choose the response. */
@@ -77,4 +99,13 @@ export async function currentStaff(): Promise<StaffUser | null> {
   const staff = await getStaff(session.subjectId);
   if (staff?.status !== "active") return null;
   return staff;
+}
+
+/** Returns null rather than redirecting, so callers choose the response. */
+export async function currentApplicant(): Promise<ApplicantAccount | null> {
+  const session = await currentSession();
+  if (session?.role !== "applicant") return null;
+  const account = await getApplicantAccount(session.subjectId);
+  if (account?.status !== "active") return null;
+  return account;
 }

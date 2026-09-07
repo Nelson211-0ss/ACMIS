@@ -2,9 +2,11 @@ import type { Permission, StaffRole, SystemSettings } from "./types";
 
 export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
   super_admin: "Super administrator",
+  head_of_department: "Head of department",
   registrar: "Registrar",
   bursar: "Bursar",
   lecturer: "Lecturer",
+  it_support: "IT support",
   viewer: "Viewer",
 };
 
@@ -15,7 +17,11 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_appearance: "Manage appearance",
   manage_announcements: "Manage announcements",
   manage_admissions: "Manage admissions",
-  manage_results: "Manage results",
+  manage_results: "Enter results",
+  approve_results: "Approve & publish results",
+  verify_payments: "Verify payments",
+  manage_fees: "Adjust fees",
+  manage_accounts: "Reset passwords & unlock accounts",
   view_monitoring: "View monitoring",
   view_audit_log: "View audit log",
 };

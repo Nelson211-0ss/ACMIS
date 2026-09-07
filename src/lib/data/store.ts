@@ -1,13 +1,16 @@
 import type {
   AdmissionScheme,
   Announcement,
+  ApplicantAccount,
   Application,
   AuditEntry,
   Course,
   CourseRegistration,
   FeeItem,
   FeePayment,
+  PasswordResetToken,
   Result,
+  ResultSubmission,
   Student,
   StaffUser,
   SystemSettings,
@@ -39,9 +42,24 @@ import { institution } from "../institution";
  * repro of this in the git history of this file's PR description if it's
  * ever in doubt again — three separate requests, three different random ids,
  * from what should have been "the same" object.
+ *
+ * ONE CONSEQUENCE WORTH KNOWING: because the store is created once per
+ * process and then reused, editing the seed data below does NOT show up on a
+ * hot reload — the `??` finds the old object still on `globalThis` and keeps
+ * it. Restart `npm run dev` after changing a seed. That is the price of the
+ * data surviving between routes, and it is the right trade.
  */
 function createStore() {
   const YEAR = "2026/2027";
+
+  /**
+   * Every seeded account shares one password: "portal123". This is seed data
+   * for a walkable demo, not a credential — it is checked through the same
+   * scrypt path as any other password, so the sign-in flow being exercised is
+   * the real one. A deployment seeds no accounts and issues reset links.
+   */
+  const DEMO_PASSWORD_HASH =
+    "scrypt$65536$8$1$e43e57032bed10a6b35e5e9b7892ccb6$4727338517203f54ea15509bdff9217ceaba12dd6e246abba1a4b85097cc1967";
 const PREV_YEAR = "2025/2026";
 
 // --- Courses ---------------------------------------------------------------
@@ -87,6 +105,24 @@ const STUDENTS: Student[] = [
     status: "active",
     admittedYear: "2024/2025",
     advisorName: "Dr. Peter Lado",
+    passwordHash: DEMO_PASSWORD_HASH,
+  },
+  {
+    // Graduated, so the portal drops to the alumni subset: a transcript stays
+    // reachable for good, while registration, fees and a timetable do not.
+    id: "stu-2",
+    studentNumber: "UOJ/SCI/2021/0088",
+    firstName: "Nyandeng",
+    lastName: "Chol",
+    email: "nyandeng.chol@student.example.ss",
+    phone: "+211921778899",
+    programmeId: "prog-csc",
+    yearOfStudy: 4,
+    currentSemester: 2,
+    status: "graduated",
+    admittedYear: "2021/2022",
+    advisorName: "Prof. Mary Aluel",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
 ];
 
@@ -158,6 +194,10 @@ const FEE_PAYMENTS: FeePayment[] = [
   { id: "pay-1", studentId: "stu-1", amountSSP: 160_000, method: "mgurush", reference: "MG7K4Q281D", paidAt: "2026-09-22T10:31:00.000Z", status: "confirmed" },
   { id: "pay-2", studentId: "stu-1", amountSSP: 100_000, method: "mgurush", reference: "MG9B2X0473", paidAt: "2026-09-26T08:15:00.000Z", status: "confirmed" },
   { id: "pay-3", studentId: "stu-1", amountSSP: 35_000, method: "bank_slip", reference: "IVB-0092447", paidAt: "2026-09-30T14:02:00.000Z", status: "confirmed" },
+  // Waiting on the bursary. A slip is a claim that money reached the bank
+  // until somebody checks the statement, so this one sits pending — it is
+  // what the Bursary desk exists to clear.
+  { id: "pay-4", studentId: "stu-1", amountSSP: 18_000, method: "bank_slip", reference: "IVB-0093812", paidAt: "2026-09-06T09:21:00.000Z", status: "pending" },
 ];
 
 // --- Timetable -------------------------------------------------------------
@@ -345,6 +385,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "super_admin",
     status: "active",
     lastActiveAt: "2026-09-06T08:10:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-12",
@@ -353,6 +394,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "super_admin",
     status: "active",
     lastActiveAt: "2026-09-05T16:40:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
 
   // --- Registry ------------------------------------------------------------
@@ -363,6 +405,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "registrar",
     status: "active",
     lastActiveAt: "2026-09-06T14:22:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-13",
@@ -371,6 +414,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "registrar",
     status: "active",
     lastActiveAt: "2026-09-04T10:05:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
 
   // --- Bursary -------------------------------------------------------------
@@ -381,6 +425,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "bursar",
     status: "active",
     lastActiveAt: "2026-09-05T09:05:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-14",
@@ -389,6 +434,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "bursar",
     status: "active",
     lastActiveAt: "2026-09-03T11:48:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
 
   // --- Teaching staff ------------------------------------------------------
@@ -402,6 +448,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "lecturer",
     status: "active",
     lastActiveAt: "2026-09-06T11:30:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-5",
@@ -410,6 +457,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "lecturer",
     status: "active",
     lastActiveAt: "2026-09-05T13:15:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-6",
@@ -418,6 +466,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "lecturer",
     status: "active",
     lastActiveAt: "2026-09-06T07:52:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-7",
@@ -426,6 +475,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "lecturer",
     status: "active",
     lastActiveAt: "2026-09-04T15:36:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-8",
@@ -434,6 +484,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "lecturer",
     status: "active",
     lastActiveAt: "2026-09-02T09:20:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-9",
@@ -442,6 +493,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "lecturer",
     status: "active",
     lastActiveAt: "2026-09-01T12:04:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-10",
@@ -452,6 +504,7 @@ const STAFF_USERS: StaffUser[] = [
     // resolve to a real person, so the account stays and simply cannot sign in.
     status: "suspended",
     lastActiveAt: "2026-06-18T10:12:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
   {
     id: "staff-11",
@@ -460,6 +513,31 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "lecturer",
     status: "active",
     lastActiveAt: "2026-09-03T08:45:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
+  },
+
+  // --- Departmental approval ------------------------------------------------
+  // Signs off marks entered by the lecturers above. Deliberately someone who
+  // does not also teach: the point of the role is a second pair of eyes.
+  {
+    id: "staff-16",
+    name: "Dr. Achol Mayen",
+    email: "achol.mayen@uoj.example.ss",
+    staffRole: "head_of_department",
+    status: "active",
+    lastActiveAt: "2026-09-06T09:18:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
+  },
+
+  // --- Helpdesk -------------------------------------------------------------
+  {
+    id: "staff-17",
+    name: "Peter Deng",
+    email: "peter.deng@uoj.example.ss",
+    staffRole: "it_support",
+    status: "active",
+    lastActiveAt: "2026-09-06T15:44:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
 
   // --- Read-only -----------------------------------------------------------
@@ -470,6 +548,7 @@ const STAFF_USERS: StaffUser[] = [
     staffRole: "viewer",
     status: "active",
     lastActiveAt: "2026-09-05T17:02:00.000Z",
+    passwordHash: DEMO_PASSWORD_HASH,
   },
 ];
 
@@ -503,15 +582,27 @@ const SYSTEM_SETTINGS: SystemSettings = {
       "manage_announcements",
       "manage_admissions",
       "manage_results",
+      "approve_results",
+      "verify_payments",
+      "manage_fees",
+      "manage_accounts",
       "view_monitoring",
       "view_audit_log",
     ],
+    // Signs off marks but does not enter them — the point of the role is that
+    // the person approving is not the person who graded.
+    head_of_department: ["approve_results", "view_audit_log"],
     // The registrar's office runs admissions in real life, so it's the
     // default here too.
     registrar: ["manage_users", "manage_announcements", "manage_admissions", "view_audit_log"],
-    bursar: ["view_monitoring", "view_audit_log"],
+    // The bursary reconciles deposit slips against the bank and corrects what
+    // a student was charged; it has no say over academic records.
+    bursar: ["verify_payments", "manage_fees", "view_monitoring", "view_audit_log"],
     // A lecturer's only business here is entering marks for their own courses.
     lecturer: ["manage_results"],
+    // Restores access, never grants it: no manage_users, so IT support cannot
+    // create an account or change anyone's role.
+    it_support: ["manage_accounts", "view_audit_log"],
     viewer: ["view_monitoring"],
   },
 };
@@ -537,6 +628,43 @@ const AUDIT_LOG: AuditEntry[] = [
   },
 ];
 
+  const APPLICANT_ACCOUNTS: ApplicantAccount[] = [
+    {
+      id: "usr-applicant",
+      email: "emmanuel.wani@example.ss",
+      passwordHash: DEMO_PASSWORD_HASH,
+      status: "active",
+      createdAt: "2026-07-04T08:15:00.000Z",
+    },
+  ];
+
+  /** Empty at boot: reset tokens are only ever created by a live request. */
+  const PASSWORD_RESETS: PasswordResetToken[] = [];
+
+  /**
+   * Sign-off state per course offering. Last session's results are already
+   * approved — they are published and students have seen them. This year's
+   * courses have no row yet, which reads as a draft.
+   */
+  const RESULT_SUBMISSIONS: ResultSubmission[] = [
+    ...["c-csc111", "c-mat111", "c-eng111", "c-phy111"].map((courseId) => ({
+      courseId,
+      academicYear: PREV_YEAR,
+      semester: 1 as const,
+      status: "approved" as const,
+      decidedBy: "staff-16",
+      decidedAt: "2026-02-10T09:00:00.000Z",
+    })),
+    ...["c-csc121", "c-mat121", "c-csc122", "c-cit121"].map((courseId) => ({
+      courseId,
+      academicYear: PREV_YEAR,
+      semester: 2 as const,
+      status: "approved" as const,
+      decidedBy: "staff-16",
+      decidedAt: "2026-07-05T09:00:00.000Z",
+    })),
+  ];
+
   return {
     COURSES,
     STUDENTS,
@@ -553,6 +681,9 @@ const AUDIT_LOG: AuditEntry[] = [
     CURRENT_YEAR,
     PREVIOUS_YEAR,
     STAFF_USERS,
+    APPLICANT_ACCOUNTS,
+    PASSWORD_RESETS,
+    RESULT_SUBMISSIONS,
     SYSTEM_SETTINGS,
     AUDIT_LOG,
   };
@@ -585,6 +716,9 @@ export const {
   CURRENT_YEAR,
   PREVIOUS_YEAR,
   STAFF_USERS,
+  APPLICANT_ACCOUNTS,
+  PASSWORD_RESETS,
+  RESULT_SUBMISSIONS,
   SYSTEM_SETTINGS,
   AUDIT_LOG,
 } = store;

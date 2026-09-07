@@ -30,6 +30,22 @@ export const PORTAL_NAV: NavItem[] = [
   { href: "/portal/profile", label: "My profile", short: "Profile", icon: UserRound },
 ];
 
+/**
+ * What an alumnus keeps after graduating.
+ *
+ * Their record does not go away — a transcript has to stay verifiable for
+ * decades — but registering for courses, paying fees and a timetable all stop
+ * meaning anything the day they graduate, so those come off the nav rather
+ * than sitting there leading to empty pages.
+ */
+const ALUMNI_HREFS = new Set(["/portal/results", "/portal/profile"]);
+
+export function navFor(status: string): NavItem[] {
+  return status === "graduated"
+    ? PORTAL_NAV.filter((item) => ALUMNI_HREFS.has(item.href))
+    : PORTAL_NAV;
+}
+
 /** `/portal` must match exactly; every other route matches its subtree. */
 function useIsActive() {
   const pathname = usePathname();
@@ -38,12 +54,13 @@ function useIsActive() {
 }
 
 /** Desktop rail. Navy fill, gold marker on the active row. */
-export function SidebarNav() {
+export function SidebarNav({ status }: { status: string }) {
   const isActive = useIsActive();
+  const items = navFor(status);
   return (
     <nav aria-label="Portal sections" className="px-2 py-3">
       <ul className="space-y-0.5">
-        {PORTAL_NAV.map(({ href, label, icon: Icon }) => {
+        {items.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           return (
             <li key={href}>
@@ -79,11 +96,11 @@ export function SidebarNav() {
  * Phone tab bar. Fixed to the bottom because thumbs live there, and because a
  * hamburger drawer costs a tap and a JS bundle for no benefit.
  */
-export function BottomTabs() {
+export function BottomTabs({ status }: { status: string }) {
   const isActive = useIsActive();
   // Profile is reachable from the header avatar, so it is dropped here to keep
   // five comfortable targets across a 360px screen.
-  const tabs = PORTAL_NAV.filter((i) => i.href !== "/portal/profile");
+  const tabs = navFor(status).filter((i) => i.href !== "/portal/profile");
   return (
     <nav
       aria-label="Portal sections"

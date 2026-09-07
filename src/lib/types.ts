@@ -189,6 +189,8 @@ export interface Student {
   status: "active" | "suspended" | "graduated" | "deferred";
   admittedYear: string;
   advisorName: string;
+  /** scrypt hash — see src/lib/crypto.ts. Unset until the student activates. */
+  passwordHash?: string;
 }
 
 export interface Course {
@@ -236,6 +238,36 @@ export interface Result {
   grade: LetterGrade;
   points: number; // 4.0 scale
   published: boolean;
+}
+
+/**
+ * One course's marks, moving through sign-off.
+ *
+ * Results were previously published by whoever entered them, in one click.
+ * A grade is the single most consequential number this system holds, so it
+ * now takes two people: the lecturer submits, the head of department decides.
+ *
+ * Keyed on course + year + semester rather than on individual results,
+ * because a class is marked and signed off as a whole — a half-approved
+ * roster is not a state anyone wants to explain to a student.
+ */
+export type ResultSubmissionStatus =
+  | "draft"
+  | "pending_approval"
+  | "approved"
+  | "returned";
+
+export interface ResultSubmission {
+  courseId: Id;
+  academicYear: string;
+  semester: 1 | 2;
+  status: ResultSubmissionStatus;
+  submittedBy?: Id;
+  submittedAt?: string;
+  decidedBy?: Id;
+  decidedAt?: string;
+  /** Why it came back, so the lecturer knows what to fix. */
+  note?: string;
 }
 
 export interface FeeItem {
@@ -287,7 +319,16 @@ export interface Announcement {
  * actually has an opinion about, and adding a sixth is a one-line change in
  * three places (this union, ROLE_LABELS, and the seed's default permissions).
  */
-export type StaffRole = "super_admin" | "registrar" | "bursar" | "lecturer" | "viewer";
+export type StaffRole =
+  | "super_admin"
+  /** Approves within a faculty: course allocations and results sign-off. */
+  | "head_of_department"
+  | "registrar"
+  | "bursar"
+  | "lecturer"
+  /** Account recovery and unlocks only — deliberately not a second super admin. */
+  | "it_support"
+  | "viewer";
 
 export interface StaffUser {
   id: Id;
@@ -296,6 +337,43 @@ export interface StaffUser {
   staffRole: StaffRole;
   status: "active" | "suspended";
   lastActiveAt?: string;
+  /**
+   * scrypt hash — see src/lib/crypto.ts for the format. Optional because an
+   * account can be created by a registrar before its holder has ever set a
+   * password; until then it simply cannot sign in, and IT support issues a
+   * reset link to get them started.
+   */
+  passwordHash?: string;
+}
+
+/**
+ * An applicant's login, separate from the application itself.
+ *
+ * Applications carry the applicant's name and email inside `personal`, but
+ * that is form data they can edit — it cannot be the thing they authenticate
+ * against. This is the account: one per person, created at sign-up, owning
+ * however many applications they go on to start.
+ */
+export interface ApplicantAccount {
+  id: Id;
+  email: string;
+  passwordHash: string;
+  status: "active" | "suspended";
+  createdAt: string;
+}
+
+/**
+ * A single-use password reset. Stored hashed for the same reason a password
+ * is: whoever can read the database should not be able to walk into an
+ * account with what they find there.
+ */
+export interface PasswordResetToken {
+  /** HMAC of the token that was emailed, never the token itself. */
+  tokenHash: string;
+  subjectKind: "student" | "applicant" | "staff";
+  subjectId: Id;
+  expiresAt: string;
+  usedAt?: string;
 }
 
 /** One row of the unified directory shown on the admin Users page. */
@@ -320,6 +398,17 @@ export type Permission =
   | "manage_announcements"
   | "manage_admissions"
   | "manage_results"
+  /** Sign off marks a lecturer has entered, before students ever see them. */
+  | "approve_results"
+  /** Confirm or reject a bank deposit slip against the bursary's own records. */
+  | "verify_payments"
+  /** Adjust what a student has been charged — waivers, corrections, scholarships. */
+  | "manage_fees"
+  /**
+   * Reset a password and unlock an account. Deliberately separate from
+   * manage_users: IT support restores access, it does not decide who has it.
+   */
+  | "manage_accounts"
   | "view_monitoring"
   | "view_audit_log";
 

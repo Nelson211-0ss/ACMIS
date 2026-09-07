@@ -22,6 +22,7 @@ import { confirmPayment, initiatePayment, methodName } from "@/lib/data/payments
 import { institution } from "@/lib/institution";
 import { fileSize, ssp } from "@/lib/format";
 import type { DocumentKind, PaymentMethod, ProgrammeChoice } from "@/lib/types";
+import { currentSession } from "@/lib/auth";
 
 /**
  * Shared shape for every step's result.
@@ -45,10 +46,24 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
   return out;
 }
 
-/** Refuse to edit anything that has already gone to the admissions board. */
+/**
+ * Refuse to edit anything that is not yours, or that has already gone to the
+ * admissions board.
+ *
+ * The ownership half is the important one: every step below funnels through
+ * here, and without it knowing an application id was enough to rewrite a
+ * stranger's exam marks. "Could not be found" is deliberately the same answer
+ * for someone else's application as for one that does not exist — confirming
+ * that id 'app-1' is real just tells a guesser to keep going.
+ */
 async function requireDraft(id: string) {
+  const session = await currentSession();
   const application = await getApplication(id);
+
   if (!application) return { error: "That application could not be found." as const };
+  if (session?.role !== "applicant" || session.subjectId !== application.applicantId) {
+    return { error: "That application could not be found." as const };
+  }
   if (application.status !== "draft") {
     return { error: "This application has been submitted and can no longer be changed." as const };
   }

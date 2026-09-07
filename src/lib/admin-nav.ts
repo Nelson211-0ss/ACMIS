@@ -1,7 +1,9 @@
 import {
   Activity,
+  Banknote,
   KeyRound,
   LayoutDashboard,
+  LifeBuoy,
   Megaphone,
   Palette,
   ScrollText,
@@ -29,7 +31,9 @@ export interface AdminNavItem {
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users, permission: "manage_users" },
+  { href: "/admin/accounts", label: "Account recovery", icon: LifeBuoy, permission: "manage_accounts" },
   { href: "/admin/roles", label: "Roles & permissions", icon: KeyRound, permission: "manage_roles" },
+  { href: "/admin/finance", label: "Bursary", icon: Banknote, permission: "verify_payments" },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone, permission: "manage_announcements" },
   { href: "/admin/settings", label: "System settings", icon: Settings, permission: "manage_settings" },
   { href: "/admin/theme", label: "Appearance", icon: Palette, permission: "manage_appearance" },

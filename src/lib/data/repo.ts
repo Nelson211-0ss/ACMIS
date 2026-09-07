@@ -1,6 +1,7 @@
 import type {
   AdmissionScheme,
   Announcement,
+  ApplicantAccount,
   Application,
   ApplicationStatus,
   AuditEntry,
@@ -8,8 +9,10 @@ import type {
   DirectoryUser,
   FeeItem,
   FeePayment,
+  PasswordResetToken,
   Payment,
   Result,
+  ResultSubmission,
   SchemeStatus,
   StaffRole,
   StaffUser,
@@ -22,14 +25,17 @@ import { gpa, gradeFor } from "../format";
 import {
   ADMISSION_SCHEMES,
   ANNOUNCEMENTS,
+  APPLICANT_ACCOUNTS,
   APPLICATIONS,
   AUDIT_LOG,
   COURSES,
   CURRENT_YEAR,
   FEE_ITEMS,
   FEE_PAYMENTS,
+  PASSWORD_RESETS,
   REGISTRATIONS,
   RESULTS,
+  RESULT_SUBMISSIONS,
   STAFF_USERS,
   STUDENTS,
   SYSTEM_SETTINGS,
@@ -373,6 +379,207 @@ export async function recordFeePayment(
   };
   FEE_PAYMENTS.push(payment);
   return payment;
+}
+
+// --- Results sign-off --------------------------------------------------------
+
+/** No row yet means nobody has submitted this offering — that is a draft. */
+export async function getResultSubmission(
+  courseId: string,
+  academicYear = CURRENT_YEAR,
+): Promise<ResultSubmission | null> {
+  return (
+    RESULT_SUBMISSIONS.find(
+      (r) => r.courseId === courseId && r.academicYear === academicYear,
+    ) ?? null
+  );
+}
+
+/**
+ * A lecturer sends a marked class up for sign-off.
+ *
+ * Nothing is published here — that is the head of department's call. This
+ * only changes who the ball is with.
+ */
+export async function submitResultsForApproval(
+  courseId: string,
+  semester: 1 | 2,
+  submittedBy: string,
+  academicYear = CURRENT_YEAR,
+): Promise<ResultSubmission> {
+  const existing = await getResultSubmission(courseId, academicYear);
+  if (existing) {
+    existing.status = "pending_approval";
+    existing.submittedBy = submittedBy;
+    existing.submittedAt = new Date().toISOString();
+    existing.decidedBy = undefined;
+    existing.decidedAt = undefined;
+    existing.note = undefined;
+    return existing;
+  }
+
+  const submission: ResultSubmission = {
+    courseId,
+    academicYear,
+    semester,
+    status: "pending_approval",
+    submittedBy,
+    submittedAt: new Date().toISOString(),
+  };
+  RESULT_SUBMISSIONS.push(submission);
+  return submission;
+}
+
+/**
+ * The head of department decides.
+ *
+ * Approving is what actually makes marks visible to students — publishing is
+ * a consequence of the decision rather than a separate button somebody could
+ * press on its own.
+ */
+export async function decideResultSubmission(
+  courseId: string,
+  decidedBy: string,
+  outcome: "approved" | "returned",
+  note: string | undefined,
+  academicYear = CURRENT_YEAR,
+): Promise<ResultSubmission | null> {
+  const submission = await getResultSubmission(courseId, academicYear);
+  if (!submission || submission.status !== "pending_approval") return null;
+
+  submission.status = outcome;
+  submission.decidedBy = decidedBy;
+  submission.decidedAt = new Date().toISOString();
+  submission.note = note;
+
+  await setCourseResultsPublished(
+    courseId,
+    academicYear,
+    submission.semester,
+    outcome === "approved",
+  );
+  return submission;
+}
+
+export interface PendingApprovalRow {
+  submission: ResultSubmission;
+  course: Course;
+  submittedBy: StaffUser | null;
+  marked: number;
+  registered: number;
+}
+
+/** Everything waiting on a head of department, oldest submission first. */
+export async function listPendingApprovals(
+  academicYear = CURRENT_YEAR,
+): Promise<PendingApprovalRow[]> {
+  const rows: PendingApprovalRow[] = [];
+
+  for (const submission of RESULT_SUBMISSIONS) {
+    if (submission.status !== "pending_approval") continue;
+    if (submission.academicYear !== academicYear) continue;
+
+    const course = COURSES.find((c) => c.id === submission.courseId);
+    if (!course) continue;
+
+    const roster = await getCourseRoster(course.id, academicYear);
+    rows.push({
+      submission,
+      course,
+      submittedBy: submission.submittedBy
+        ? (STAFF_USERS.find((s) => s.id === submission.submittedBy) ?? null)
+        : null,
+      marked: roster.filter((r) => r.result !== null).length,
+      registered: roster.length,
+    });
+  }
+
+  return rows.sort((a, b) =>
+    (a.submission.submittedAt ?? "").localeCompare(b.submission.submittedAt ?? ""),
+  );
+}
+
+// --- Bursary -----------------------------------------------------------------
+
+export interface PendingPaymentRow {
+  payment: FeePayment;
+  student: Student | null;
+}
+
+/**
+ * Bank deposit slips waiting on the bursary.
+ *
+ * Mobile money settles itself; a slip is a claim that money reached the
+ * university's account, and until somebody checks the bank statement it is
+ * only a claim. Before this existed the claim was recorded and then nothing
+ * could ever act on it — the payment sat "pending" forever.
+ */
+export async function listPendingPayments(): Promise<PendingPaymentRow[]> {
+  return FEE_PAYMENTS.filter((p) => p.status === "pending")
+    .sort((a, b) => a.paidAt.localeCompare(b.paidAt))
+    .map((payment) => ({
+      payment,
+      student: STUDENTS.find((s) => s.id === payment.studentId) ?? null,
+    }));
+}
+
+/**
+ * Clear or reject a slip. `confirmed` is what makes the money count toward a
+ * balance — `getFeeSummary` only totals confirmed payments — so this is the
+ * step that actually unblocks a student's results.
+ */
+export async function settlePayment(
+  paymentId: string,
+  outcome: "confirmed" | "failed",
+): Promise<FeePayment | null> {
+  const payment = FEE_PAYMENTS.find((p) => p.id === paymentId);
+  if (!payment) return null;
+  // Only a pending slip is the bursary's to decide; re-settling a closed one
+  // would let a second click undo a decision already acted on.
+  if (payment.status !== "pending") return null;
+  payment.status = outcome;
+  return payment;
+}
+
+/** A correction, waiver or scholarship against one student's account. */
+export async function addFeeItem(input: {
+  studentId: string;
+  description: string;
+  amountSSP: number;
+  dueDate: string;
+  blocking: boolean;
+  semester: 1 | 2;
+}): Promise<FeeItem> {
+  const item: FeeItem = {
+    id: nextId("fee"),
+    studentId: input.studentId,
+    academicYear: CURRENT_YEAR,
+    semester: input.semester,
+    description: input.description,
+    amountSSP: input.amountSSP,
+    dueDate: input.dueDate,
+    blocking: input.blocking,
+  };
+  FEE_ITEMS.push(item);
+  return item;
+}
+
+/** Every student with an outstanding balance, worst first. */
+export async function listFeeBalances(): Promise<
+  Array<{ student: Student; charged: number; paid: number; balance: number }>
+> {
+  const rows = await Promise.all(
+    STUDENTS.map(async (student) => {
+      const summary = await getFeeSummary(student.id);
+      return {
+        student,
+        charged: summary.charged,
+        paid: summary.paid,
+        balance: summary.balance,
+      };
+    }),
+  );
+  return rows.sort((a, b) => b.balance - a.balance);
 }
 
 // --- Timetable -------------------------------------------------------------
@@ -743,6 +950,159 @@ export async function updateSystemSettings(
  */
 export async function getBranding(): Promise<SystemSettings["branding"]> {
   return SYSTEM_SETTINGS.branding;
+}
+
+// --- Accounts and credentials ------------------------------------------------
+
+export async function getApplicantAccount(
+  id: string,
+): Promise<ApplicantAccount | null> {
+  return APPLICANT_ACCOUNTS.find((a) => a.id === id) ?? null;
+}
+
+/**
+ * One person, whichever table they live in.
+ *
+ * Sign-in cannot know in advance whether an email belongs to a student, an
+ * applicant or a staff member, so it asks once and gets back what kind of
+ * subject it found along with the hash to check.
+ */
+export interface Credential {
+  kind: "student" | "applicant" | "staff";
+  id: string;
+  email: string;
+  passwordHash?: string;
+  /** False for a suspended staff member or student — checked after the password. */
+  active: boolean;
+}
+
+export async function findCredentialByEmail(
+  email: string,
+): Promise<Credential | null> {
+  const target = email.trim().toLowerCase();
+
+  const student = STUDENTS.find((s) => s.email.toLowerCase() === target);
+  if (student) {
+    return {
+      kind: "student",
+      id: student.id,
+      email: student.email,
+      passwordHash: student.passwordHash,
+      active: student.status !== "suspended",
+    };
+  }
+
+  const staff = STAFF_USERS.find((s) => s.email.toLowerCase() === target);
+  if (staff) {
+    return {
+      kind: "staff",
+      id: staff.id,
+      email: staff.email,
+      passwordHash: staff.passwordHash,
+      active: staff.status === "active",
+    };
+  }
+
+  const applicant = APPLICANT_ACCOUNTS.find((a) => a.email.toLowerCase() === target);
+  if (applicant) {
+    return {
+      kind: "applicant",
+      id: applicant.id,
+      email: applicant.email,
+      passwordHash: applicant.passwordHash,
+      active: applicant.status === "active",
+    };
+  }
+
+  return null;
+}
+
+/** Writes a new hash to whichever table the subject lives in. */
+export async function setPasswordHash(
+  kind: Credential["kind"],
+  id: string,
+  passwordHash: string,
+): Promise<boolean> {
+  if (kind === "student") {
+    const student = STUDENTS.find((s) => s.id === id);
+    if (!student) return false;
+    student.passwordHash = passwordHash;
+    return true;
+  }
+  if (kind === "staff") {
+    const staff = STAFF_USERS.find((s) => s.id === id);
+    if (!staff) return false;
+    staff.passwordHash = passwordHash;
+    return true;
+  }
+  const applicant = APPLICANT_ACCOUNTS.find((a) => a.id === id);
+  if (!applicant) return false;
+  applicant.passwordHash = passwordHash;
+  return true;
+}
+
+/**
+ * Creates an applicant login. Email is the natural key across all three
+ * subject tables — a student must not be able to shadow their own record with
+ * a second applicant account on the same address.
+ */
+export async function createApplicantAccount(
+  email: string,
+  passwordHash: string,
+): Promise<{ account: ApplicantAccount } | { error: string }> {
+  const target = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
+    return { error: "Enter a valid email address." };
+  }
+  if (await findCredentialByEmail(target)) {
+    return { error: "An account already exists for that email address." };
+  }
+
+  const account: ApplicantAccount = {
+    id: nextId("usr"),
+    email: target,
+    passwordHash,
+    status: "active",
+    createdAt: new Date().toISOString(),
+  };
+  APPLICANT_ACCOUNTS.push(account);
+  return { account };
+}
+
+// --- Password resets ---------------------------------------------------------
+
+export async function createPasswordReset(
+  token: PasswordResetToken,
+): Promise<void> {
+  // One live reset per person: issuing a new link invalidates the old one, so
+  // a forwarded or shoulder-surfed earlier email stops working.
+  for (let i = PASSWORD_RESETS.length - 1; i >= 0; i--) {
+    const existing = PASSWORD_RESETS[i];
+    if (
+      existing.subjectKind === token.subjectKind &&
+      existing.subjectId === token.subjectId &&
+      !existing.usedAt
+    ) {
+      PASSWORD_RESETS.splice(i, 1);
+    }
+  }
+  PASSWORD_RESETS.push(token);
+}
+
+/** Unused, unexpired resets only — a spent or stale token is not a match. */
+export async function findPasswordReset(
+  tokenHash: string,
+): Promise<PasswordResetToken | null> {
+  const found = PASSWORD_RESETS.find((t) => t.tokenHash === tokenHash);
+  if (!found) return null;
+  if (found.usedAt) return null;
+  if (new Date(found.expiresAt).getTime() < Date.now()) return null;
+  return found;
+}
+
+export async function consumePasswordReset(tokenHash: string): Promise<void> {
+  const found = PASSWORD_RESETS.find((t) => t.tokenHash === tokenHash);
+  if (found) found.usedAt = new Date().toISOString();
 }
 
 // --- Audit log --------------------------------------------------------------

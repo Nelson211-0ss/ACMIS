@@ -8,7 +8,7 @@ import type { SignInState } from "./actions";
 
 export function SignInForm({
   action,
-  emailLabel = "Email address or student number",
+  emailLabel = "Email address",
   emailPlaceholder = "achol.majok@student.example.ss",
   className,
 }: {
@@ -52,6 +52,7 @@ export function SignInForm({
             type="password"
             autoComplete="current-password"
             placeholder="••••••••"
+            required
           />
         </Field>
       </div>

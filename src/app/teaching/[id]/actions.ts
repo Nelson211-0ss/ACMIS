@@ -9,7 +9,7 @@ import {
   getCourseRoster,
   getSystemSettings,
   logAudit,
-  setCourseResultsPublished,
+  submitResultsForApproval,
   upsertResult,
 } from "@/lib/data/repo";
 import { can } from "@/lib/permissions";
@@ -72,23 +72,44 @@ export async function saveMarks(courseId: string, formData: FormData): Promise<v
   revalidatePath(`/teaching/${courseId}`);
 }
 
-export async function publishCourseResults(courseId: string, formData: FormData): Promise<void> {
+/**
+ * Send a marked class up for sign-off.
+ *
+ * This replaced a "publish" button that put marks in front of students in one
+ * click, by the same person who typed them. A grade is the most consequential
+ * number in here and the easiest to mistype, so it now needs a second person:
+ * the head of department approves on /teaching/approvals, and approving is
+ * what publishes.
+ */
+export async function submitCourseResults(courseId: string): Promise<void> {
   const actor = await requireManageResults();
 
   const course = await getCourse(courseId);
   if (!course) redirect("/teaching");
   requireOwnsCourse(actor, course);
 
-  const published = String(formData.get("published") ?? "true") === "true";
+  const roster = await getCourseRoster(courseId);
+  const marked = roster.filter((r) => r.result !== null).length;
+  if (marked === 0) {
+    redirect(`/teaching/${courseId}?error=` + encodeURIComponent("Enter some marks first."));
+  }
+  if (marked < roster.length) {
+    redirect(
+      `/teaching/${courseId}?error=` +
+        encodeURIComponent(
+          `${roster.length - marked} student(s) still have no mark. Complete the roster before submitting.`,
+        ),
+    );
+  }
 
-  const count = await setCourseResultsPublished(courseId, CURRENT_YEAR, course.semester, published);
+  await submitResultsForApproval(courseId, course.semester, actor.id);
   await logAudit(
     actor.name,
-    `${published ? "Published" : "Withdrew"} results for ${count} student(s)`,
+    `Submitted marks for ${marked} student(s) for approval`,
     course.code,
   );
+
   revalidatePath(`/teaching/${courseId}`);
   revalidatePath("/teaching");
-  revalidatePath("/portal");
-  revalidatePath("/portal/results");
+  revalidatePath("/teaching/approvals");
 }

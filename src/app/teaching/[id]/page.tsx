@@ -4,13 +4,14 @@ import { BookOpen, CheckCircle2 } from "lucide-react";
 import { Card, CardBody, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge, GradeBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
 import { Input } from "@/components/ui/field";
 import { EmptyState } from "@/components/ui/empty";
 import { Table, TableWrap, Td, Th, Tr } from "@/components/ui/table";
 import { currentStaff } from "@/lib/auth";
-import { getCourse, getCourseRoster } from "@/lib/data/repo";
+import { getCourse, getCourseRoster, getResultSubmission } from "@/lib/data/repo";
 import { programmeById } from "@/lib/data/reference";
-import { publishCourseResults, saveMarks } from "./actions";
+import { saveMarks, submitCourseResults } from "./actions";
 
 export const metadata: Metadata = { title: "Course roster" };
 
@@ -32,6 +33,8 @@ export default async function TeachingCoursePage({
   const roster = await getCourseRoster(id);
   const programme = programmeById(course.programmeId);
   const publishedCount = roster.filter((r) => r.result?.published).length;
+  const marked = roster.filter((r) => r.result !== null).length;
+  const submission = await getResultSubmission(id);
 
   return (
     <div className="space-y-5">
@@ -136,22 +139,36 @@ export default async function TeachingCoursePage({
           <Card>
             <CardHeader
               icon={CheckCircle2}
-              title="Publish to students"
-              description={`${publishedCount} of ${roster.length} currently published`}
+              title="Send for approval"
+              description={
+                submission?.status === "pending_approval"
+                  ? "With the head of department. You cannot edit marks that are under review."
+                  : submission?.status === "approved"
+                    ? `Approved and visible to students — ${publishedCount} of ${roster.length} published.`
+                    : `${marked} of ${roster.length} students marked. The head of department publishes once they have signed off.`
+              }
             />
+
+            {submission?.status === "returned" && submission.note ? (
+              <CardBody>
+                <Callout tone="warning" title="Sent back for a correction">
+                  {submission.note}
+                </Callout>
+              </CardBody>
+            ) : null}
+
             <CardFooter className="justify-between">
-              <form action={publishCourseResults.bind(null, id)}>
-                <input type="hidden" name="published" value="true" />
-                <Button type="submit" size="sm">
-                  Publish all entered marks
-                </Button>
-              </form>
-              <form action={publishCourseResults.bind(null, id)}>
-                <input type="hidden" name="published" value="false" />
-                <Button type="submit" variant="secondary" size="sm">
-                  Withdraw publication
-                </Button>
-              </form>
+              {submission?.status === "pending_approval" ? (
+                <Badge tone="gold">Awaiting sign-off</Badge>
+              ) : submission?.status === "approved" ? (
+                <Badge tone="green">Approved and published</Badge>
+              ) : (
+                <form action={submitCourseResults.bind(null, id)}>
+                  <Button type="submit" size="sm" disabled={marked < roster.length}>
+                    Submit {roster.length} marks for approval
+                  </Button>
+                </form>
+              )}
             </CardFooter>
           </Card>
         </>

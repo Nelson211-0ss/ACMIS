@@ -27,9 +27,11 @@ const KIND_TONE: Record<DirectoryUser["kind"], Tone> = {
  */
 const ROLE_TONE: Record<StaffRole, Tone> = {
   super_admin: "gold",
+  head_of_department: "gold",
   registrar: "brand",
   bursar: "brand",
   lecturer: "neutral",
+  it_support: "brand",
   viewer: "neutral",
 };
 

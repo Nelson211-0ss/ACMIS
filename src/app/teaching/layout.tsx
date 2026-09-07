@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Presentation } from "lucide-react";
+import { Presentation, Stamp } from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
@@ -24,7 +25,14 @@ export default async function TeachingLayout({
   if (!staff) redirect("/login");
 
   const settings = await getSystemSettings();
-  if (!can(staff.staffRole, "manage_results", settings)) {
+  // Two different people live here: a lecturer who enters marks, and a head of
+  // department who signs them off. The head does NOT hold manage_results — the
+  // point of the role is that they do not grade — so gating on that one
+  // permission alone would lock them out of the approvals queue.
+  const mayTeach = can(staff.staffRole, "manage_results", settings);
+  const mayApprove = can(staff.staffRole, "approve_results", settings);
+
+  if (!mayTeach && !mayApprove) {
     return (
       <div className="mx-auto max-w-md px-4 py-16">
         <Callout tone="warning" title="Restricted">
@@ -41,6 +49,23 @@ export default async function TeachingLayout({
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Wordmark href="/teaching" />
           <div className="flex shrink-0 items-center gap-2">
+            {mayTeach ? (
+              <Link
+                href="/teaching"
+                className="hidden rounded px-2.5 py-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-sunken sm:inline-flex"
+              >
+                My courses
+              </Link>
+            ) : null}
+            {mayApprove ? (
+              <Link
+                href="/teaching/approvals"
+                className="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-sunken"
+              >
+                <Stamp className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">Approvals</span>
+              </Link>
+            ) : null}
             <Badge tone="gold" className="hidden sm:inline-flex">
               <Presentation className="h-3 w-3" aria-hidden />
               Teaching
