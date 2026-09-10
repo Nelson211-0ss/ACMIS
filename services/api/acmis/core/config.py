@@ -9,11 +9,12 @@ university.
 
 from __future__ import annotations
 
+import json
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import AnyUrl, Field, PostgresDsn, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 Environment = Literal["local", "test", "staging", "production"]
 
@@ -32,7 +33,12 @@ class Settings(BaseSettings):
     #: Origins allowed to call the API with credentials. Every module app is a
     #: distinct origin in development, which is why this is a list and not one
     #: value. In production these are subdomains of the tenant's host.
-    cors_origins: list[str] = Field(
+    #: `NoDecode` because pydantic-settings otherwise tries `json.loads` on
+    #: any list-typed field read from the environment, and fails before
+    #: `_split_origins` below ever runs. Which meant the one place this is
+    #: actually set — a deployment's environment — was the one place a
+    #: comma-separated list did not work, and the process refused to boot.
+    cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [f"http://localhost:{p}" for p in range(3000, 3010)]
     )
     #: Host that serves the control plane UI (tenant provisioning, plan admin).
@@ -137,8 +143,12 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:
+        """Accept `a,b,c`, and a JSON array for anyone who writes one."""
         if isinstance(v, str):
-            return [o.strip() for o in v.split(",") if o.strip()]
+            text = v.strip()
+            if text.startswith("["):
+                return [str(o).strip() for o in json.loads(text) if str(o).strip()]
+            return [o.strip() for o in text.split(",") if o.strip()]
         return v
 
     @property

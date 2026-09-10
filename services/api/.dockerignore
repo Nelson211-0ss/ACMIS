@@ -1,0 +1,16 @@
+# The build context is only what the image needs. `.venv` is the expensive
+# exclusion — several hundred megabytes of macOS-linked wheels that would be
+# both useless and wrong inside a Linux image.
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+tests
+scripts
+openapi.json
+package.json
+node_modules
+.env
+.env.*
