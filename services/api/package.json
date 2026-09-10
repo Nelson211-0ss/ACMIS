@@ -1,0 +1,15 @@
+{
+  "name": "@acmis/api-dev",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turborepo shim so `turbo run dev` also starts the Python API",
+  "scripts": {
+    "dev": "./scripts/dev.sh",
+    "build": "python3 -m compileall -q acmis",
+    "lint": "./scripts/with-venv.sh ruff check acmis tests",
+    "typecheck": "./scripts/with-venv.sh mypy acmis tests",
+    "test": "./scripts/with-venv.sh pytest",
+    "clean": "rm -rf .ruff_cache .mypy_cache .pytest_cache",
+    "format": "./scripts/with-venv.sh ruff format acmis tests"
+  }
+}

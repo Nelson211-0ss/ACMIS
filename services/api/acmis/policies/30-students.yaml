@@ -1,0 +1,140 @@
+policies:
+  - id: students.own-record
+    description: >
+      A student reads their own record and maintains the parts of it that are
+      genuinely theirs: contact details, next of kin, bank details for a
+      stipend. Name, programme, sponsor and date of birth are registry-owned —
+      a student who could edit those could quietly graduate under a different
+      identity, and every one of them requires documentary evidence to change.
+    priority: 100
+    target:
+      subject_kinds: ["student"]
+    rules:
+      - id: read-own
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and matches(action, "(student|enrolment|registration|result|invoice|payment|transcript|timetable|clearance):(read|list)")
+      - id: maintain-own-contact
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action == "student:update"
+        writable_fields: [
+          "phone", "alternate_phone", "personal_email", "postal_address",
+          "residential_address", "next_of_kin_name", "next_of_kin_phone",
+          "next_of_kin_relationship", "bank_account_name", "photo",
+          "emergency_contact_name", "emergency_contact_phone"
+        ]
+      - id: own-registration
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["registration:create", "registration:update",
+                         "registration:submit", "enrolment:create"]
+      - id: no-reading-others
+        effect: deny
+        description: You can only see your own record.
+        condition: >
+          subject.kind == "student"
+          and has(resource, "student_id")
+          and resource.student_id != None
+          and not owns(resource.student_id, subject.student_id)
+
+  - id: students.registry
+    description: The academic registrar's office owns the student record.
+    priority: 100
+    target:
+      resource_types: ["student", "enrolment", "registration", "programme_transfer",
+                       "leave_of_absence", "withdrawal", "student_status_change"]
+    rules:
+      - id: registry-manages
+        effect: permit
+        condition: >
+          "student:manage" in subject.permissions
+          and matches(action, "(student|enrolment|registration|programme_transfer|leave_of_absence|withdrawal|student_status_change):.*")
+          and not matches(action, ".*:(approve|confer)")
+      - id: registrar-approves-status
+        effect: permit
+        sensitive: true
+        condition: >
+          "student:approve_status" in subject.permissions
+          and matches(action, "(programme_transfer|leave_of_absence|withdrawal|student_status_change):approve")
+
+  - id: students.academic-unit-reach
+    description: >
+      A head of department or dean sees the students in their own unit. The
+      comparison is against the *student's* programme, so a lecturer teaching a
+      service course to engineers does not thereby gain the engineering
+      students' full records — for that they get the course-scoped grant in
+      70-assessment.yaml instead.
+    priority: 100
+    target:
+      resource_types: ["student", "enrolment", "registration"]
+    rules:
+      - id: unit-read
+        effect: permit
+        condition: >
+          "student:read_unit" in subject.permissions
+          and (
+            any_in(resource.faculty_ids, subject.faculty_ids)
+            or any_in(resource.department_ids, subject.department_ids)
+            or any_in(resource.programme_ids, subject.programme_ids)
+          )
+          and matches(action, "(student|enrolment|registration):(read|list)")
+        mask_fields: ["national_id", "bank_account_number", "disability_detail",
+                      "hiv_status", "disciplinary_summary", "sponsor_reference"]
+
+  - id: students.special-category
+    description: >
+      Medical, disability and disciplinary records sit behind their own grants
+      and every read of them is logged with the reader's name. The dean who has
+      a legitimate reason to open a disciplinary file should be able to; they
+      should also know that opening it is recorded.
+    priority: 20
+    rules:
+      - id: medical
+        effect: permit
+        sensitive: true
+        condition: >
+          action == "student:read_medical"
+          and any_in(["welfare:medical", "welfare:support"], subject.permissions)
+      - id: disciplinary
+        effect: permit
+        sensitive: true
+        condition: >
+          action in ["student:read_disciplinary", "disciplinary_case:read"]
+          and any_in(["discipline:investigate", "discipline:chair", "student:manage"], subject.permissions)
+      - id: no-general-sensitive
+        effect: deny
+        description: Special-category data requires a specific grant.
+        condition: >
+          action in ["student:read_medical", "student:read_disciplinary"]
+          and not any_in(
+            ["welfare:medical", "welfare:support", "discipline:investigate",
+             "discipline:chair", "student:manage"],
+            subject.permissions)
+
+  - id: students.registration-window
+    description: >
+      Registration closes. After the deadline a student registers only with a
+      late-registration approval, which is a fee event as well as an academic
+      one — hence a rule rather than a disabled button.
+    priority: 15
+    target:
+      resource_types: ["registration"]
+    rules:
+      - id: window-closed
+        effect: deny
+        description: Registration for this semester has closed.
+        condition: >
+          action in ["registration:create", "registration:submit"]
+          and resource.window_state == "closed"
+          and not "registration:override_deadline" in subject.permissions
+      - id: financially-blocked
+        effect: deny
+        description: Registration is blocked until the required fee portion is paid.
+        condition: >
+          action == "registration:submit"
+          and resource.fee_cleared == False
+          and not "registration:override_finance" in subject.permissions

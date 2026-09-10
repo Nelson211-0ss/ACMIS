@@ -1,0 +1,165 @@
+# Late payment: surcharges, instalment plans and reminders.
+#
+# The design position, which the rules exist to hold: an institution has to
+# collect fees, and the levers are a *charge* and a *block*. Charging alone
+# collects less; blocking alone collects nothing and loses the student. So
+# both exist, both are bounded, and both are overridable by a named person
+# for a stated reason — because hardship is real and a system with no
+# override gets one anyway, informally and unrecorded.
+policies:
+  - id: finance.late-payment-terms
+    description: >
+      The terms themselves. Drafted by the bursary, approved like any other
+      fee decision, and readable by students — a surcharge nobody was told
+      about is a surcharge that gets waived on appeal.
+    priority: 100
+    target:
+      resource_types: ["late_payment_rule"]
+    rules:
+      - id: published-terms-are-public
+        effect: permit
+        condition: >
+          resource.status == "approved"
+          and matches(action, "late_payment_rule:(read|list)")
+      - id: bursary-drafts-terms
+        effect: permit
+        condition: >
+          any_in(["finance:post", "finance:approve"], subject.permissions)
+          and matches(action, "late_payment_rule:(create|read|list|update)")
+      - id: bursar-approves-terms
+        effect: permit
+        sensitive: true
+        condition: >
+          "finance:approve" in subject.permissions
+          and action == "late_payment_rule:approve"
+
+  - id: finance.surcharges
+    description: >
+      A surcharge that was actually applied. Applied by the nightly job in the
+      ordinary case, and reversible by a person — because the commonest reason
+      for a wrong surcharge is a payment that had not yet been posted, and the
+      student should not carry the cost of the bank's float.
+    priority: 100
+    target:
+      resource_types: ["penalty_charge"]
+    rules:
+      - id: student-sees-own-surcharges
+        effect: permit
+        description: >
+          With the arithmetic. "You owe 14,000" is disputed; "14 days at
+          1,000 on a balance of 700,000" is paid.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and matches(action, "penalty_charge:(read|list)")
+      - id: bursary-applies-and-reads
+        effect: permit
+        condition: >
+          any_in(["finance:post", "finance:receipt", "finance:approve"],
+                 subject.permissions)
+          and matches(action, "penalty_charge:(create|read|list|apply)")
+      - id: bursar-reverses
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["finance:approve", "finance:waive", "finance:override_block"],
+                 subject.permissions)
+          and matches(action, "penalty_charge:(reverse|waive)")
+        obligations: ["require:reason"]
+
+  - id: finance.surcharge-limits
+    description: >
+      What a surcharge must never do.
+    priority: 7
+    target:
+      resource_types: ["penalty_charge", "invoice"]
+    rules:
+      - id: no-surcharge-under-an-agreed-plan
+        effect: deny
+        sensitive: true
+        description: >
+          This student is paying to an agreed instalment plan and is not
+          late. Surcharging them anyway is the fastest way to make an agreed
+          plan worthless.
+        condition: >
+          action == "penalty_charge:apply"
+          and resource.status == "under_plan"
+      - id: no-reversing-your-own-surcharge
+        effect: deny
+        sensitive: true
+        description: Someone other than the person who applied it must reverse it.
+        condition: >
+          matches(action, "penalty_charge:(reverse|waive)")
+          and owns(resource.applied_by_id, subject.id)
+
+  - id: finance.payment-plans
+    description: >
+      An instalment plan is the institution forgoing its right to block, so
+      it is an approval rather than a self-service action — and once agreed it
+      is the authority that decides whether a student is late at all.
+    priority: 100
+    target:
+      resource_types: ["payment_plan"]
+    rules:
+      - id: student-requests-a-plan
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["payment_plan:create", "payment_plan:read", "payment_plan:list"]
+      - id: bursary-reads-and-drafts
+        effect: permit
+        condition: >
+          any_in(["finance:post", "finance:receipt", "finance:approve"],
+                 subject.permissions)
+          and matches(action, "payment_plan:(create|read|list|update)")
+      - id: bursar-agrees-a-plan
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["finance:approve", "finance:waive"], subject.permissions)
+          and matches(action, "payment_plan:(approve|decline|cancel)")
+        obligations: ["require:reason"]
+      - id: welfare-advocates
+        effect: permit
+        description: >
+          The dean of students and the welfare office raise these for
+          students in difficulty, which is most of where they come from.
+        condition: >
+          any_in(["welfare:support", "student:manage"], subject.permissions)
+          and matches(action, "payment_plan:(create|read|list)")
+      - id: no-approving-own-plan
+        effect: deny
+        sensitive: true
+        description: You cannot approve a plan you requested.
+        condition: >
+          action == "payment_plan:approve"
+          and owns(resource.requested_by_id, subject.id)
+
+  - id: finance.reminders
+    description: >
+      Dunning notices. Recorded rather than merely sent, because "nobody told
+      me" is answered from here and because an escalation ladder with no
+      memory emails the same student every night — which trains them to
+      filter it, and then the notice that mattered goes unread.
+    priority: 100
+    target:
+      resource_types: ["dunning_notice"]
+    rules:
+      - id: student-sees-what-they-were-sent
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and matches(action, "dunning_notice:(read|list)")
+      - id: bursary-sends-reminders
+        effect: permit
+        condition: >
+          any_in(["finance:post", "finance:receipt", "finance:approve"],
+                 subject.permissions)
+          and matches(action, "dunning_notice:(create|read|list|send)")
+      - id: registry-reads-the-ladder
+        effect: permit
+        description: >
+          A student about to be blocked out of examinations is a registry
+          problem before it is a finance one.
+        condition: >
+          any_in(["student:manage", "welfare:support"], subject.permissions)
+          and matches(action, "dunning_notice:(read|list)")

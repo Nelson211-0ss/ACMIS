@@ -1,0 +1,89 @@
+policies:
+  - id: people.self-service
+    description: A member of staff maintains their own contact details and reads their own file.
+    priority: 100
+    target:
+      subject_kinds: ["staff"]
+      resource_types: ["staff", "appointment", "leave_request", "workload", "payslip"]
+    rules:
+      - id: read-own
+        effect: permit
+        condition: >
+          owns(resource.staff_id, subject.staff_id)
+          and matches(action, "(staff|appointment|leave_request|workload|payslip):(read|list)")
+      - id: maintain-own
+        effect: permit
+        condition: owns(resource.staff_id, subject.staff_id) and action == "staff:update"
+        writable_fields: ["phone", "personal_email", "postal_address", "next_of_kin_name",
+                          "next_of_kin_phone", "photo", "biography", "orcid", "publications"]
+      - id: own-leave
+        effect: permit
+        condition: >
+          owns(resource.staff_id, subject.staff_id)
+          and action in ["leave_request:create", "leave_request:cancel", "leave_request:read"]
+      - id: no-approving-own-leave
+        effect: deny
+        description: Your own leave must be approved by your supervisor.
+        condition: >
+          action == "leave_request:approve" and owns(resource.staff_id, subject.staff_id)
+
+  - id: people.line-management
+    description: A head of unit approves leave and workload for their own unit only.
+    priority: 100
+    target:
+      resource_types: ["leave_request", "workload", "appointment", "staff"]
+    rules:
+      - id: unit-head
+        effect: permit
+        condition: >
+          "people:manage_unit" in subject.permissions
+          and (any_in(resource.department_ids, subject.department_ids)
+               or any_in(resource.faculty_ids, subject.faculty_ids))
+          and action in ["leave_request:approve", "leave_request:reject",
+                         "leave_request:read", "leave_request:list",
+                         "workload:assign", "workload:read", "workload:list",
+                         "staff:read", "staff:list"]
+        mask_fields: ["salary_scale", "gross_salary_minor", "bank_account_number",
+                      "national_id", "medical_notes"]
+
+  - id: people.human-resources
+    description: HR owns appointments, contracts and the establishment.
+    priority: 100
+    target:
+      resource_types: ["staff", "appointment", "contract", "establishment_post",
+                       "qualification", "disciplinary_case", "leave_request"]
+    rules:
+      - id: hr-officer
+        effect: permit
+        condition: >
+          "people:admin" in subject.permissions
+          and matches(action, "(staff|appointment|contract|establishment_post|qualification|leave_request):.*")
+          and not matches(action, ".*:(approve|read_payroll)")
+      - id: hr-director-approves
+        effect: permit
+        sensitive: true
+        condition: >
+          "people:approve" in subject.permissions
+          and matches(action, "(appointment|contract|establishment_post|promotion):approve")
+
+  - id: people.payroll-confidentiality
+    description: >
+      Salary is read by payroll and by the individual. Not by deans, not by
+      heads of department, not by the registry — the masks above are why, and
+      this is the explicit grant that lifts them for the two who need it.
+    priority: 18
+    rules:
+      - id: payroll-read
+        effect: permit
+        sensitive: true
+        condition: >
+          action == "staff:read_payroll"
+          and ("people:payroll" in subject.permissions
+               or owns(resource.staff_id, subject.staff_id))
+      - id: default-deny-payroll
+        effect: deny
+        description: Salary information requires a payroll grant.
+        condition: >
+          action == "staff:read_payroll"
+          and not "people:payroll" in subject.permissions
+          and not owns(resource.staff_id, subject.staff_id)

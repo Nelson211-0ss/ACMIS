@@ -1,0 +1,137 @@
+policies:
+  - id: curriculum.authoring
+    description: >
+      A curriculum is drafted in the department, recommended by the faculty
+      board, approved by Senate and only then may students be registered onto
+      it. Each of those is a different grant, because the whole value of the
+      approval chain is that the person who wrote the programme is not the
+      person who approved it.
+    priority: 100
+    target:
+      resource_types: ["programme", "curriculum_version", "course", "course_offering",
+                       "prerequisite", "assessment_scheme"]
+    rules:
+      - id: department-drafts
+        effect: permit
+        condition: >
+          "curriculum:author" in subject.permissions
+          and any_in(resource.department_ids, subject.department_ids)
+          and resource.status in ["draft", "returned"]
+          and matches(action, "(programme|curriculum_version|course|prerequisite|assessment_scheme):(create|read|list|update|submit)")
+      - id: faculty-recommends
+        effect: permit
+        condition: >
+          "curriculum:recommend" in subject.permissions
+          and any_in(resource.faculty_ids, subject.faculty_ids)
+          and resource.status == "submitted"
+          and action in ["curriculum_version:recommend", "curriculum_version:return",
+                         "programme:recommend", "programme:return"]
+      - id: senate-approves
+        effect: permit
+        sensitive: true
+        condition: >
+          "curriculum:approve" in subject.permissions
+          and resource.status == "recommended"
+          and matches(action, "(programme|curriculum_version):(approve|reject)")
+      - id: read-approved
+        effect: permit
+        description: An approved curriculum is public inside the institution.
+        condition: >
+          subject.kind in ["staff", "student"]
+          and resource.status == "approved"
+          and matches(action, "(programme|curriculum_version|course|course_offering|prerequisite|assessment_scheme):(read|list)")
+
+  - id: curriculum.immutability
+    description: >
+      An approved curriculum version is frozen. Changing the credit weighting
+      of a course a cohort has already sat retroactively changes their CGPA —
+      so a change is a *new version* with its own effective date, never an edit.
+    priority: 12
+    target:
+      resource_types: ["curriculum_version", "course", "assessment_scheme"]
+    rules:
+      - id: no-editing-approved
+        effect: deny
+        description: An approved curriculum version cannot be edited; create a new version.
+        condition: >
+          resource.status == "approved"
+          and action in ["curriculum_version:update", "course:update",
+                         "assessment_scheme:update", "curriculum_version:delete"]
+      - id: no-retiring-in-use
+        effect: deny
+        description: This course has live registrations and cannot be retired mid-semester.
+        condition: >
+          action == "course:retire"
+          and resource.active_registrations > 0
+
+  - id: curriculum.timetabling
+    description: Timetabling is a scheduling office function with a faculty veto.
+    priority: 100
+    target:
+      resource_types: ["timetable_slot", "room", "exam_sitting"]
+    rules:
+      - id: scheduler
+        effect: permit
+        condition: >
+          "timetable:manage" in subject.permissions
+          and matches(action, "(timetable_slot|room|exam_sitting):.*")
+      - id: faculty-view
+        effect: permit
+        condition: >
+          subject.kind in ["staff", "student"]
+          and matches(action, "(timetable_slot|room|exam_sitting):(read|list)")
+
+  - id: curriculum.offerings-and-allocation
+    description: >
+      Standing up a semester: creating the offerings a course runs as, and
+      allocating the staff who teach them. Timetabling does the work, the
+      department owns the allocation, and neither is a curriculum change — an
+      offering is an instance of an approved course, so it does not go back to
+      Senate.
+
+      This matters more than it looks: `assigned_course_offering_ids` comes
+      from the allocation, and that is what authorises mark entry. Whoever
+      allocates teaching decides who can enter marks.
+    priority: 100
+    target:
+      resource_types: ["course_offering"]
+    rules:
+      - id: timetabling-creates-offerings
+        effect: permit
+        condition: >
+          any_in(["timetable:manage", "curriculum:author", "student:manage"],
+                 subject.permissions)
+          and action in ["course_offering:create", "course_offering:update",
+                         "course_offering:read", "course_offering:list"]
+      - id: department-allocates-teaching
+        effect: permit
+        sensitive: true
+        description: >
+          Allocating teaching grants mark entry, so it is scoped to the unit
+          that owns the offering rather than available institution-wide.
+        condition: >
+          any_in(["people:manage_unit", "timetable:manage", "curriculum:author"],
+                 subject.permissions)
+          and (
+            any_in(resource.department_ids, subject.department_ids)
+            or any_in(resource.faculty_ids, subject.faculty_ids)
+            or "student:manage" in subject.permissions
+          )
+          and action == "course_offering:allocate"
+      - id: generate-mark-sheet
+        effect: permit
+        description: >
+          Generating the mark sheet for an offering. Deliberately not limited
+          to the lecturer: the examinations office generates sheets in bulk
+          before a marking window opens, and a sheet that does not exist is
+          the usual reason marks arrive late on paper.
+        condition: >
+          any_in(["results:enter", "results:moderate", "student:manage",
+                  "award:prepare"], subject.permissions)
+          and (
+            any_in([resource.id], subject.assigned_course_offering_ids)
+            or any_in(resource.department_ids, subject.department_ids)
+            or any_in(resource.faculty_ids, subject.faculty_ids)
+            or "student:manage" in subject.permissions
+          )
+          and action == "mark_sheet:create"

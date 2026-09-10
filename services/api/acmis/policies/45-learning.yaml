@@ -1,0 +1,328 @@
+policies:
+  - id: learning.teaching-space
+    description: >
+      The staff allocated to teach an offering own its space: they publish
+      material, author assessments and mark them. Authority follows the
+      teaching allocation, exactly as it does for mark entry, so it lapses
+      when a part-time contract ends.
+    priority: 100
+    target:
+      resource_types: ["course_space", "material", "online_assessment",
+                       "assessment_item", "assignment", "question", "question_bank"]
+    rules:
+      - id: allocated-staff-teaches
+        effect: permit
+        condition: >
+          "results:enter" in subject.permissions
+          and any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+          and matches(action, "(course_space|material|online_assessment|assessment_item|assignment):.*")
+          and not matches(action, ".*:(review|release|push_marks)")
+      - id: department-authors-banks
+        effect: permit
+        description: A question bank is departmental property, not one lecturer's.
+        condition: >
+          any_in(["results:enter", "curriculum:author"], subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and matches(action, "(question|question_bank):(create|read|list|update)")
+      - id: shared-bank-read
+        effect: permit
+        condition: >
+          "results:enter" in subject.permissions
+          and resource.is_shared == True
+          and matches(action, "(question|question_bank):(read|list)")
+      - id: unit-head-oversight
+        effect: permit
+        condition: >
+          any_in(["results:board_approve", "results:moderate"], subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and matches(action, "(course_space|material|online_assessment|assignment|question):(read|list)")
+
+  - id: learning.paper-review
+    description: >
+      A paper is reviewed by someone other than its author before candidates
+      see it. A typo in a stem is a complaint; a wrong answer key is an appeal
+      across a whole cohort, and the author is the last person able to spot it.
+    priority: 7
+    target:
+      resource_types: ["online_assessment"]
+    rules:
+      - id: no-self-review
+        effect: deny
+        sensitive: true
+        description: An assessment must be reviewed by someone other than its author.
+        condition: >
+          action == "online_assessment:review"
+          and resource.authored_by_id == subject.id
+      - id: reviewer
+        effect: permit
+        condition: >
+          any_in(["results:moderate", "results:board_approve"], subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and resource.status == "review"
+          and action in ["online_assessment:review", "online_assessment:read"]
+
+  - id: learning.answer-key-confidentiality
+    description: >
+      Nobody reads an answer key while a paper is live. The whole integrity of
+      an online sitting rests on this one prohibition — a leaked key is a
+      re-sit for the entire cohort, and the most likely leak is an
+      over-permissive read endpoint rather than a person.
+    priority: 9
+    target:
+      resource_types: ["question", "online_assessment"]
+    rules:
+      - id: never-to-students
+        effect: deny
+        sensitive: true
+        description: Answer keys are not visible to candidates.
+        condition: >
+          subject.kind in ["student", "applicant", "service"]
+          and action in ["question:read_answer_key", "online_assessment:read_paper"]
+      - id: not-while-open
+        effect: deny
+        sensitive: true
+        description: The answer key is sealed while the assessment is open.
+        condition: >
+          action == "question:read_answer_key"
+          and resource.assessment_status in ["open", "scheduled"]
+          and not "results:moderate" in subject.permissions
+
+  - id: learning.student-access
+    description: >
+      A student reads the material and sits the assessments for the courses
+      they are registered for, and sees a score only once it is released.
+    priority: 100
+    target:
+      subject_kinds: ["student"]
+      resource_types: ["course_space", "material", "online_assessment",
+                       "assessment_attempt", "assignment", "assignment_submission"]
+    rules:
+      - id: read-published-material
+        effect: permit
+        condition: >
+          resource.is_registered == True
+          and resource.is_available == True
+          and matches(action, "(course_space|material):(read|list|download)")
+      - id: unpublished-hidden
+        effect: deny
+        description: This material has not been published yet.
+        condition: >
+          resource.is_available == False
+          and matches(action, "material:(read|download)")
+      - id: not-registered
+        effect: deny
+        description: You are not registered for this course.
+        condition: >
+          resource.is_registered == False
+          and matches(action, "(course_space|material|online_assessment|assignment):(read|list|download|start)")
+      - id: sit-open-assessment
+        effect: permit
+        condition: >
+          resource.is_registered == True
+          and resource.is_open == True
+          and action in ["online_assessment:read", "online_assessment:start",
+                         "assessment_attempt:save", "assessment_attempt:submit"]
+      - id: work-on-own-attempt
+        effect: permit
+        description: >
+          The candidate saves and submits their own sitting. Separate from
+          `sit-open-assessment` because that rule reads the *assessment* — is
+          it open, are they registered — while these two actions are taken
+          against the *attempt*, which publishes neither. Registration and the
+          window were settled when the attempt was started, the server-side
+          expiry governs the deadline, and `learning.attempt-integrity`
+          freezes the attempt the moment it is submitted.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and resource.status == "in_progress"
+          and action in ["assessment_attempt:save", "assessment_attempt:submit"]
+
+      - id: own-attempt-only
+        effect: deny
+        description: You can only see your own attempt.
+        condition: >
+          has(resource, "student_id")
+          and resource.student_id != None
+          and subject.student_id != None
+          and not owns(resource.student_id, subject.student_id)
+      - id: read-own-work
+        effect: permit
+        description: >
+          A candidate reads their own sitting whether or not the marks are
+          out: that they sat it, when, and whether it is submitted are their
+          own record. The *score* is a separate action
+          (`assessment_attempt:read_score`) and stays sealed until release by
+          the rule below — a candidate who cannot see their own submission
+          receipt rings the examinations office instead.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["assessment_attempt:read", "assignment_submission:read"]
+      - id: unreleased-score-hidden
+        effect: deny
+        description: This score has not been released yet.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and resource.score_visible == False
+          and action in ["assessment_attempt:read_score", "assignment_submission:read_score"]
+      - id: submit-own-assignment
+        effect: permit
+        condition: >
+          resource.is_registered == True
+          and action in ["assignment:read", "assignment_submission:create",
+                         "assignment_submission:update"]
+
+  - id: learning.attempt-integrity
+    description: >
+      An attempt in progress belongs to the candidate sitting it. Nobody
+      changes an answer once submitted, and voiding an attempt is a
+      malpractice finding rather than a correction.
+    priority: 11
+    target:
+      resource_types: ["assessment_attempt", "assessment_response"]
+    rules:
+      - id: no-editing-submitted
+        effect: deny
+        sensitive: true
+        description: A submitted attempt cannot be altered.
+        condition: >
+          resource.status in ["submitted", "marked", "expired"]
+          and action in ["assessment_attempt:save", "assessment_attempt:submit"]
+      - id: no-marking-own-attempt
+        effect: deny
+        sensitive: true
+        description: You cannot mark your own attempt.
+        condition: >
+          matches(action, "assessment_(attempt|response):mark")
+          and subject.student_id != None
+          and owns(resource.student_id, subject.student_id)
+      - id: void-requires-finding
+        effect: deny
+        sensitive: true
+        description: Voiding an attempt requires a malpractice finding.
+        condition: >
+          action == "assessment_attempt:void"
+          and not any_in(["discipline:chair", "results:senate_approve"], subject.permissions)
+
+  - id: learning.marking
+    description: >
+      Marking a human-marked answer is a teaching act, and it is scoped to the
+      staff who teach the course. Blind marking is honoured by not returning
+      the candidate's identity, not merely by asking markers not to look.
+    priority: 100
+    target:
+      resource_types: ["assessment_attempt", "assessment_response",
+                       "assignment_submission"]
+    rules:
+      - id: allocated-staff-marks
+        effect: permit
+        condition: >
+          "results:enter" in subject.permissions
+          and any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+          and matches(action, "(assessment_attempt|assessment_response|assignment_submission):(read|list|mark)")
+        mask_fields: ["student_id", "student_name", "student_number"]
+      - id: moderator-reads
+        effect: permit
+        condition: >
+          "results:moderate" in subject.permissions
+          and any_in(resource.department_ids, subject.department_ids)
+          and matches(action, "(assessment_attempt|assignment_submission):(read|list)")
+      - id: second-marker
+        effect: permit
+        condition: >
+          "results:enter" in subject.permissions
+          and resource.marked_by_id != None
+          and not owns(resource.marked_by_id, subject.id)
+          and action == "assignment_submission:second_mark"
+
+  - id: learning.release-and-push
+    description: >
+      Releasing scores to candidates, and writing them into the academic
+      record, are separate acts with separate grants. The push writes a
+      component score onto a draft mark sheet and nothing else — the approval
+      chain still governs every mark that reaches a transcript.
+    priority: 100
+    target:
+      resource_types: ["online_assessment", "assignment"]
+    rules:
+      - id: release-scores
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["results:enter", "results:moderate"], subject.permissions)
+          and any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+          and resource.status in ["marked", "closed"]
+          and matches(action, "(online_assessment|assignment):release")
+        obligations: ["notify:students"]
+      - id: push-to-mark-sheet
+        effect: permit
+        sensitive: true
+        condition: >
+          "results:enter" in subject.permissions
+          and any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+          and resource.status == "released"
+          and matches(action, "(online_assessment|assignment):push_marks")
+        obligations: ["audit:mark_entry"]
+      - id: no-push-to-locked-sheet
+        effect: deny
+        sensitive: true
+        description: >
+          The mark sheet has left draft. Corrections after submission go
+          through moderation, not through the assessment tool.
+        condition: >
+          matches(action, "(online_assessment|assignment):push_marks")
+          and resource.mark_sheet_status != "draft"
+          and resource.mark_sheet_status != None
+
+  - id: learning.engagement-privacy
+    description: >
+      Engagement data — what a student opened and for how long — is a
+      pastoral tool, not a surveillance one. It is readable in aggregate by
+      the teaching staff and per student by the people whose job is to
+      intervene, and never by anyone else.
+    priority: 30
+    target:
+      resource_types: ["engagement_snapshot", "material_view"]
+    rules:
+      - id: teaching-staff-aggregate
+        effect: permit
+        condition: >
+          "results:enter" in subject.permissions
+          and any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+          and action in ["engagement_snapshot:list", "engagement_snapshot:read"]
+      - id: pastoral-per-student
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["welfare:support", "student:manage"], subject.permissions)
+          and action in ["engagement_snapshot:read", "material_view:read"]
+      - id: own-engagement
+        effect: permit
+        condition: >
+          subject.kind == "student"
+          and owns(resource.student_id, subject.student_id)
+          and matches(action, "(engagement_snapshot|material_view):read")
+      - id: not-for-discipline
+        effect: deny
+        sensitive: true
+        description: >
+          Engagement data is not evidence in a disciplinary case. A shared
+          laptop and an empty data bundle look identical to a missing student.
+        condition: >
+          action in ["engagement_snapshot:read", "material_view:read"]
+          and environment.module == "discipline"
+
+  - id: learning.engagement-capture
+    description: >
+      Taking the weekly engagement snapshot. A computation over material views
+      and submissions, not a judgement about anyone, and the risk bands it
+      produces are what `learning.engagement-privacy` then protects.
+    priority: 100
+    target:
+      resource_types: ["engagement_snapshot"]
+    rules:
+      - id: capture-a-snapshot
+        effect: permit
+        condition: >
+          any_in(["learning:read_engagement", "results:enter", "welfare:support"],
+                 subject.permissions)
+          and action in ["engagement_snapshot:capture", "engagement_snapshot:read"]

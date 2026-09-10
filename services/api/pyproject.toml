@@ -1,0 +1,102 @@
+[project]
+name = "acmis-api"
+version = "1.0.0"
+description = "ACMIS — multi-tenant Academic Management Information System, monolithic API"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115.6",
+  "uvicorn[standard]>=0.34.0",
+  "sqlalchemy>=2.0.36",
+  "alembic>=1.14.0",
+  "psycopg[binary,pool]>=3.2.3",
+  "pydantic>=2.10.4",
+  "pydantic-settings>=2.7.1",
+  "python-jose[cryptography]>=3.3.0",
+  "argon2-cffi>=23.1.0",
+  "python-multipart>=0.0.20",
+  "email-validator>=2.2.0",
+  "httpx>=0.28.1",
+  "structlog>=24.4.0",
+  "orjson>=3.10.13",
+  "redis>=5.2.1",
+  "tenacity>=9.0.0",
+  "python-slugify>=8.0.4",
+  "pyyaml>=6.0.2",
+  "boto3>=1.35.90",
+  "openpyxl>=3.1.5",
+  "weasyprint>=63.1",
+  "jinja2>=3.1.5",
+  "celery[redis]>=5.4.0",
+  "prometheus-fastapi-instrumentator>=7.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.4",
+  "pytest-asyncio>=0.25.2",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.9.2",
+  "mypy>=1.14.1",
+  "types-python-slugify",
+  "types-pyyaml",
+  "faker>=33.3.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["acmis"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM", "TC", "RUF", "ASYNC", "S"]
+ignore = [
+  # `assert` is how the tests are written.
+  "S101",
+  # FastAPI's whole dependency-injection design is `Depends()` in a default
+  # argument. This rule is correct in general and wrong for this framework.
+  "B008",
+  # Mutable class attributes: our SQLAlchemy models and Pydantic settings use
+  # them deliberately, and the ORM/`Field` machinery handles the sharing.
+  "RUF012",
+  # The typing-only-import family. Correct for most codebases and actively
+  # harmful here: Pydantic and FastAPI resolve annotations *at runtime* to
+  # build validators, response models and dependencies, so moving `uuid`,
+  # `datetime` or `Session` behind `TYPE_CHECKING` turns a working endpoint
+  # into a `NameError` on the first request. Enabling these would trade a
+  # negligible import cost for a class of runtime failure.
+  "TC001",
+  "TC002",
+  "TC003",
+  # Exception names. `raise NotFound()` and `raise Conflict()` read better at
+  # the call site than `NotFoundError`, and every one of them subclasses
+  # `ACMISError`, which does carry the suffix.
+  "N818",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106"]
+"alembic/*" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+# FastAPI and SQLAlchemy decorators are untyped by design.
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+# `python-jose` ships no type information and has no stub package on PyPI.
+# Declared here rather than as a per-import ignore so it is one decision in
+# one place, and so a future stubs release is a one-line removal.
+module = ["jose", "jose.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

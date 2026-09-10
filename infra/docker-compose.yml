@@ -1,0 +1,81 @@
+# Local development stack.
+#
+# One Postgres cluster holding the control-plane database and every tenant
+# database. That is also how a small production deployment starts; the point of
+# database-per-tenant is that moving a university to its own cluster later is a
+# DSN change on one row, not a migration.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: acmis-postgres
+    environment:
+      POSTGRES_USER: acmis
+      POSTGRES_PASSWORD: acmis
+      POSTGRES_DB: acmis_control
+      # Explicit so `CREATE DATABASE ... LC_COLLATE 'en_US.UTF-8'` in
+      # provisioning works against the alpine image, which defaults to C.
+      POSTGRES_INITDB_ARGS: "--locale=en_US.UTF-8 --encoding=UTF8"
+      LANG: en_US.utf8
+    ports: ["5432:5432"]
+    volumes:
+      - acmis-pgdata:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    command:
+      # A tenant engine holds up to 10 connections and 64 engines stay hot, so
+      # the ceiling has to be sized alongside `ACMIS_TENANT_ENGINE_CACHE_SIZE`.
+      - "postgres"
+      - "-c"
+      - "max_connections=400"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "log_min_duration_statement=500"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acmis -d acmis_control"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: acmis-redis
+    ports: ["6379:6379"]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - acmis-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    # S3-compatible storage for uploaded documents. Certificates, transcripts
+    # and identity scans never go in Postgres — only their keys and hashes do.
+    image: minio/minio:latest
+    container_name: acmis-minio
+    environment:
+      MINIO_ROOT_USER: acmis
+      MINIO_ROOT_PASSWORD: acmis-dev-secret
+    ports: ["9000:9000", "9001:9001"]
+    command: ["server", "/data", "--console-address", ":9001"]
+    volumes:
+      - acmis-miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    # Catches every outbound email in development. Password resets and results
+    # notifications are easier to verify when they land somewhere visible than
+    # when they are logged and dropped.
+    image: axllent/mailpit:latest
+    container_name: acmis-mailpit
+    ports: ["1025:1025", "8025:8025"]
+
+volumes:
+  acmis-pgdata:
+  acmis-redisdata:
+  acmis-miniodata:

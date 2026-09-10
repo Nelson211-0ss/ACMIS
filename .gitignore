@@ -1,22 +1,35 @@
 node_modules/
 .next/
 out/
-build/
 dist/
+.turbo/
+coverage/
 
+# env
 .env
-.env.local
 .env*.local
+!.env.example
 
-*.tsbuildinfo
-next-env.d.ts
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
 
+# editors / os
 .DS_Store
-Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
 
-npm-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# generated
+packages/api-client/src/generated/
+services/api/openapi.json
+*.tsbuildinfo
+next-env.d.ts
+reference/

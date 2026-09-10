@@ -1,0 +1,150 @@
+policies:
+  - id: admissions.applicant-own-application
+    description: An applicant works on their own application, until they submit it.
+    priority: 100
+    target:
+      subject_kinds: ["applicant"]
+      resource_types: ["application", "application_document", "application_choice"]
+    rules:
+      - id: read-own
+        effect: permit
+        condition: owns(resource.applicant_id, subject.applicant_id)
+      - id: edit-own-draft
+        effect: permit
+        description: A draft is the applicant's to change.
+        condition: >
+          owns(resource.applicant_id, subject.applicant_id)
+          and resource.status == "draft"
+          and action in ["application:update", "application:submit",
+                         "application_document:upload", "application_document:delete",
+                         "application_choice:update"]
+      - id: no-edit-after-submission
+        effect: deny
+        description: A submitted application can only be changed by the admissions office.
+        condition: >
+          owns(resource.applicant_id, subject.applicant_id)
+          and resource.status != "draft"
+          and matches(action, "application.*:(update|delete|submit)")
+
+  - id: admissions.office
+    description: The admissions office runs the cycle.
+    priority: 100
+    target:
+      resource_types: ["application", "admission_scheme", "programme_intake",
+                       "application_document", "selection_list", "offer"]
+    rules:
+      - id: officer-processes-applications
+        effect: permit
+        condition: >
+          "admissions:process" in subject.permissions
+          and matches(action, "(application|application_document|selection_list):.*")
+          and not matches(action, ".*:(approve|publish|confer)")
+      - id: head-publishes-scheme
+        effect: permit
+        sensitive: true
+        condition: >
+          "admissions:manage_scheme" in subject.permissions
+          and matches(action, "(admission_scheme|programme_intake):.*")
+      - id: head-approves-selection
+        effect: permit
+        sensitive: true
+        description: Only the head of admissions approves a selection list.
+        condition: >
+          "admissions:approve_selection" in subject.permissions
+          and action in ["selection_list:approve", "offer:issue", "offer:withdraw"]
+      - id: approver-may-read
+        effect: permit
+        description: >
+          An approver can read what they are approving. The conflict table
+          deliberately keeps `admissions:approve_selection` apart from
+          `admissions:process` — the person who prepares a merit list must not
+          be the person who signs it — but that separates *acting* from
+          *approving*, not approving from seeing. Without this rule a head of
+          admissions could sign a list they were unable to open.
+        condition: >
+          any_in(["admissions:approve_selection", "admissions:manage_scheme"],
+                 subject.permissions)
+          and matches(action, "(application|selection_list|offer|admission_scheme|programme_intake):(read|list)")
+        mask_fields: ["disability_detail", "refugee_status", "hiv_status"]
+
+  - id: admissions.faculty-review
+    description: >
+      A faculty reviews applications ranked to its own programmes and no others.
+      Reach is decided by the applicant's programme choice, not by the reviewer's
+      title, so a dean of Science cannot read the Law intake.
+    priority: 100
+    target:
+      resource_types: ["application"]
+    rules:
+      - id: review-own-faculty
+        effect: permit
+        condition: >
+          "admissions:review" in subject.permissions
+          and any_in(resource.faculty_ids, subject.faculty_ids)
+          and action in ["application:read", "application:list", "application:score",
+                         "application:recommend", "application:comment"]
+        mask_fields: ["national_id", "sponsor_bank_account", "disability_detail"]
+
+  - id: admissions.intake-capacity
+    description: >
+      An offer may not exceed a programme's approved intake. This is a policy
+      and not just a database check because the exception is real — the
+      admissions board over-admits deliberately for expected declines — and it
+      must be an *authorised* exception with a name attached to it.
+    priority: 10
+    target:
+      resource_types: ["offer"]
+    rules:
+      - id: no-over-admission
+        effect: deny
+        description: This programme's approved intake is already filled.
+        condition: >
+          action == "offer:issue"
+          and resource.offers_issued >= resource.approved_intake
+          and not "admissions:override_intake" in subject.permissions
+
+  - id: admissions.applicant-privacy
+    description: >
+      Applicant special-category data — disability disclosure, refugee status,
+      national ID — is read by the admissions office and the disability support
+      officer, and by nobody else, including deans reviewing the application.
+    priority: 20
+    target:
+      resource_types: ["application", "applicant"]
+    rules:
+      - id: sensitive-read
+        effect: permit
+        sensitive: true
+        condition: >
+          action in ["applicant:read_sensitive", "application:read_sensitive"]
+          and any_in(["admissions:read_sensitive", "welfare:support"], subject.permissions)
+      - id: default-mask
+        effect: permit
+        condition: >
+          action in ["application:read", "application:list"]
+          and "admissions:process" in subject.permissions
+        mask_fields: ["disability_detail", "refugee_status", "hiv_status"]
+
+  - id: admissions.offer-response
+    description: >
+      An applicant accepts or declines their own offer. The single most
+      important self-service action in admissions: the alternative is an
+      officer keying in a decision reported by telephone, which is both slower
+      and unauditable.
+    priority: 100
+    target:
+      resource_types: ["offer"]
+    rules:
+      - id: applicant-responds-to-own-offer
+        effect: permit
+        condition: >
+          owns(resource.applicant_id, subject.applicant_id)
+          and action in ["offer:respond", "offer:read"]
+      - id: office-records-a-response
+        effect: permit
+        description: >
+          A response received by post or in person is recorded by the office,
+          which is why this is not applicant-only.
+        condition: >
+          any_in(["admissions:process", "admissions:review"], subject.permissions)
+          and action in ["offer:respond", "offer:read", "offer:list"]

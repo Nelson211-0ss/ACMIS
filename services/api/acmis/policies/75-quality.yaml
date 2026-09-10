@@ -1,0 +1,351 @@
+# Quality assurance: attendance, evaluations, observations and audits.
+#
+# Three boundaries do most of the work here, and each exists because the
+# alternative destroys the data it is meant to protect:
+#
+# 1. **Evaluation anonymity.** A student who believes their lecturer can work
+#    out who wrote a comment does not write one. Responses carry no identity
+#    at all, and no breakdown is shown below the reporting threshold.
+# 2. **Results before opinions.** A lecturer must not read their students'
+#    evaluations while still holding their marks. That is not distrust; it is
+#    removing a conflict nobody should have to navigate.
+# 3. **Observation is developmental.** An observation is for the person
+#    observed. One commissioned for a promotion decision is a different
+#    document with a different readership, and blurring the two stops staff
+#    volunteering for observation at all.
+policies:
+  - id: quality.registers
+    description: >
+      Marking a class register. The lecturer who taught the session marks it;
+      the student sees their own attendance and may dispute it. A register
+      that has been closed is corrected only through the dispute path — the
+      database enforces this too, and the policy refuses it earlier so the
+      caller gets a reason rather than a constraint error.
+    priority: 100
+    target:
+      resource_types: ["class_session", "session_attendance"]
+    rules:
+      - id: teaching-staff-mark-the-register
+        effect: permit
+        condition: >
+          "results:enter" in subject.permissions
+          and any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+          and matches(action, "(class_session|session_attendance):(create|read|list|update|mark|close)")
+      - id: unit-head-sees-delivery
+        effect: permit
+        description: >
+          Whether classes are actually happening is the head of department's
+          business — it is the one measure of teaching delivery that is not
+          self-reported.
+        condition: >
+          any_in(["people:manage_unit", "results:moderate", "quality:review"],
+                 subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and matches(action, "(class_session|session_attendance):(read|list)")
+      - id: student-sees-own-attendance
+        effect: permit
+        description: >
+          And disputes it. Attendance gates examinations, so a student who
+          cannot see their own record finds out they are barred in the week of
+          the paper.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["session_attendance:read", "session_attendance:list",
+                         "session_attendance:dispute"]
+      - id: student-marks-own-presence
+        effect: permit
+        description: >
+          Self-service check-in, where the institution uses it. Recorded with
+          its method, because a tap from a phone is not a roll call and a
+          dispute turns on which one it was.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action == "session_attendance:check_in"
+          and resource.register_closed == False
+      - id: registry-reads-attendance
+        effect: permit
+        condition: >
+          any_in(["student:manage", "reporting:run", "award:prepare"], subject.permissions)
+          and matches(action, "(class_session|session_attendance):(read|list)")
+
+  - id: quality.register-integrity
+    priority: 8
+    target:
+      resource_types: ["session_attendance", "class_session"]
+    rules:
+      - id: no-quiet-change-after-closing
+        effect: deny
+        sensitive: true
+        description: >
+          This register is closed. A correction has to go through the dispute
+          path, which records who changed it and why.
+        condition: >
+          resource.register_closed == True
+          and action in ["session_attendance:update", "session_attendance:mark",
+                         "class_session:update"]
+          and not "student:manage" in subject.permissions
+
+  - id: quality.staff-attendance
+    description: >
+      Duty attendance, where the institution records it — a clinical rota, a
+      part-timer paid by the session, an invigilation roster. Deliberately not
+      a general time clock for academics: clocking a lecturer in measures
+      presence, and it is teaching the institution is accountable for.
+    priority: 100
+    target:
+      resource_types: ["staff_attendance"]
+    rules:
+      - id: staff-see-own-attendance
+        effect: permit
+        condition: >
+          owns(resource.staff_id, subject.staff_id)
+          and matches(action, "staff_attendance:(read|list)")
+      - id: unit-head-records-duty
+        effect: permit
+        condition: >
+          any_in(["people:manage_unit", "people:admin"], subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and matches(action, "staff_attendance:(create|read|list|update)")
+      - id: no-claiming-your-own-payable-session
+        effect: deny
+        sensitive: true
+        description: >
+          A member of staff cannot record their own payable attendance. The
+          claim and the authorisation are the same act otherwise, which for a
+          session-paid contract is money.
+        condition: >
+          action == "staff_attendance:create"
+          and owns(resource.staff_id, subject.staff_id)
+          and resource.payable == True
+      - id: payroll-reads-payable-sessions
+        effect: permit
+        description: >
+          A session-paid contract is paid from this. The link is what stops a
+          part-timer being paid twice, or not at all.
+        condition: >
+          "people:payroll" in subject.permissions
+          and matches(action, "staff_attendance:(read|list|approve_for_payroll)")
+
+  - id: quality.evaluations
+    description: >
+      Course and teaching evaluations. Students answer anonymously within a
+      window; results are sealed until after the marking deadline; the
+      lecturer writes a reflection and the department an action plan.
+    priority: 100
+    target:
+      resource_types: ["course_evaluation", "evaluation_instrument", "evaluation_response",
+                       "evaluation_invitation"]
+    rules:
+      - id: student-answers-an-open-evaluation
+        effect: permit
+        description: >
+          Creating a response, and nothing else — a student cannot read
+          responses, including their own, because a response that can be
+          retrieved by its author can be retrieved by anyone who can act as
+          them.
+        condition: >
+          subject.kind == "student"
+          and resource.is_open == True
+          and action in ["course_evaluation:read", "course_evaluation:list",
+                         "evaluation_response:create"]
+      - id: lecturer-reads-own-results-after-release
+        effect: permit
+        description: >
+          Their own evaluation, once it is reportable and the marks are in.
+          `read_results` is the aggregate — the dimension means and the
+          comments; it is a separate action from reading the evaluation
+          record, because the record says a questionnaire ran and the results
+          say what it found.
+        condition: >
+          owns(resource.staff_id, subject.staff_id)
+          and resource.is_reportable == True
+          and resource.results_visible == True
+          and action in ["course_evaluation:read", "course_evaluation:list",
+                         "course_evaluation:read_results",
+                         "course_evaluation:reflect"]
+      - id: unit-head-reads-department-results
+        effect: permit
+        condition: >
+          any_in(["people:manage_unit", "quality:review"], subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and resource.is_reportable == True
+          and resource.results_visible == True
+          and matches(action, "course_evaluation:(read|list|read_results|action_plan)")
+      - id: quality-office-runs-them
+        effect: permit
+        condition: >
+          any_in(["quality:review", "quality:admin", "reporting:run"], subject.permissions)
+          and matches(action, "(course_evaluation|evaluation_instrument):(create|read|list|update|open|close|publish)")
+      - id: student-sees-own-invitations
+        effect: permit
+        description: >
+          "You have two evaluations to complete" is the whole reason a student
+          opens this page. The invitation says *that* they were asked and
+          whether they answered — never what they said.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and matches(action, "evaluation_invitation:(read|list)")
+      - id: instruments-are-readable
+        effect: permit
+        condition: >
+          resource.is_published == True
+          and matches(action, "evaluation_instrument:(read|list)")
+
+  - id: quality.evaluation-anonymity
+    description: >
+      The rules that make anonymity real rather than promised. The schema
+      helps — a response has no student column and the table is append-only
+      in the database — and these close the remaining ways to work backwards
+      to a respondent.
+    priority: 5
+    target:
+      resource_types: ["course_evaluation", "evaluation_response", "evaluation_invitation"]
+    rules:
+      - id: no-reading-individual-responses
+        effect: deny
+        sensitive: true
+        description: >
+          Individual evaluation responses are not readable. Only the
+          aggregate is, and only above the reporting threshold.
+        condition: >
+          matches(action, "evaluation_response:(read|list|export)")
+          and not any_in(["quality:admin", "audit:read"], subject.permissions)
+      - id: no-breakdown-of-a-small-cohort
+        effect: deny
+        sensitive: true
+        description: >
+          Too few responses to report without identifying the respondents.
+        condition: >
+          resource.is_reportable == False
+          and matches(action, "course_evaluation:(read_results|export)")
+      - id: no-results-before-marks-are-in
+        effect: deny
+        sensitive: true
+        description: >
+          Evaluation results are sealed until after the marking deadline. A
+          lecturer must not read their students' opinions while still holding
+          their marks.
+        condition: >
+          resource.results_visible == False
+          and owns(resource.staff_id, subject.staff_id)
+          and matches(action, "course_evaluation:(read_results|export)")
+      - id: no-linking-responses-to-invitations
+        effect: deny
+        sensitive: true
+        description: >
+          The invitation list records *that* a student responded and never
+          what they said. Reading the two together is the one query that
+          would undo the anonymity.
+        condition: >
+          action == "evaluation_invitation:list"
+          and not any_in(["quality:admin", "audit:read"], subject.permissions)
+
+  - id: quality.observations
+    description: >
+      Teaching observation. Developmental by default and readable by the
+      person observed; an observation commissioned for a decision *about*
+      them is not, and is granted separately.
+    priority: 100
+    target:
+      resource_types: ["teaching_observation"]
+    rules:
+      - id: observee-reads-own-observation
+        effect: permit
+        condition: >
+          owns(resource.staff_id, subject.staff_id)
+          and action in ["teaching_observation:read", "teaching_observation:list",
+                         "teaching_observation:respond"]
+      - id: observer-writes-it-up
+        effect: permit
+        condition: >
+          owns(resource.observer_staff_id, subject.staff_id)
+          and matches(action, "teaching_observation:(create|read|list|update|submit)")
+      - id: quality-office-schedules
+        effect: permit
+        condition: >
+          any_in(["quality:review", "quality:admin"], subject.permissions)
+          and matches(action, "teaching_observation:(create|read|list|schedule)")
+      - id: promotion-panel-reads-non-developmental
+        effect: permit
+        sensitive: true
+        description: >
+          A panel deciding on promotion reads the observations commissioned
+          for that purpose, and only those.
+        condition: >
+          any_in(["people:approve", "people:admin"], subject.permissions)
+          and resource.is_developmental == False
+          and matches(action, "teaching_observation:(read|list)")
+
+  - id: quality.observation-confidentiality
+    priority: 8
+    target:
+      resource_types: ["teaching_observation"]
+    rules:
+      - id: developmental-stays-with-the-observed
+        effect: deny
+        sensitive: true
+        description: >
+          This is a developmental observation. It belongs to the member of
+          staff observed, and is not evidence in a decision about them.
+        condition: >
+          resource.is_developmental == True
+          and not owns(resource.staff_id, subject.staff_id)
+          and not owns(resource.observer_staff_id, subject.staff_id)
+          and matches(action, "teaching_observation:(read|list|export)")
+          and not any_in(["quality:admin", "audit:read"], subject.permissions)
+      - id: no-observing-yourself
+        effect: deny
+        description: An observation must be written by someone else.
+        condition: >
+          action == "teaching_observation:create"
+          and owns(resource.staff_id, subject.staff_id)
+
+  - id: quality.audits
+    description: >
+      Internal and external quality audits, and the indicators they are
+      argued from. Findings have owners and dates: a finding with neither is
+      a sentence in a report and nothing else.
+    priority: 100
+    target:
+      resource_types: ["quality_audit", "quality_indicator"]
+    rules:
+      - id: quality-office-conducts-audits
+        effect: permit
+        condition: >
+          any_in(["quality:review", "quality:admin", "governance:oversight"],
+                 subject.permissions)
+          and matches(action, "quality_audit:(create|read|list|update|conduct|publish)")
+      - id: unit-reads-its-own-audit
+        effect: permit
+        description: >
+          The unit being audited reads its own report and closes its own
+          findings. An audit the audited unit cannot see is a report about
+          them rather than a review with them.
+        condition: >
+          any_in(["people:manage_unit", "curriculum:author"], subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and matches(action, "quality_audit:(read|list|close_finding)")
+      - id: indicators-are-widely-readable
+        effect: permit
+        description: >
+          Aggregate indicators — pass rates, staff-student ratios, attendance
+          — carry no personal data and are more useful the more widely they
+          are read.
+        condition: >
+          subject.kind == "staff"
+          and matches(action, "quality_indicator:(read|list)")
+      - id: indicators-are-computed-by-the-office
+        effect: permit
+        condition: >
+          any_in(["quality:admin", "reporting:run", "governance:oversight"],
+                 subject.permissions)
+          and matches(action, "quality_indicator:(create|compute|update|delete)")
+      - id: auditor-reads-everything-here
+        effect: permit
+        description: >
+          Internal audit reads the quality record in full, including
+          unpublished audits. Reviewing whether quality assurance works is
+          exactly their remit.
+        condition: >
+          any_in(["audit:read", "governance:oversight"], subject.permissions)
+          and matches(action, "(quality_audit|quality_indicator):(read|list)")

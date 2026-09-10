@@ -1,0 +1,44 @@
+policies:
+  - id: identity.account-administration
+    description: Who may create accounts, reset credentials and grant roles.
+    priority: 100
+    target:
+      resource_types: ["user_account", "role", "role_assignment"]
+    rules:
+      - id: sysadmin-manages-accounts
+        effect: permit
+        sensitive: true
+        condition: >
+          "identity:admin" in subject.permissions
+          and matches(action, "(account|role|role_assignment):.*")
+      - id: registry-resets-student-credentials
+        effect: permit
+        description: The registry may reset a student's password at the counter.
+        condition: >
+          "identity:reset_student" in subject.permissions
+          and action == "account:reset_password"
+          and resource.kind == "student"
+
+  - id: identity.separation-of-duties
+    description: >
+      Nobody grants themselves authority. The classic escalation is a systems
+      administrator adding `results:approve` to their own account for an
+      afternoon; separating request from approval is the only structural answer.
+    priority: 5
+    target:
+      resource_types: ["role_assignment", "user_account"]
+    rules:
+      - id: no-self-grant
+        effect: deny
+        sensitive: true
+        description: You cannot change your own roles or permissions.
+        condition: >
+          action in ["role_assignment:create", "role_assignment:delete", "account:update_roles"]
+          and resource.user_id == subject.id
+      - id: no-self-approval
+        effect: deny
+        sensitive: true
+        description: A request you raised must be approved by someone else.
+        condition: >
+          matches(action, ".*:approve")
+          and owns(resource.requested_by_id, subject.id)

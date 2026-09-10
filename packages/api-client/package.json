@@ -1,0 +1,24 @@
+{
+  "name": "@acmis/api-client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "generate": "./scripts/generate.sh",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .turbo node_modules src/generated"
+  },
+  "dependencies": { "zod": "^4.5.4" },
+  "devDependencies": {
+    "@acmis/eslint-config": "workspace:*",
+    "@acmis/typescript-config": "workspace:*",
+    "openapi-typescript": "^7.5.2",
+    "typescript": "^5.7.3"
+  }
+}

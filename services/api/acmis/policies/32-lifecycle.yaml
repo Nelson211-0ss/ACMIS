@@ -1,0 +1,314 @@
+# The student life-cycle events that happen *to* a student rather than being
+# part of ordinary study: a missed examination, a lost card, a change of
+# programme, a year off, a move to another university.
+#
+# One theme runs through all of them. Each is a request by (or about) a
+# student, decided by somebody else, and the decision has consequences the
+# student cannot reverse — so every policy here separates *lodging* a request
+# from *deciding* it, and none of them lets the same person do both.
+policies:
+  - id: lifecycle.special-examinations
+    description: >
+      A candidate who missed a paper applies; the department recommends and
+      the examinations board decides. Two signatures because the department
+      knows the circumstances and the board owns consistency across the
+      faculty — a special examination granted in one department and refused
+      in the next for the same illness is the complaint that follows.
+    priority: 100
+    target:
+      resource_types: ["special_exam_request"]
+    rules:
+      - id: student-lodges-own-request
+        effect: permit
+        description: >
+          The student applies for themselves. Deliberately self-service: the
+          alternative is a queue at the registry during the week they are
+          least able to stand in one.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["special_exam_request:create", "special_exam_request:read",
+                         "special_exam_request:list", "special_exam_request:update"]
+          and resource.status in ["draft", "submitted", None]
+      - id: office-lodges-on-behalf
+        effect: permit
+        description: >
+          Lodged at the desk for a student in hospital, or by a warden for a
+          bereaved student. Common enough that refusing it means the paperwork
+          is done on paper.
+        condition: >
+          any_in(["student:manage", "welfare:support", "award:prepare"], subject.permissions)
+          and matches(action, "special_exam_request:(create|read|list|update)")
+      - id: department-recommends
+        effect: permit
+        condition: >
+          any_in(["results:enter", "results:moderate", "people:manage_unit"],
+                 subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and action in ["special_exam_request:read", "special_exam_request:list",
+                         "special_exam_request:recommend", "special_exam_request:return"]
+      - id: board-decides
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["results:board_approve", "results:senate_approve", "award:prepare"],
+                 subject.permissions)
+          and matches(action, "special_exam_request:(read|list|decide|schedule)")
+      - id: registry-reads-the-queue
+        effect: permit
+        description: >
+          The registry chases these; an office that cannot see which requests
+          are outstanding cannot chase them.
+        condition: >
+          any_in(["student:manage", "reporting:run"], subject.permissions)
+          and matches(action, "special_exam_request:(read|list)")
+
+  - id: lifecycle.special-exam-integrity
+    description: >
+      What a special examination must never become: an unevidenced favour, a
+      decision by the person who asked for it, or a second bite at a paper
+      already remarked.
+    priority: 7
+    target:
+      resource_types: ["special_exam_request"]
+    rules:
+      - id: no-grant-without-evidence
+        effect: deny
+        sensitive: true
+        description: >
+          A special examination cannot be granted without the evidence on
+          file. The whole difference between a special examination and a
+          favour is the medical certificate.
+        condition: >
+          action == "special_exam_request:decide"
+          and resource.has_evidence == False
+      - id: no-deciding-own-request
+        effect: deny
+        sensitive: true
+        description: You cannot decide a request you lodged.
+        condition: >
+          action == "special_exam_request:decide"
+          and owns(resource.requested_by_id, subject.id)
+      - id: no-second-grant
+        effect: deny
+        sensitive: true
+        description: >
+          The mark for this request has already been recorded. A further
+          sitting is an appeal, not a special examination.
+        condition: >
+          matches(action, "special_exam_request:(decide|schedule)")
+          and resource.status == "mark_recorded"
+
+  - id: lifecycle.identity-cards
+    description: >
+      The campus card. A student sees their own and reports it lost — the
+      report is the urgent part, because a card in someone else's hands opens
+      doors — and the registry issues, replaces and revokes.
+    priority: 100
+    target:
+      resource_types: ["student_id_card"]
+    rules:
+      - id: student-sees-own-card
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["student_id_card:read", "student_id_card:list",
+                         "student_id_card:report_lost"]
+      - id: registry-issues
+        effect: permit
+        condition: >
+          any_in(["student:manage", "identity:admin"], subject.permissions)
+          and matches(action, "student_id_card:(create|read|list|issue|replace|revoke)")
+      - id: security-verifies
+        effect: permit
+        description: >
+          A gate or an examination hall needs to know whether a card is live.
+          Verification returns that and the holder's name — never the rest of
+          the record, which is why it is its own action.
+        condition: >
+          action == "student_id_card:verify"
+          and subject.kind == "staff"
+
+  - id: lifecycle.examination-cards
+    description: >
+      Permission to sit. The card is issued when the gates are open, and the
+      gates are recorded on it — because at the hall door the question is not
+      whether the student is cleared now but whether the card was validly
+      issued, and that has to be answerable months later.
+    priority: 100
+    target:
+      resource_types: ["exam_card"]
+    rules:
+      - id: student-sees-own-card
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["exam_card:read", "exam_card:list", "exam_card:download"]
+      - id: registry-issues
+        effect: permit
+        condition: >
+          any_in(["student:manage", "award:prepare", "results:moderate"],
+                 subject.permissions)
+          and matches(action, "exam_card:(issue|read|list|revoke)")
+      - id: invigilator-verifies
+        effect: permit
+        condition: >
+          any_in(["learning:invigilate", "student:manage", "results:enter"],
+                 subject.permissions)
+          and action == "exam_card:verify"
+
+  - id: lifecycle.dead-semesters
+    description: >
+      A dead semester or dead year is a `student_status_change`, so it already
+      carries an approval chain and its evidence. What this adds is the shape
+      of the decision: the student applies with a reason, the faculty decides,
+      and the duration rules in `assessment.rules` bound how many may be
+      taken — an unbounded dead year is an indefinite enrolment that consumes
+      a place and eventually collides with the maximum duration with no way
+      back.
+    priority: 100
+    target:
+      resource_types: ["student_status_change"]
+    rules:
+      - id: student-applies-for-time-off
+        effect: permit
+        description: >
+          Applying for a dead semester, a dead year or a leave of absence.
+          The student may lodge and withdraw their own application and read
+          it; they cannot approve it, and `no-self-approval` below makes sure
+          of it even if a permission is mis-granted.
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["student_status_change:create", "student_status_change:read",
+                         "student_status_change:list", "student_status_change:withdraw"]
+          and resource.kind in ["dead_semester", "dead_year", "leave_of_absence",
+                                "withdrawal", "reinstatement"]
+      - id: faculty-decides-time-off
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["student:approve_status", "student:manage"], subject.permissions)
+          and matches(action, "student_status_change:(read|list|approve|reject|return)")
+      - id: no-self-approval
+        effect: deny
+        sensitive: true
+        description: You cannot approve your own application.
+        condition: >
+          matches(action, "student_status_change:(approve|reject)")
+          and owns(resource.requested_by_id, subject.id)
+
+  - id: lifecycle.institution-transfers
+    description: >
+      Moving between universities. The two directions are different problems
+      and are granted separately.
+
+      *Incoming* credit is assessed course by course and then approved
+      against a cap — a degree awarded mostly on another institution's
+      teaching is not ours to award, and the cap is the only thing standing
+      between a transfer scheme and a diploma mill. Assessment is an academic
+      act (the department), approval is a Senate one.
+
+      *Outgoing* assesses nothing: it produces a transcript and a letter, and
+      the student's status becomes `transferred_out` rather than `withdrawn`.
+      The distinction matters to the student, who is not dropping out.
+    priority: 100
+    target:
+      resource_types: ["institution_transfer"]
+    rules:
+      - id: student-requests-outgoing
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and resource.direction == "outgoing"
+          and action in ["institution_transfer:create", "institution_transfer:read",
+                         "institution_transfer:list"]
+      - id: admissions-lodges-incoming
+        effect: permit
+        condition: >
+          any_in(["admissions:process", "admissions:review", "student:manage"],
+                 subject.permissions)
+          and matches(action, "institution_transfer:(create|read|list|update)")
+      - id: department-assesses-credit
+        effect: permit
+        sensitive: true
+        description: >
+          Which of another institution's courses count here is an academic
+          judgement, made by the unit that teaches the subject.
+        condition: >
+          any_in(["curriculum:author", "curriculum:recommend", "results:moderate"],
+                 subject.permissions)
+          and matches(action, "institution_transfer:(read|list|assess)")
+      - id: senate-approves-credit
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["curriculum:approve", "results:senate_approve"], subject.permissions)
+          and matches(action, "institution_transfer:(read|list|approve|reject)")
+      - id: registry-issues-outgoing-papers
+        effect: permit
+        condition: >
+          any_in(["transcript:issue", "student:manage"], subject.permissions)
+          and matches(action, "institution_transfer:(read|list|issue_papers)")
+
+  - id: lifecycle.transfer-credit-cap
+    description: >
+      The one rule in this file an external examiner will look for.
+    priority: 7
+    target:
+      resource_types: ["institution_transfer"]
+    rules:
+      - id: credit-over-cap-needs-senate
+        effect: deny
+        sensitive: true
+        description: >
+          The credit awarded exceeds the transfer cap for this programme.
+          Above the cap the student is being awarded our degree for someone
+          else's teaching, which only Senate can decide.
+        condition: >
+          action == "institution_transfer:approve"
+          and resource.credits_awarded > resource.credits_claimed
+      - id: no-assessing-own-transfer
+        effect: deny
+        sensitive: true
+        description: You lodged this transfer; someone else must assess it.
+        condition: >
+          action in ["institution_transfer:assess", "institution_transfer:approve"]
+          and owns(resource.requested_by_id, subject.id)
+
+  - id: lifecycle.calendar
+    description: >
+      The academic calendar. Read by nearly everybody — half the interface
+      depends on knowing when the semester starts — and written by the office
+      that owns the approved document.
+    priority: 100
+    target:
+      resource_types: ["calendar_event"]
+    rules:
+      - id: everyone-reads-the-published-calendar
+        effect: permit
+        condition: >
+          resource.is_published == True
+          and action in ["calendar_event:read", "calendar_event:list"]
+      - id: registry-maintains-the-calendar
+        effect: permit
+        condition: >
+          any_in(["student:manage", "timetable:manage", "reporting:run"],
+                 subject.permissions)
+          and matches(action, "calendar_event:(create|read|list|update|delete)")
+      - id: senate-publishes-the-calendar
+        effect: permit
+        sensitive: true
+        description: >
+          An institution's calendar is an approved document. Publishing it is
+          a separate grant from drafting it, because a date changed quietly
+          after publication is a dispute with every student affected.
+        condition: >
+          any_in(["curriculum:approve", "results:senate_approve", "student:manage"],
+                 subject.permissions)
+          and action == "calendar_event:publish"
+      - id: unpublished-calendar-is-internal
+        effect: deny
+        description: This calendar has not been published yet.
+        condition: >
+          resource.is_published == False
+          and subject.kind in ["student", "applicant"]
+          and matches(action, "calendar_event:(read|list)")

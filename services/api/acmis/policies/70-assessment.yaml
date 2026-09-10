@@ -1,0 +1,233 @@
+policies:
+  - id: assessment.mark-entry
+    description: >
+      Marks are entered by the member of staff assigned to teach the course
+      offering — not by anyone in the department, and not by the head unless
+      they are also assigned. `assigned_course_offering_ids` is populated from
+      the teaching allocation, so the authority follows the timetable.
+    priority: 100
+    target:
+      resource_types: ["mark_sheet", "course_result", "assessment_component_score"]
+    rules:
+      - id: assigned-lecturer-enters
+        effect: permit
+        condition: >
+          "results:enter" in subject.permissions
+          and any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+          and resource.status in ["draft", "returned"]
+          and action in ["mark_sheet:read", "mark_sheet:list", "mark_sheet:update",
+                         "mark_sheet:submit", "course_result:update",
+                         "assessment_component_score:update"]
+      - id: entering-lecturer-follows-own-sheet
+        effect: permit
+        description: >
+          The lecturer who entered the marks keeps *reading* the sheet after it
+          leaves their hands. `assigned-lecturer-enters` deliberately stops at
+          `draft`/`returned` so that submitting is a real handover — but
+          without this the lecturer cannot see whether their sheet was
+          moderated, returned or approved, and the first they hear of a
+          returned sheet is a phone call. Read only: the write actions stay in
+          the rule above, so a submitted sheet is still frozen to them.
+        condition: >
+          "results:enter" in subject.permissions
+          and (
+            any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+            or any_in([subject.staff_id], resource.entered_by_ids)
+          )
+          and action in ["mark_sheet:read", "mark_sheet:list"]
+
+      - id: internal-examiner-moderates
+        effect: permit
+        condition: >
+          "results:moderate" in subject.permissions
+          and any_in(resource.department_ids, subject.department_ids)
+          and resource.status == "submitted"
+          and action in ["mark_sheet:read", "mark_sheet:moderate", "mark_sheet:return"]
+
+  - id: assessment.separation-of-duties
+    description: >
+      The person who entered a mark does not approve it, and nobody approves
+      the mark of a student they are related to or of a course they sat.
+      Everything else in this bundle protects data; this protects the integrity
+      of the award itself, which is the only thing a degree certificate is
+      evidence of.
+    priority: 6
+    target:
+      resource_types: ["mark_sheet", "course_result", "board_decision"]
+    rules:
+      - id: no-approving-own-entry
+        effect: deny
+        sensitive: true
+        description: A mark sheet must be approved by someone other than the person who entered it.
+        condition: >
+          matches(action, "(mark_sheet|course_result):(approve|senate_approve|publish)")
+          and any_in([subject.staff_id], resource.entered_by_ids)
+      - id: declared-conflict
+        effect: deny
+        sensitive: true
+        description: You have declared an interest in this student's assessment.
+        condition: >
+          matches(action, "(mark_sheet|course_result|board_decision):(approve|moderate|update)")
+          and any_in([subject.staff_id], resource.conflicted_staff_ids)
+      - id: no-post-publication-edit
+        effect: deny
+        sensitive: true
+        description: A published result can only be changed through the appeals process.
+        condition: >
+          resource.status in ["published", "senate_approved"]
+          and action in ["course_result:update", "mark_sheet:update",
+                         "assessment_component_score:update"]
+
+  - id: assessment.board-and-senate
+    description: "The approval chain: department board, faculty board, Senate."
+    priority: 100
+    target:
+      resource_types: ["mark_sheet", "board_decision", "results_release", "course_result"]
+    rules:
+      - id: department-board
+        effect: permit
+        sensitive: true
+        condition: >
+          "results:board_approve" in subject.permissions
+          and any_in(resource.department_ids, subject.department_ids)
+          and resource.status == "moderated"
+          and action in ["mark_sheet:approve", "board_decision:create", "mark_sheet:return"]
+      - id: faculty-board
+        effect: permit
+        sensitive: true
+        condition: >
+          "results:faculty_approve" in subject.permissions
+          and any_in(resource.faculty_ids, subject.faculty_ids)
+          and resource.status == "board_approved"
+          and action in ["mark_sheet:faculty_approve", "board_decision:create"]
+      - id: senate
+        effect: permit
+        sensitive: true
+        condition: >
+          "results:senate_approve" in subject.permissions
+          and resource.status == "faculty_approved"
+          and action in ["mark_sheet:senate_approve", "results_release:create",
+                         "results_release:publish", "course_result:senate_approve"]
+
+  - id: assessment.registry-oversight
+    description: >
+      The registry and the examinations office read mark sheets without being
+      able to change them. This is not incidental: chasing outstanding results
+      is the registry's job, and an office that cannot see which sheets are
+      late cannot do it. Read only, and no individual marks — the status, the
+      counts and the deadline are what the chase needs, and a clerk does not
+      need a student's mark to send a reminder.
+    priority: 100
+    target:
+      resource_types: ["mark_sheet", "results_release", "board_decision"]
+    rules:
+      - id: registry-reads-status
+        effect: permit
+        condition: >
+          any_in(["student:manage", "award:prepare", "transcript:issue",
+                  "reporting:run", "results:moderate"], subject.permissions)
+          and matches(action, "(mark_sheet|results_release|board_decision):(read|list)")
+        # The chase needs progress, not marks. A registry clerk reading an
+        # individual candidate's mark is a separate grant they do not hold.
+        mask_fields: ["grade_distribution", "mean_mark", "median_mark"]
+
+  - id: assessment.student-visibility
+    description: >
+      A student sees a result once it is released, and never before. An
+      unreleased mark is provisional — it may still be moderated up or down —
+      and showing it produces an argument the institution cannot win.
+    priority: 16
+    target:
+      resource_types: ["course_result", "mark_sheet", "transcript", "results_release"]
+    rules:
+      - id: released-only
+        effect: permit
+        condition: >
+          subject.kind == "student"
+          and owns(resource.student_id, subject.student_id)
+          and resource.released == True
+          and action in ["course_result:read", "course_result:list", "transcript:read"]
+      - id: unreleased-hidden
+        effect: deny
+        description: These results have not been released yet.
+        condition: >
+          subject.kind == "student"
+          and resource.released == False
+          and matches(action, "(course_result|mark_sheet|results_release):(read|list)")
+      - id: withheld-for-cause
+        effect: deny
+        description: Your results are withheld. Contact the registry.
+        condition: >
+          subject.kind == "student"
+          and resource.withheld == True
+          and matches(action, "(course_result|transcript):(read|list|issue)")
+
+  - id: assessment.appeals-exception
+    description: >
+      An appeals committee, sitting with a case reference, may reopen a
+      published mark. This is the one policy in the bundle allowed to override
+      a prohibition, and it names exactly which one — a published result is
+      otherwise immutable, and an institution with no way at all to correct an
+      error is as indefensible as one that lets anybody correct anything.
+    priority: 60
+    combining: permit_overrides
+    overrides: ["assessment.separation-of-duties"]
+    target:
+      resource_types: ["course_result", "mark_sheet"]
+    rules:
+      - id: appeals-committee-amendment
+        effect: permit
+        sensitive: true
+        description: Amendment under an open appeal, recorded against the case.
+        condition: >
+          "results:amend_on_appeal" in subject.permissions
+          and subject.mfa_satisfied
+          and resource.appeal_case_id != None
+          and resource.appeal_status == "open"
+          and action in ["course_result:amend", "mark_sheet:amend"]
+        obligations: ["notify:student", "notify:senate", "require:reason"]
+
+  - id: assessment.awards
+    description: Conferment of an award is a Senate act and is irreversible in practice.
+    priority: 100
+    target:
+      resource_types: ["award", "graduation_list", "transcript"]
+    rules:
+      - id: registry-prepares
+        effect: permit
+        condition: >
+          "award:prepare" in subject.permissions
+          and action in ["graduation_list:create", "graduation_list:update",
+                         "graduation_list:read", "graduation_list:submit", "award:read"]
+      - id: senate-confers
+        effect: permit
+        sensitive: true
+        condition: >
+          "award:confer" in subject.permissions
+          and resource.status == "senate_ready"
+          and action in ["award:confer", "graduation_list:approve"]
+        obligations: ["require:reason", "notify:student"]
+      - id: registry-issues-transcript
+        effect: permit
+        sensitive: true
+        condition: >
+          "transcript:issue" in subject.permissions
+          and action in ["transcript:issue", "transcript:read", "transcript:verify"]
+
+  - id: assessment.result-computation
+    description: >
+      Computing semester results — GPA, CGPA and progression — from approved
+      marks. Arithmetic over already-approved marks rather than a decision
+      about any one student, so it sits with the registry and the examinations
+      office and is re-runnable.
+    priority: 100
+    target:
+      resource_types: ["course_result", "semester_result"]
+    rules:
+      - id: registry-computes
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["student:manage", "award:prepare", "results:senate_approve"],
+                 subject.permissions)
+          and action in ["course_result:compute", "semester_result:compute"]

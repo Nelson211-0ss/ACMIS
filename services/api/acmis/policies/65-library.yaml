@@ -1,0 +1,261 @@
+# The library.
+#
+# The governing distinction: the *catalogue* is public and the *circulation
+# record* is not. What the library holds is information the institution wants
+# known; who borrowed what is among the most sensitive data a university keeps
+# — reading history reveals belief, health and politics — and libraries have
+# defended that boundary for a century. So the catalogue is readable by
+# anyone signed in, and a loan is readable by its borrower and by circulation
+# staff doing their job, and by nobody else, including the borrower's head of
+# department.
+policies:
+  - id: library.catalogue
+    description: >
+      The catalogue is for reading. Everyone signed in may search it; only
+      cataloguers may change it, because a mistyped call number takes a book
+      off the shelf as effectively as losing it.
+    priority: 100
+    target:
+      resource_types: ["catalogue_record", "catalogue_copy", "e_resource_subscription"]
+    rules:
+      - id: anyone-searches-the-catalogue
+        effect: permit
+        condition: >
+          resource.is_searchable != False
+          and matches(action, "(catalogue_record|catalogue_copy):(read|list|search)")
+      - id: cataloguers-maintain-it
+        effect: permit
+        condition: >
+          any_in(["library:catalogue", "library:admin"], subject.permissions)
+          and matches(action, "(catalogue_record|catalogue_copy):.*")
+      - id: e-resources-are-listed-to-members
+        effect: permit
+        condition: >
+          resource.is_active == True
+          and subject.kind in ["student", "staff"]
+          and matches(action, "e_resource_subscription:(read|list)")
+      - id: subscriptions-are-managed-by-the-library
+        effect: permit
+        condition: >
+          any_in(["library:admin", "library:acquisitions"], subject.permissions)
+          and matches(action, "e_resource_subscription:.*")
+
+  - id: library.embargoed-theses
+    description: >
+      A deposited thesis under embargo is readable by its author, the
+      library, and the supervisor — not by the reading room. An embargo
+      exists because publication would prejudice a patent or endanger a
+      research subject, and a catalogue that leaks it has done the one thing
+      the embargo was for.
+    priority: 8
+    target:
+      resource_types: ["catalogue_record"]
+    rules:
+      - id: embargo-hides-the-full-text
+        effect: deny
+        sensitive: true
+        description: This thesis is under embargo.
+        condition: >
+          action == "catalogue_record:download"
+          and resource.material_kind == "thesis"
+          and resource.is_searchable == False
+          and not owns(resource.student_id, subject.student_id)
+          and not any_in(["library:admin", "award:prepare"], subject.permissions)
+
+  - id: library.circulation
+    description: >
+      Issuing, returning and renewing. Desk work, and scoped to the desk: a
+      circulation assistant may issue and take in books all day and cannot
+      write off a loss or waive a fine, which are decisions about money.
+    priority: 100
+    target:
+      resource_types: ["library_loan", "library_member", "library_reservation"]
+    rules:
+      - id: reader-sees-own-record
+        effect: permit
+        description: >
+          A reader sees their own loans, their own reservations and their own
+          fines. This is also the self-service renewal path, which is most of
+          a library's renewal traffic.
+        condition: >
+          (
+            owns(resource.student_id, subject.student_id)
+            or owns(resource.staff_id, subject.staff_id)
+          )
+          and action in ["library_loan:read", "library_loan:list", "library_loan:renew",
+                         "library_reservation:create", "library_reservation:read",
+                         "library_reservation:list", "library_reservation:cancel",
+                         "library_member:read"]
+      - id: desk-issues-and-receives
+        effect: permit
+        condition: >
+          any_in(["library:circulate", "library:admin"], subject.permissions)
+          and matches(action, "(library_loan|library_reservation):(create|read|list|issue|return|renew|recall|cancel|allocate)")
+      - id: desk-manages-membership
+        effect: permit
+        condition: >
+          any_in(["library:circulate", "library:admin"], subject.permissions)
+          and matches(action, "library_member:(create|read|list|update|suspend|clear)")
+      - id: registry-reads-membership-for-clearance
+        effect: permit
+        description: >
+          Graduation clearance turns on whether the library is owed anything,
+          so the registry reads the membership summary — the counts and the
+          balance, not the reading history.
+        condition: >
+          any_in(["student:manage", "award:prepare"], subject.permissions)
+          and matches(action, "library_member:(read|list)")
+        mask_fields: ["notes"]
+
+  - id: library.reading-privacy
+    description: >
+      Who read what is not management information. Libraries have defended
+      this for a century, and the reason is concrete: reading history reveals
+      belief, health, sexuality and politics, and a student who believes their
+      borrowing is reported to their department stops borrowing.
+
+      So a loan is readable by its borrower and by circulation staff working
+      the desk — and by nobody else. Not by the head of department, not by the
+      dean, not by a warden, and not by a report.
+    priority: 6
+    target:
+      resource_types: ["library_loan", "library_reservation"]
+    rules:
+      - id: no-unit-reach-into-borrowing
+        effect: deny
+        sensitive: true
+        description: >
+          A reader's borrowing is not visible to their department. Ask the
+          library for an aggregate if you need one.
+        condition: >
+          matches(action, "(library_loan|library_reservation):(read|list)")
+          and resource.student_id != None
+          and not owns(resource.student_id, subject.student_id)
+          and not any_in(["library:circulate", "library:admin", "audit:read"],
+                         subject.permissions)
+      - id: no-loan-history-in-exports
+        effect: deny
+        sensitive: true
+        description: >
+          Borrowing history cannot be exported. An aggregate — titles, counts,
+          turnaway rates — is what collection management actually needs.
+        condition: >
+          matches(action, "library_loan:(export|bulk_read)")
+          and not any_in(["library:admin", "audit:read"], subject.permissions)
+
+  - id: library.fines
+    description: >
+      A fine is money, so it follows the money rules: raised by the library,
+      settled through the ledger, and waived only by someone other than the
+      person who raised it. Declaring a copy lost lives here too, because it
+      is a charge and a write-off rather than a circulation act.
+    priority: 100
+    target:
+      resource_types: ["library_fine", "library_loan"]
+    rules:
+      - id: reader-sees-own-fines
+        effect: permit
+        condition: >
+          (
+            owns(resource.student_id, subject.student_id)
+            or owns(resource.staff_id, subject.staff_id)
+          )
+          and matches(action, "library_fine:(read|list)")
+      - id: desk-raises-fines
+        effect: permit
+        condition: >
+          any_in(["library:circulate", "library:admin"], subject.permissions)
+          and matches(action, "library_fine:(create|read|list|invoice)")
+      - id: write-off-a-lost-copy
+        effect: permit
+        sensitive: true
+        description: >
+          Declaring a copy lost writes stock off the catalogue and charges the
+          reader for it — a decision about money and about the collection, so
+          it sits with the librarian rather than the desk. A circulation
+          assistant taking books in all day should not be able to write one
+          off.
+        condition: >
+          any_in(["library:admin", "library:catalogue"], subject.permissions)
+          and action == "library_loan:declare_lost"
+        obligations: ["require:reason"]
+
+      - id: library-head-waives
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["library:admin", "finance:waive"], subject.permissions)
+          and matches(action, "library_fine:(waive|write_off)")
+        obligations: ["require:reason"]
+      - id: bursary-reads-fines
+        effect: permit
+        description: >
+          The bursary invoices and receipts these, so it reads them. It does
+          not read what was borrowed — the fine says "overdue", not which
+          book.
+        condition: >
+          any_in(["finance:receipt", "finance:post", "finance:approve"],
+                 subject.permissions)
+          and matches(action, "library_fine:(read|list)")
+
+  - id: library.fine-integrity
+    priority: 7
+    target:
+      resource_types: ["library_fine"]
+    rules:
+      - id: no-waiving-own-fine
+        effect: deny
+        sensitive: true
+        description: Someone other than the person who raised this must waive it.
+        condition: >
+          matches(action, "library_fine:(waive|write_off)")
+          and owns(resource.raised_by_id, subject.id)
+      - id: no-waiving-your-own-debt
+        effect: deny
+        sensitive: true
+        description: You cannot waive a fine owed by you.
+        condition: >
+          matches(action, "library_fine:(waive|write_off)")
+          and resource.staff_id != None
+          and owns(resource.staff_id, subject.staff_id)
+
+  - id: library.acquisitions
+    description: >
+      Teaching staff ask for titles; the library orders within a budget. Kept
+      as a request rather than an email because the useful question — which
+      requested titles are still not on the shelf two months into the
+      semester — is unanswerable from an inbox.
+    priority: 100
+    target:
+      resource_types: ["acquisition_request", "library_stock_take"]
+    rules:
+      - id: staff-request-titles
+        effect: permit
+        condition: >
+          any_in(["results:enter", "curriculum:author", "learning:manage_banks"],
+                 subject.permissions)
+          and matches(action, "acquisition_request:(create|read|list)")
+      - id: requester-tracks-own-request
+        effect: permit
+        condition: >
+          owns(resource.requested_by_id, subject.id)
+          and matches(action, "acquisition_request:(read|list|cancel)")
+      - id: library-orders
+        effect: permit
+        condition: >
+          any_in(["library:acquisitions", "library:admin"], subject.permissions)
+          and matches(action, "acquisition_request:.*")
+      - id: library-takes-stock
+        effect: permit
+        condition: >
+          any_in(["library:admin", "library:catalogue"], subject.permissions)
+          and matches(action, "library_stock_take:.*")
+      - id: finance-approves-the-spend
+        effect: permit
+        sensitive: true
+        description: >
+          Ordering commits money, so above the library's own delegation it is
+          a finance approval like any other.
+        condition: >
+          "finance:approve" in subject.permissions
+          and action == "acquisition_request:approve"

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="AD">
+  <!-- The module's own accent, so a staff member with several ACMIS tabs open
+       can tell them apart at a glance. The light-mode accent deliberately:
+       those are dark enough to carry white text (11:1 at worst), which the
+       dark-mode variants are not. -->
+  <rect width="32" height="32" rx="7" fill="oklch(0.512 0.118 216)"/>
+  <text x="16" y="21.5" text-anchor="middle"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="13"
+        font-weight="700" fill="#ffffff">AD</text>
+</svg>

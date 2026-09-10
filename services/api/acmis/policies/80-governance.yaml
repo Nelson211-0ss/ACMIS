@@ -1,0 +1,130 @@
+policies:
+  - id: governance.audit-access
+    description: >
+      The audit trail is readable by the people whose job is to review it, and
+      every read of it is itself audited. An audit log that only its subjects
+      can see is not oversight; one that anyone can read is a directory of who
+      has looked at whom.
+    priority: 100
+    target:
+      resource_types: ["audit_event", "access_log", "policy", "report", "report_run"]
+    rules:
+      - id: internal-audit-reads
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["audit:read", "governance:oversight"], subject.permissions)
+          and matches(action, "(audit_event|access_log):(read|list|search|export)")
+      - id: own-trail
+        effect: permit
+        description: Anyone may see the trail of actions taken on their own record.
+        condition: >
+          action in ["audit_event:read", "audit_event:list"]
+          and (resource.subject_student_id == subject.student_id
+               or resource.subject_staff_id == subject.staff_id)
+      - id: no-mutating-the-trail
+        effect: deny
+        sensitive: true
+        description: The audit trail is append-only.
+        condition: matches(action, "(audit_event|access_log):(update|delete|purge)")
+
+  - id: governance.policy-administration
+    description: >
+      A tenant's system administrator may add authorization policies for their
+      own institution. They may not touch the shipped bundle — the loader
+      refuses an overlay that collides with a builtin id — and a policy change
+      is itself a high-consequence, MFA-gated, fully audited act.
+    priority: 100
+    target:
+      resource_types: ["policy"]
+    rules:
+      - id: tenant-policy-admin
+        effect: permit
+        sensitive: true
+        condition: >
+          "policy:admin" in subject.permissions
+          and subject.mfa_satisfied
+          and matches(action, "policy:(create|read|list|update|disable|simulate)")
+        obligations: ["require:reason", "notify:governance"]
+      - id: anyone-may-simulate
+        effect: permit
+        description: Staff may test what a policy would decide, which grants nothing.
+        condition: >
+          action == "policy:simulate" and subject.kind == "staff"
+      - id: oversight-reads-policy
+        effect: permit
+        description: >
+          An auditor reads the authorization rules. It is not incidental to
+          their job — an access review that cannot see the policy bundle can
+          report that a request was refused but not whether it should have
+          been. Read only: `policy:admin` is what changes a rule, and the
+          conflict table keeps that apart from `audit:read` precisely so the
+          person being audited against the rules is not the person writing
+          them.
+        condition: >
+          any_in(["audit:read", "governance:oversight"], subject.permissions)
+          and action in ["policy:read", "policy:list"]
+
+  - id: governance.statutory-reporting
+    description: Returns to the regulator, the ministry and the university council.
+    priority: 100
+    target:
+      resource_types: ["report", "report_run", "statutory_return", "dataset_export"]
+    rules:
+      - id: analyst-runs-reports
+        effect: permit
+        condition: >
+          "reporting:run" in subject.permissions
+          and matches(action, "(report|report_run):(read|list|run|schedule)")
+      - id: officer-submits-returns
+        effect: permit
+        sensitive: true
+        condition: >
+          "reporting:submit_statutory" in subject.permissions
+          and matches(action, "statutory_return:.*")
+
+  - id: governance.data-export
+    description: >
+      Bulk export is the highest-risk read in the system: one click produces a
+      file containing everything the ABAC layer spends the rest of its time
+      restricting access to. So it is MFA-gated, capped, reason-bearing, and
+      the export itself is recorded row-count and all.
+    priority: 22
+    target:
+      resource_types: ["dataset_export", "report_run"]
+    rules:
+      - id: export-with-grant
+        effect: permit
+        sensitive: true
+        condition: >
+          "export:run" in subject.permissions
+          and subject.mfa_satisfied
+          and action == "export:run"
+        obligations: ["require:reason", "record:row_count", "watermark:recipient"]
+      - id: no-unbounded-personal-export
+        effect: deny
+        sensitive: true
+        description: An export of personal data must be filtered or approved.
+        condition: >
+          action == "export:run"
+          and resource.contains_personal_data == True
+          and resource.row_estimate > 5000
+          and not "export:bulk_personal" in subject.permissions
+
+  - id: governance.subject-access
+    description: >
+      Logging a data-subject request. Uganda's Data Protection and Privacy Act
+      2019 gives a subject the right of access and correction, and the clock
+      starts when the request is *received* — so the front desk must be able
+      to log one, and the data protection officer works the queue.
+    priority: 100
+    target:
+      resource_types: ["report", "data_request"]
+    rules:
+      - id: log-a-data-request
+        effect: permit
+        condition: >
+          any_in(["governance:oversight", "audit:read", "student:manage",
+                  "people:admin"], subject.permissions)
+          and action in ["data_request:create", "data_request:read",
+                         "data_request:list", "data_request:update"]

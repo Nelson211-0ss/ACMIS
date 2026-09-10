@@ -1,0 +1,225 @@
+policies:
+  - id: developers.portal
+    description: >
+      An institution's own developers register applications, hold credentials
+      and read the API documentation for their tenant.
+    priority: 100
+    target:
+      resource_types: ["api_client", "api_key", "webhook", "webhook_delivery",
+                       "sandbox_dataset", "integration_log"]
+    rules:
+      - id: developer-manages-own-clients
+        effect: permit
+        condition: >
+          "developer:manage" in subject.permissions
+          and owns(resource.owner_id, subject.id)
+          and matches(action, "(api_client|webhook|sandbox_dataset):.*")
+      - id: developer-reads-own-logs
+        effect: permit
+        condition: >
+          "developer:manage" in subject.permissions
+          and owns(resource.owner_id, subject.id)
+          and matches(action, "(integration_log|webhook_delivery):(read|list|replay)")
+      - id: integration-admin
+        effect: permit
+        sensitive: true
+        condition: >
+          "developer:admin" in subject.permissions
+          and matches(action, "(api_client|api_key|webhook|integration_log|webhook_delivery):.*")
+
+  - id: developers.credentials
+    description: >
+      A secret is shown once, at creation. Thereafter it can be rotated or
+      revoked but never re-read, so a stolen console session cannot harvest the
+      credentials of every existing integration.
+    priority: 24
+    target:
+      resource_types: ["api_key", "api_client"]
+    rules:
+      - id: never-reveal
+        effect: deny
+        sensitive: true
+        description: A client secret cannot be retrieved after it is created. Rotate it instead.
+        condition: action in ["api_key:reveal", "api_client:reveal_secret"]
+      - id: rotate-with-mfa
+        effect: permit
+        sensitive: true
+        condition: >
+          "developer:manage" in subject.permissions
+          and subject.mfa_satisfied
+          and owns(resource.owner_id, subject.id)
+          and action in ["api_key:create", "api_key:rotate", "api_key:revoke"]
+        obligations: ["notify:owner", "require:reason"]
+
+  - id: developers.machine-tokens
+    description: >
+      A service token acts with the *intersection* of its OAuth scopes and the
+      permissions of the account it was issued for. This is what stops the
+      developer portal from becoming a privilege-escalation route: a token
+      cannot do anything its owner could not do by hand, however generous its
+      scopes.
+    priority: 26
+    target:
+      subject_kinds: ["service"]
+    rules:
+      - id: scope-must-cover-action
+        effect: deny
+        description: This token's scopes do not cover that action.
+        condition: >
+          subject.kind == "service"
+          and not any_in([action], subject.scopes)
+          and not any_in([action], subject.permissions)
+      - id: no-interactive-only-actions
+        effect: deny
+        sensitive: true
+        description: This action requires a person, not a token.
+        condition: >
+          subject.kind == "service"
+          and action in ["award:confer", "award:revoke", "result:senate_approve",
+                         "finance:waive", "policy:update", "role_assignment:create",
+                         "impersonation:start"]
+      - id: rate-tier
+        effect: deny
+        description: This token's plan does not include that endpoint.
+        condition: >
+          subject.kind == "service"
+          and resource.required_plan != None
+          and not any_in([resource.required_plan], tenant.plan_features)
+
+  - id: developers.public-endpoints
+    description: >
+      The handful of genuinely public endpoints: certificate verification by
+      serial, the published programme catalogue, and open admission schemes.
+      Verification is public on purpose — an employer checking a certificate has
+      no account — and returns only whether the serial is valid and what it
+      says, never a record it was not given the serial for.
+    priority: 100
+    target:
+      subject_kinds: ["anonymous", "service"]
+    rules:
+      - id: public-catalogue
+        effect: permit
+        condition: >
+          action in ["programme:list_public", "programme:read_public",
+                     "admission_scheme:list_public", "transcript:verify_serial",
+                     "award:verify_serial", "institution:read_public"]
+
+  - id: interop.oneroster
+    description: >
+      OneRoster is a rostering feed to another system, and what it discloses
+      is a class list with names and identifiers. So it is granted explicitly
+      rather than implied by any existing permission, and contact details are
+      masked unless the reader's grant says otherwise.
+
+      Read-only throughout: the write bindings are not implemented, because
+      enrolments and marks change through the approval chain and not over an
+      integration.
+    priority: 100
+    target:
+      resource_types: ["institution", "programme", "course_offering", "student",
+                       "registration", "staff"]
+    rules:
+      - id: rostering-read
+        effect: permit
+        condition: >
+          any_in(["developer:admin", "interop:manage_tools", "reporting:run",
+                  "student:manage"], subject.permissions)
+          and matches(action, "oneroster:.*")
+        mask_fields: ["email", "phone", "sms", "national_id", "bank_account_number"]
+      - id: rostering-read-with-contact
+        effect: permit
+        description: >
+          A feed that may carry contact details. Separate from the rule above
+          because a library system needs names and student numbers and does
+          not need phone numbers, and a standard that makes it easy to send
+          everything is not a reason to.
+        sensitive: true
+        condition: >
+          "interop:disclose_contact" in subject.permissions
+          and matches(action, "oneroster:.*")
+      - id: enrolment-feed
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["developer:admin", "interop:manage_tools", "student:manage"],
+                 subject.permissions)
+          and action == "oneroster:read_enrollments"
+
+  - id: interop.question-interchange
+    description: >
+      Importing and exporting question banks. Export is the reason this exists:
+      an institution should be able to leave, and a bank readable only through
+      our own API is a bank held hostage. It is still an export of assessment
+      material, so it is audited and scoped to the owning department.
+    priority: 100
+    target:
+      resource_types: ["question_bank", "question"]
+    rules:
+      - id: import-into-own-bank
+        effect: permit
+        sensitive: true
+        description: >
+          `results:enter` is included deliberately. Importing a QTI item and
+          typing a question into the authoring form are the same act with
+          different input, and `learning.teaching-space` already lets the
+          teaching staff do the second — refusing the first only means the
+          questions get retyped by hand, which is slower and no safer.
+        condition: >
+          any_in(["learning:manage_banks", "curriculum:author", "results:enter"],
+                 subject.permissions)
+          and any_in(resource.department_ids, subject.department_ids)
+          and action == "question:import"
+        obligations: ["require:reason"]
+      - id: export-own-bank
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["learning:manage_banks", "learning:teach", "curriculum:author"],
+                 subject.permissions)
+          and (
+            any_in(resource.department_ids, subject.department_ids)
+            or resource.is_shared == True
+          )
+          and action == "question:export"
+        obligations: ["record:row_count"]
+      - id: no-export-of-live-paper
+        effect: deny
+        sensitive: true
+        description: >
+          A bank cannot be exported while one of its questions is on an open
+          paper — an export carries the answer keys, and that is the one
+          disclosure that invalidates a whole cohort's sitting.
+        condition: >
+          action == "question:export"
+          and resource.has_open_assessment == True
+          and not "results:moderate" in subject.permissions
+
+  - id: interop.tool-registration
+    description: >
+      Registering an LTI tool, and launching a resource link into one.
+      Registration is an integration-administration act: a tool receives
+      names, roles and grades for a whole course, so it is the same weight of
+      decision as approving a live API client.
+    priority: 100
+    target:
+      resource_types: ["api_client", "course_space", "lti_tool"]
+    rules:
+      - id: register-a-tool
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["interop:manage_tools", "developer:admin"], subject.permissions)
+          and action in ["lti_tool:create", "lti_tool:read", "lti_tool:list",
+                         "lti_tool:update"]
+      - id: launch-into-a-space
+        effect: permit
+        description: >
+          Whoever may already open the space may launch its tools. The launch
+          carries no more than the space does; what the *tool* then shows is
+          governed by the scopes granted at registration.
+        condition: >
+          action == "lti_resource_link:launch"
+          and (
+            resource.is_registered == True
+            or any_in([resource.course_offering_id], subject.assigned_course_offering_ids)
+          )

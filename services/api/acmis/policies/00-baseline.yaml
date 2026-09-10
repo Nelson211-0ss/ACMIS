@@ -1,0 +1,146 @@
+# ---------------------------------------------------------------------------
+# Baseline prohibitions.
+#
+# Priority 0-49 is reserved for deny rules and a tenant overlay may not write
+# in that range. These are the rules that must hold no matter what any faculty
+# has been delegated, so they are evaluated first and cannot be lifted by a
+# later permit (deny_overrides) unless a policy explicitly names them in
+# `overrides` — which only the appeals policy in 70-assessment.yaml does.
+# ---------------------------------------------------------------------------
+policies:
+  - id: baseline.account-standing
+    description: A suspended, locked or unverified account does nothing at all.
+    priority: 1
+    combining: deny_overrides
+    rules:
+      - id: suspended
+        effect: deny
+        description: Your account is not active.
+        condition: subject.status in ["suspended", "disabled", "locked"]
+      - id: password-expired
+        effect: deny
+        description: Your password must be changed before you can continue.
+        condition: >
+          subject.password_expired == True
+          and not action in ["auth:change_password", "auth:logout", "auth:whoami"]
+
+  - id: baseline.tenant-standing
+    description: A tenant past its grace period is read-only; a suspended one is closed.
+    priority: 2
+    rules:
+      - id: suspended-tenant
+        effect: deny
+        description: This institution's subscription is suspended.
+        condition: tenant.status == "suspended" and subject.kind != "platform"
+      - id: read-only-tenant
+        effect: deny
+        description: This institution's ACMIS is in read-only mode.
+        condition: >
+          tenant.status == "read_only"
+          and not matches(action, ".*:(read|list|export|search|whoami)")
+
+  - id: baseline.step-up-required
+    description: >
+      High-consequence actions require a second factor on the current session.
+      These are the actions that cannot be undone by an ordinary correction:
+      conferring an award, publishing results to students, waiving money, and
+      bulk-exporting personal data.
+    priority: 3
+    rules:
+      - id: mfa-required
+        effect: deny
+        sensitive: true
+        description: Confirm your identity with a second factor to continue.
+        condition: >
+          not subject.mfa_satisfied
+          and action in [
+            "award:confer", "award:revoke",
+            "result:publish", "result:senate_approve",
+            "finance:waive", "finance:reverse", "finance:refund",
+            "export:run", "student:bulk_update",
+            "staff:grant_role", "policy:update",
+            "tenant:update", "apikey:create"
+          ]
+
+  - id: baseline.impersonation-limits
+    description: >
+      Platform support staff may enter a tenant to reproduce a fault. They may
+      never write to an academic record while doing so — an impersonated write
+      is unattributable to a person who consented to make it, and a transcript
+      changed by "support" is a transcript no examinations board can defend.
+    priority: 4
+    rules:
+      - id: no-impersonated-writes
+        effect: deny
+        sensitive: true
+        description: Support sessions are read-only inside an institution.
+        condition: >
+          subject.is_impersonated == True
+          and not matches(action, ".*:(read|list|search|export|whoami)")
+      - id: no-impersonated-sensitive-reads
+        effect: deny
+        sensitive: true
+        description: Support sessions cannot open special-category records.
+        condition: >
+          subject.is_impersonated == True
+          and action in [
+            "student:read_medical", "student:read_disciplinary",
+            "applicant:read_sensitive", "staff:read_payroll"
+          ]
+
+  - id: baseline.self-service
+    description: Anyone may read their own profile and manage their own session.
+    priority: 200
+    rules:
+      - id: own-session
+        effect: permit
+        condition: >
+          action in ["auth:whoami", "auth:logout", "auth:change_password",
+                     "auth:enrol_mfa", "notification:read", "notification:acknowledge"]
+          and subject.kind in ["staff", "student", "applicant", "platform"]
+
+  - id: baseline.platform-support
+    description: >
+      Platform staff administer tenants, plans and platform users. They have no
+      standing grant inside a tenant's academic data; entering one requires an
+      impersonation session, which the rules above make read-only.
+    priority: 150
+    target:
+      subject_kinds: ["platform"]
+    rules:
+      - id: control-plane
+        effect: permit
+        sensitive: true
+        condition: >
+          "platform:admin" in subject.permissions
+          and matches(action, "(tenant|plan|platform_user|impersonation|region):.*")
+      - id: support-read
+        effect: permit
+        condition: >
+          "platform:support" in subject.permissions
+          and matches(action, ".*:(read|list|search)")
+
+  - id: baseline.institution-configuration
+    description: >
+      The institution's own settings and its academic-unit tree. Read widely
+      because half the UI depends on the tree; written only by configuration
+      administrators, because a renamed faculty re-scopes every unit-based
+      permission in the system.
+    priority: 100
+    target:
+      resource_types: ["institution", "academic_unit"]
+    rules:
+      - id: staff-read-the-unit-tree
+        effect: permit
+        condition: >
+          subject.kind == "staff"
+          and action in ["institution:read_settings", "academic_unit:read",
+                         "academic_unit:list", "institution:read"]
+      - id: administrators-configure
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["identity:admin", "policy:admin", "student:manage"],
+                 subject.permissions)
+          and action in ["academic_unit:create", "academic_unit:update",
+                         "institution:update_settings", "institution:read_settings"]

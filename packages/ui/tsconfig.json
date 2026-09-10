@@ -1,0 +1,9 @@
+{
+  "extends": "@acmis/typescript-config/react-library.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@acmis/ui/*": ["./src/*"] }
+  },
+  "include": ["src", "*.mjs"],
+  "exclude": ["node_modules", "dist"]
+}

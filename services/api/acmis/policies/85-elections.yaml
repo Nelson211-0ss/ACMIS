@@ -1,0 +1,218 @@
+# Student elections.
+#
+# The rules here protect one thing above all: the secrecy of the ballot. The
+# schema does most of the work — a ballot carries no voter identity and
+# nothing joins it to the roll — and these close the remaining routes:
+#
+# * nobody reads an individual ballot, not the returning officer, not internal
+#   audit, not a platform administrator. There is nothing in a ballot worth
+#   reading that the count does not give you, and an endpoint that returns one
+#   is an endpoint somebody will be pressured to use.
+# * the roll is readable by the returning officer and the observers, because
+#   "who was entitled to vote" is exactly what a disputed election turns on.
+# * a running tally is refused while the poll is open. Turnout is published;
+#   a partial count is not, because publishing one changes how people vote.
+policies:
+  - id: elections.electorate
+    description: >
+      What a student may do: see the election, stand for a position, and vote
+      once. The commonest failure in a student-election system is treating the
+      electorate as an audience — they are the participants, and every
+      self-service action here exists so that standing and voting do not
+      require a queue at the guild office.
+    priority: 100
+    target:
+      subject_kinds: ["student"]
+      resource_types: ["election", "election_position", "election_candidate",
+                       "election_result", "election_petition"]
+    rules:
+      - id: students-see-a-published-election
+        effect: permit
+        condition: >
+          resource.is_published == True
+          and matches(action, "(election|election_position|election_candidate):(read|list)")
+      - id: students-see-declared-results
+        effect: permit
+        condition: >
+          action in ["election_result:read", "election_result:list"]
+          and resource.is_declared == True
+      - id: stand-for-a-position
+        effect: permit
+        description: >
+          Lodging a nomination, and seconding somebody else's. Vetting decides
+          whether it reaches the ballot; anyone in the electorate may put
+          their name forward.
+        condition: >
+          resource.status in ["nominations", "nominated", None]
+          and action in ["election_candidate:create", "election_candidate:second"]
+      - id: withdraw-own-nomination
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["election_candidate:withdraw", "election_candidate:read",
+                         "election_candidate:update"]
+      - id: vote-once
+        effect: permit
+        sensitive: true
+        description: >
+          Casting a ballot. The service refuses a second one; this grant is
+          what lets the first through.
+        condition: >
+          resource.status == "voting"
+          and action in ["election:vote", "election:read_entitlement"]
+      - id: verify-own-receipt
+        effect: permit
+        description: >
+          Checking a ballot is in the count from the receipt token. Returns
+          that it was counted and never what it said — a receipt that proved
+          the choice would make a vote sellable.
+        condition: >
+          action == "election:verify_receipt"
+      - id: petition-a-result
+        effect: permit
+        condition: >
+          action in ["election_petition:create", "election_petition:read",
+                     "election_petition:list"]
+
+  - id: elections.ballot-secrecy
+    description: >
+      The rules that make the secret ballot real rather than promised. These
+      are deny rules and they apply to *everybody* — the returning officer,
+      internal audit, the platform. There is no grant anywhere in this bundle
+      that reads an individual ballot, and that is deliberate: the count is
+      what an election needs, and the ability to read one ballot is the
+      ability to be leaned on for it.
+    priority: 4
+    target:
+      resource_types: ["election_ballot", "election_voter_roll"]
+    rules:
+      - id: no-reading-a-ballot
+        effect: deny
+        sensitive: true
+        description: >
+          An individual ballot is never readable. Use the count.
+        condition: >
+          matches(action, "election_ballot:(read|list|export)")
+      - id: no-altering-a-ballot
+        effect: deny
+        sensitive: true
+        description: A cast ballot cannot be changed or removed by anyone.
+        condition: >
+          matches(action, "election_ballot:(update|delete|void)")
+      - id: no-roll-to-anyone-but-the-officers
+        effect: deny
+        sensitive: true
+        description: >
+          The roll says who voted. It is for the returning officer and the
+          observers, and for the voter's own row — not for a dean, a warden,
+          or a report.
+        condition: >
+          matches(action, "election_voter_roll:(read|list|export)")
+          and not owns(resource.student_id, subject.student_id)
+          and not any_in(["elections:conduct", "elections:observe", "audit:read"],
+                         subject.permissions)
+
+  - id: elections.conduct
+    description: >
+      The returning officer runs the poll: builds the roll, draws the ballot
+      order, opens and closes voting, counts and declares. One office, named
+      on the election, because a disputed result turns on who did what and
+      "the system did it" is not an answer.
+    priority: 100
+    target:
+      resource_types: ["election", "election_position", "election_candidate",
+                       "election_result", "election_voter_roll"]
+    rules:
+      - id: returning-officer-conducts
+        effect: permit
+        sensitive: true
+        condition: >
+          "elections:conduct" in subject.permissions
+          and matches(action, "(election|election_position|election_candidate|election_result|election_voter_roll):.*")
+          and not matches(action, "election_ballot:.*")
+      - id: guild-office-administers
+        effect: permit
+        description: >
+          Setting an election up — positions, dates, the constitution's
+          eligibility rules — before it is published. Deliberately separate
+          from conducting the poll: the office that writes the rules is not
+          the office that runs the count.
+        condition: >
+          any_in(["elections:administer", "welfare:support", "student:manage"],
+                 subject.permissions)
+          and resource.status in ["draft", "nominations", "vetting", None]
+          and matches(action, "(election|election_position):(create|read|list|update|publish)")
+      - id: observers-watch
+        effect: permit
+        description: >
+          An observer reads everything except a ballot, and changes nothing.
+          That is the whole job, and a system that cannot express it forces
+          observers to watch over somebody's shoulder.
+        condition: >
+          "elections:observe" in subject.permissions
+          and matches(action, "(election|election_position|election_candidate|election_result|election_voter_roll):(read|list)")
+      - id: registry-reads-the-outcome
+        effect: permit
+        description: >
+          A declared result changes who sits on Senate committees, so the
+          registry reads it.
+        condition: >
+          any_in(["student:manage", "governance:oversight", "audit:read"],
+                 subject.permissions)
+          and matches(action, "(election|election_result|election_candidate):(read|list)")
+
+  - id: elections.separation-of-duties
+    description: >
+      Who may not do what. An election is the one process here where the
+      people running it are the most likely source of a challenge.
+    priority: 5
+    target:
+      resource_types: ["election", "election_candidate", "election_result"]
+    rules:
+      - id: no-running-tally-while-the-poll-is-open
+        effect: deny
+        sensitive: true
+        description: >
+          A partial count is not published while voting is open. It changes how
+          people vote, and in a student election it is the most effective way
+          to depress turnout for a trailing candidate. The returning officer
+          may count — they have to, to be ready — and nobody else may.
+        condition: >
+          action == "election:count"
+          and resource.status == "voting"
+          and not "elections:conduct" in subject.permissions
+      - id: no-conducting-an-election-you-stand-in
+        effect: deny
+        sensitive: true
+        description: >
+          A candidate cannot be the returning officer. This is the first thing
+          a petition alleges and the easiest to prevent.
+        condition: >
+          matches(action, "election:(open_poll|close_poll|declare|count)")
+          and owns(resource.returning_officer_id, subject.id)
+          and subject.student_id != None
+      - id: no-vetting-your-own-nomination
+        effect: deny
+        sensitive: true
+        description: Somebody else vets your nomination.
+        condition: >
+          action == "election_candidate:vet"
+          and owns(resource.requested_by_id, subject.id)
+      - id: no-declaring-twice
+        effect: deny
+        sensitive: true
+        description: >
+          A declared result stands. A recount comes from an upheld petition,
+          which annuls the declaration first.
+        condition: >
+          action == "election:declare"
+          and resource.status == "declared"
+      - id: no-reopening-a-closed-poll
+        effect: deny
+        sensitive: true
+        description: >
+          A poll that has closed cannot be reopened. Extending a poll happens
+          before it closes, and is recorded on the election.
+        condition: >
+          action == "election:open_poll"
+          and resource.status in ["counting", "declared", "annulled"]

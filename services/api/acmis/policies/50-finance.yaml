@@ -1,0 +1,141 @@
+policies:
+  - id: finance.student-view
+    description: A student sees their own ledger, and only ever reads it.
+    priority: 100
+    target:
+      subject_kinds: ["student", "applicant"]
+      resource_types: ["invoice", "payment", "fee_structure", "student_ledger", "sponsorship"]
+    rules:
+      - id: own-ledger
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and matches(action, "(invoice|payment|sponsorship):(read|list)"
+                      + "|student_ledger:(read|list|read_statement)")
+      - id: initiate-own-payment
+        effect: permit
+        condition: >
+          owns(resource.student_id, subject.student_id)
+          and action in ["payment:initiate", "payment:read_receipt"]
+      - id: published-fee-structure
+        effect: permit
+        condition: >
+          action in ["fee_structure:read", "fee_structure:list"]
+          and resource.status == "published"
+
+  - id: finance.bursary-operations
+    description: The finance office posts, allocates and reconciles.
+    priority: 100
+    target:
+      resource_types: ["invoice", "payment", "fee_structure", "student_ledger",
+                       "sponsorship", "journal_entry", "bank_reconciliation", "refund"]
+    rules:
+      - id: cashier-receipts
+        effect: permit
+        condition: >
+          "finance:receipt" in subject.permissions
+          and action in ["payment:record", "payment:read", "payment:list",
+                         "payment:allocate", "invoice:read", "invoice:list",
+                         "student_ledger:read", "student_ledger:read_statement"]
+      - id: accountant-posts
+        effect: permit
+        condition: >
+          "finance:post" in subject.permissions
+          and matches(action, "(invoice|journal_entry|bank_reconciliation|student_ledger):.*")
+          and not matches(action, ".*:(approve|reverse|waive|refund)")
+      - id: bursar-approves
+        effect: permit
+        sensitive: true
+        condition: >
+          "finance:approve" in subject.permissions
+          and matches(action, "(invoice|journal_entry|refund|fee_structure|sponsorship):approve")
+      - id: approver-may-read
+        effect: permit
+        description: >
+          An approver reads the whole sub-ledger. The conflict table keeps
+          `finance:approve` apart from `finance:post` and `finance:receipt` —
+          four eyes on money — but that separates posting from approving, not
+          approving from seeing. Without this a bursar could release a waiver
+          they were unable to open, and could not work the unmatched-money
+          queue at all.
+        condition: >
+          any_in(["finance:approve", "finance:override_block"], subject.permissions)
+          and matches(action, "(invoice|payment|journal_entry|student_ledger|waiver"
+                      + "|refund|fee_structure|sponsorship|bank_reconciliation)"
+                      + ":(read|list|read_statement)")
+
+  - id: finance.four-eyes
+    description: >
+      Money leaving or being forgiven needs two people. A waiver, a reversal
+      and a refund are each raised by one member of staff and released by
+      another, and the releaser cannot be the raiser. This is the single rule
+      in the bundle most likely to be tested by an external auditor.
+    priority: 8
+    target:
+      resource_types: ["refund", "waiver", "journal_entry", "payment"]
+    rules:
+      - id: no-self-release
+        effect: deny
+        sensitive: true
+        description: Someone other than the person who raised this must release it.
+        condition: >
+          action in ["refund:release", "waiver:release", "journal_entry:release",
+                     "payment:reverse"]
+          and owns(resource.raised_by_id, subject.id)
+      - id: waiver-ceiling
+        effect: deny
+        description: This amount is above your waiver limit.
+        condition: >
+          action in ["finance:waive", "waiver:release"]
+          and resource.amount_minor > subject.waiver_ceiling_minor
+      - id: no-backdating
+        effect: deny
+        sensitive: true
+        description: A financial entry cannot be posted into a closed period.
+        condition: >
+          matches(action, "(journal_entry|payment|invoice):(record|post|create)")
+          and resource.period_status == "closed"
+          and not "finance:reopen_period" in subject.permissions
+
+  - id: finance.tuition-blocks
+    description: >
+      Fee status gates examination and graduation, which is the institution's
+      main enforcement lever and therefore needs a named override rather than a
+      quiet one — hardship cases exist and must be traceable to a decision.
+    priority: 14
+    rules:
+      - id: exam-card-requires-clearance
+        effect: deny
+        description: Examination clearance requires the semester's fee threshold to be met.
+        condition: >
+          action == "exam_card:issue"
+          and resource.fee_percentage_paid < resource.required_percentage
+          and not "finance:override_block" in subject.permissions
+      - id: award-requires-zero-balance
+        effect: deny
+        sensitive: true
+        description: An award cannot be conferred while fees are outstanding.
+        condition: >
+          action == "award:confer"
+          and resource.outstanding_balance_minor > 0
+          and not "finance:override_block" in subject.permissions
+
+  - id: finance.waivers
+    description: >
+      Raising a waiver, as distinct from releasing one. `finance.four-eyes`
+      already refuses a release by the person who raised it and refuses an
+      amount above the releaser's ceiling; this is the other half — who may
+      put one on the table at all. Welfare and the dean of students raise
+      hardship cases; the bursary raises corrections.
+    priority: 100
+    target:
+      resource_types: ["waiver"]
+    rules:
+      - id: raise-a-waiver
+        effect: permit
+        sensitive: true
+        condition: >
+          any_in(["finance:waive", "finance:waive_unlimited", "welfare:support"],
+                 subject.permissions)
+          and action in ["waiver:create", "waiver:read", "waiver:list"]
+        obligations: ["require:reason"]

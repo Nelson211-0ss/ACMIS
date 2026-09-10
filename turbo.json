@@ -1,0 +1,33 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "globalDependencies": [".env", "packages/ui/src/styles/**"],
+  "globalEnv": [
+    "NODE_ENV",
+    "ACMIS_API_URL",
+    "ACMIS_API_INTERNAL_URL",
+    "ACMIS_SESSION_SECRET",
+    "ACMIS_CONTROL_PLANE_HOST",
+    "ACMIS_TENANT_HOST_SUFFIX",
+    "ACMIS_DEV_TENANT",
+    "NEXT_PUBLIC_ACMIS_ENV"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "dev": { "cache": false, "persistent": true },
+    "lint": { "dependsOn": ["^build"] },
+    "typecheck": {
+      // Depends on this package's *own* build, not only its dependencies'.
+      // Each app's tsconfig includes `.next/types/**`, which `next build`
+      // generates — so running the two concurrently is a race, and it fails
+      // intermittently on whichever app loses. Declaring the dependency is
+      // what makes `turbo run lint typecheck build` reliable.
+      "dependsOn": ["^build", "build"]
+    },
+    "clean": { "cache": false }
+  }
+}

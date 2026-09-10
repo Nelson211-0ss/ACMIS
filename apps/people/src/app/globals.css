@@ -1,0 +1,4 @@
+/* The whole design system, from the shared package. Nothing app-specific
+   belongs here — a colour or a spacing that only one module needs is a colour
+   that will be wrong in the other ten. */
+@import "@acmis/ui/globals.css";
