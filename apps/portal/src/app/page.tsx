@@ -38,6 +38,7 @@ export default async function PortalHome() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.Home />}
         title={`Hello, ${student?.given_names?.split(" ")[0] ?? user.display_name}`}
         description={
           semester
@@ -61,20 +62,14 @@ export default async function PortalHome() {
             {live.map((attempt) => (
               <li
                 key={attempt.id}
-                className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-md border p-3"
+                className="bg-card shadow-card flex flex-wrap items-center justify-between gap-3 rounded-md p-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {attempt.assessment_title}
-                  </p>
+                  <p className="truncate text-sm font-medium">{attempt.assessment_title}</p>
                   {attempt.expires_at ? (
                     <p className="text-muted-foreground text-xs">
                       Closes{" "}
-                      {dateTime(
-                        attempt.expires_at,
-                        institution?.locale,
-                        institution?.timezone,
-                      )}
+                      {dateTime(attempt.expires_at, institution?.locale, institution?.timezone)}
                     </p>
                   ) : null}
                 </div>
@@ -99,24 +94,22 @@ export default async function PortalHome() {
           <ul className="mt-2 space-y-1.5">
             {holds.map((hold, index) => (
               <li key={index} className="text-sm">
-                <span className="font-medium capitalize">
-                  {hold.kind.replace(/_/g, " ")}
-                </span>
+                <span className="font-medium capitalize">{hold.kind.replace(/_/g, " ")}</span>
                 {" — "}
                 {hold.reason}
               </li>
             ))}
           </ul>
           <p className="text-muted-foreground mt-2 text-xs">
-            Each hold is cleared by the office that placed it. Visit that office
-            rather than the registry.
+            Each hold is cleared by the office that placed it. Visit that office rather than the
+            registry.
           </p>
         </section>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {primary ? (
-          <section className="bg-card space-y-3 rounded-lg border p-4">
+          <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
             <h2 className="text-base font-semibold">Your programme</h2>
             <div className="flex items-baseline gap-2">
               <span className="tabular text-3xl font-semibold">
@@ -137,17 +130,14 @@ export default async function PortalHome() {
               />
               <Row label="Standing" value={humaniseStatus(primary.progression_status)} />
               {primary.outstanding_retakes > 0 ? (
-                <Row
-                  label="Retakes outstanding"
-                  value={String(primary.outstanding_retakes)}
-                />
+                <Row label="Retakes outstanding" value={String(primary.outstanding_retakes)} />
               ) : null}
             </dl>
           </section>
         ) : null}
 
         {statement ? (
-          <section className="bg-card space-y-3 rounded-lg border p-4">
+          <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
             <h2 className="text-base font-semibold">Your fees</h2>
             <div className="flex items-baseline gap-2">
               <span
@@ -174,23 +164,16 @@ export default async function PortalHome() {
               />
               <Row
                 label="Paid"
-                value={money(
-                  statement.total_paid_minor,
-                  statement.currency,
-                  institution?.locale,
-                )}
+                value={money(statement.total_paid_minor, statement.currency, institution?.locale)}
               />
             </dl>
-            <a
-              href="/fees"
-              className="text-module inline-block pt-1 text-xs font-medium underline"
-            >
+            <a href="/fees" className="text-module inline-block pt-1 text-xs font-medium underline">
               See your statement
             </a>
           </section>
         ) : null}
 
-        <section className="bg-card space-y-3 rounded-lg border p-4">
+        <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
           <h2 className="text-base font-semibold">Recent tests</h2>
           {attempts.length === 0 ? (
             <p className="text-muted-foreground text-sm">

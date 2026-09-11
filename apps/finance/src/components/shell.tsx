@@ -32,21 +32,31 @@ export function FinanceShell({
       items: [
         { href: "/", label: "Overview", icon: <Icons.LayoutDashboard /> },
         { href: "/invoices", label: "Invoices", icon: <Icons.FileText /> },
-        ...(has("finance:receipt", "finance:post") ? [{ href: "/payments", label: "Payments", icon: <Icons.Receipt /> }] : []),
+        ...(has("finance:receipt", "finance:post")
+          ? [{ href: "/payments", label: "Payments", icon: <Icons.Receipt /> }]
+          : []),
       ],
     },
     {
       title: "Reconciliation",
       items: [
-        ...(has("finance:receipt", "finance:post") ? [{ href: "/unmatched", label: "Unmatched money", icon: <Icons.HelpCircle /> }] : []),
-        ...(has("finance:post", "finance:approve") ? [{ href: "/trial-balance", label: "Trial balance", icon: <Icons.Scale /> }] : []),
+        ...(has("finance:receipt", "finance:post")
+          ? [{ href: "/unmatched", label: "Unmatched money", icon: <Icons.HelpCircle /> }]
+          : []),
+        ...(has("finance:post", "finance:approve")
+          ? [{ href: "/trial-balance", label: "Trial balance", icon: <Icons.Scale /> }]
+          : []),
       ],
     },
     {
       title: "Concessions",
       items: [
-        ...(has("finance:waive", "finance:approve") ? [{ href: "/waivers", label: "Waivers", icon: <Icons.BadgePercent /> }] : []),
-        ...(has("finance:post", "finance:approve") ? [{ href: "/fee-structures", label: "Fee structures", icon: <Icons.Table /> }] : []),
+        ...(has("finance:waive", "finance:approve")
+          ? [{ href: "/waivers", label: "Waivers", icon: <Icons.BadgePercent /> }]
+          : []),
+        ...(has("finance:post", "finance:approve")
+          ? [{ href: "/fee-structures", label: "Fee structures", icon: <Icons.Table /> }]
+          : []),
       ],
     },
   ]

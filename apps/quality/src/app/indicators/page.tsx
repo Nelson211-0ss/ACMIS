@@ -55,9 +55,7 @@ export default async function IndicatorsPage({
       numeric: true,
       render: (row) =>
         row.target !== null ? (
-          <span className="text-muted-foreground tabular-nums">
-            {row.target.toFixed(2)}
-          </span>
+          <span className="text-muted-foreground tabular-nums">{row.target.toFixed(2)}</span>
         ) : (
           <span className="text-muted-foreground">none set</span>
         ),
@@ -100,6 +98,7 @@ export default async function IndicatorsPage({
   return (
     <QualityShell user={user} institution={institution} currentPath="/indicators">
       <PageHeader
+        icon={<Icons.Gauge />}
         title="Indicators"
         description="Aggregate measures, readable by any member of staff — they carry no personal data and are more useful the more widely they are read."
       />
@@ -166,8 +165,8 @@ export default async function IndicatorsPage({
       />
 
       <p className="text-muted-foreground text-xs">
-        An indicator whose derivation nobody recorded is argued about instead of acted
-        on, so each row keeps its numerator, its denominator and a method note.
+        An indicator whose derivation nobody recorded is argued about instead of acted on, so each
+        row keeps its numerator, its denominator and a method note.
       </p>
     </QualityShell>
   )

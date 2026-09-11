@@ -47,9 +47,7 @@ export default async function AcquisitionsPage({
       render: (row) => (
         <div>
           <div className="font-medium">{row.title}</div>
-          {row.authors ? (
-            <div className="text-muted-foreground text-xs">{row.authors}</div>
-          ) : null}
+          {row.authors ? <div className="text-muted-foreground text-xs">{row.authors}</div> : null}
         </div>
       ),
     },
@@ -75,9 +73,7 @@ export default async function AcquisitionsPage({
       header: "Waiting",
       numeric: true,
       render: (row) => {
-        const days = Math.round(
-          (Date.now() - new Date(row.requested_on).getTime()) / 86_400_000,
-        )
+        const days = Math.round((Date.now() - new Date(row.requested_on).getTime()) / 86_400_000)
         const open = !["catalogued", "declined", "cancelled"].includes(row.status)
         return open ? (
           <StatusBadge tone={days > 60 ? "danger" : days > 30 ? "warning" : "neutral"}>
@@ -92,9 +88,7 @@ export default async function AcquisitionsPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
   ]
@@ -102,14 +96,14 @@ export default async function AcquisitionsPage({
   return (
     <LibraryShell user={user} institution={institution} currentPath="/acquisitions">
       <PageHeader
+        icon={<Icons.PackagePlus />}
         title="Acquisitions"
         description="From “this should be on the reading list” to an accession number. Requests tied to a course and a cohort size are the ones that get funded."
       />
 
       {waiting.length > 0 ? (
         <p className="border-primary/30 bg-primary/5 rounded-md border px-3 py-2 text-sm">
-          {waiting.length} requested title{waiting.length === 1 ? "" : "s"} not yet on the
-          shelf.
+          {waiting.length} requested title{waiting.length === 1 ? "" : "s"} not yet on the shelf.
         </p>
       ) : null}
 

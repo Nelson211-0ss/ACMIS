@@ -22,11 +22,7 @@ import { APP } from "@/lib/config"
  * three, and a page that shows only the record sends the clerk to two more
  * screens.
  */
-export default async function StudentPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function StudentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireUser(APP)
   const client = await acmis(APP)
@@ -69,6 +65,7 @@ export default async function StudentPage({
   return (
     <StudentsShell user={user} institution={institution} currentPath="/students">
       <PageHeader
+        icon={<Icons.Users />}
         title={surnameFirst(student)}
         description={
           <>
@@ -121,22 +118,24 @@ export default async function StudentPage({
             ))}
           </ul>
           <p className="text-muted-foreground mt-2 text-xs">
-            Each hold is cleared by the office that placed it, so a finalist can
-            be told which desk is holding them up rather than just
-            &ldquo;not cleared&rdquo;.
+            Each hold is cleared by the office that placed it, so a finalist can be told which desk
+            is holding them up rather than just &ldquo;not cleared&rdquo;.
           </p>
         </section>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <section className="bg-card space-y-3 rounded-lg border p-4 lg:col-span-2">
+        <section className="bg-card shadow-card space-y-3 rounded-lg p-4 lg:col-span-2">
           <h2 className="text-base font-semibold">Bio-data</h2>
           <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
-            <Field label="Full name" value={`${student.given_names} ${student.other_names ?? ""} ${student.surname}`.replace(/\s+/g, " ")} />
             <Field
-              label="Date of birth"
-              value={date(student.date_of_birth, institution?.locale)}
+              label="Full name"
+              value={`${student.given_names} ${student.other_names ?? ""} ${student.surname}`.replace(
+                /\s+/g,
+                " ",
+              )}
             />
+            <Field label="Date of birth" value={date(student.date_of_birth, institution?.locale)} />
             <Field label="Sex" value={humaniseStatus(student.sex)} />
             <Field label="Nationality" value={student.nationality} />
             <Field label="District of origin" value={student.district_of_origin} />
@@ -169,16 +168,16 @@ export default async function StudentPage({
           </dl>
           {masked.size > 0 ? (
             <p className="text-muted-foreground border-t pt-3 text-xs">
-              {masked.size} field{masked.size === 1 ? "" : "s"} withheld from your
-              role. Special-category data is readable only with a specific grant,
-              and every such read is logged against the reader.
+              {masked.size} field{masked.size === 1 ? "" : "s"} withheld from your role.
+              Special-category data is readable only with a specific grant, and every such read is
+              logged against the reader.
             </p>
           ) : null}
         </section>
 
         <div className="space-y-4">
           {primary ? (
-            <section className="bg-card space-y-4 rounded-lg border p-4">
+            <section className="bg-card shadow-card space-y-4 rounded-lg p-4">
               <h2 className="text-base font-semibold">Academic progress</h2>
               <div className="flex items-baseline gap-2">
                 <span className="tabular text-3xl font-semibold">
@@ -198,16 +197,13 @@ export default async function StudentPage({
               {primary.outstanding_retakes > 0 ? (
                 <p className="text-warning-foreground text-xs">
                   {primary.outstanding_retakes} outstanding retake
-                  {primary.outstanding_retakes === 1 ? "" : "s"}. An award cannot
-                  be classified until these are cleared.
+                  {primary.outstanding_retakes === 1 ? "" : "s"}. An award cannot be classified
+                  until these are cleared.
                 </p>
               ) : null}
               <dl className="space-y-2 border-t pt-3 text-sm">
                 <Field label="Entry route" value={humaniseStatus(primary.entry_route)} />
-                <Field
-                  label="Started"
-                  value={date(primary.started_on, institution?.locale)}
-                />
+                <Field label="Started" value={date(primary.started_on, institution?.locale)} />
                 <Field
                   label="Expected completion"
                   value={date(primary.expected_completion_on, institution?.locale)}
@@ -220,7 +216,7 @@ export default async function StudentPage({
           ) : null}
 
           {statement ? (
-            <section className="bg-card space-y-3 rounded-lg border p-4">
+            <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
               <h2 className="text-base font-semibold">Fees</h2>
               <div className="flex items-baseline justify-between gap-2">
                 <span
@@ -259,8 +255,8 @@ export default async function StudentPage({
                 />
               </dl>
               <p className="text-muted-foreground border-t pt-2 text-xs">
-                Recomputed from the ledger on every read. The entries are the
-                authority; the cached balance is only a cache.
+                Recomputed from the ledger on every read. The entries are the authority; the cached
+                balance is only a cache.
               </p>
             </section>
           ) : null}
@@ -268,7 +264,7 @@ export default async function StudentPage({
       </div>
 
       {clearance && clearance.length > 0 ? (
-        <section className="bg-card rounded-lg border p-4">
+        <section className="bg-card shadow-card rounded-lg p-4">
           <h2 className="text-base font-semibold">Clearance</h2>
           <p className="text-muted-foreground mt-1 text-sm">
             Each office signs independently. Graduation waits on the last one.

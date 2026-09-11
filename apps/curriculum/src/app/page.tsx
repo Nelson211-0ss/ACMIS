@@ -41,8 +41,7 @@ export default async function CurriculumOverview() {
   soon.setMonth(soon.getMonth() + 6)
   const expiring = items
     .filter(
-      (p) =>
-        p.accredited_until !== null && new Date(p.accredited_until) <= soon && p.is_active,
+      (p) => p.accredited_until !== null && new Date(p.accredited_until) <= soon && p.is_active,
     )
     .sort((a, b) => (a.accredited_until ?? "").localeCompare(b.accredited_until ?? ""))
 
@@ -54,6 +53,7 @@ export default async function CurriculumOverview() {
   return (
     <CurriculumShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.BookOpen />}
         title="Curriculum"
         description="A programme is a stable identity; a curriculum version is its content, valid for the cohorts that entered while it was current. A student is attached to a version, which is what lets the 2024 cohort graduate under the 2024 rules."
       />
@@ -65,13 +65,12 @@ export default async function CurriculumOverview() {
         >
           <h2 className="text-destructive flex items-center gap-2 text-sm font-semibold">
             <Icons.AlertTriangle className="size-4" aria-hidden />
-            {expiring.length} programme{expiring.length === 1 ? "" : "s"} with
-            accreditation expiring within six months
+            {expiring.length} programme{expiring.length === 1 ? "" : "s"} with accreditation
+            expiring within six months
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Admitting onto a lapsed accreditation invalidates the award. Nothing
-            else changes when the date passes, which is why it is the first thing
-            on this page.
+            Admitting onto a lapsed accreditation invalidates the award. Nothing else changes when
+            the date passes, which is why it is the first thing on this page.
           </p>
           <ul className="mt-3 space-y-1.5">
             {expiring.map((programme) => (
@@ -80,8 +79,7 @@ export default async function CurriculumOverview() {
                 className="flex flex-wrap items-baseline justify-between gap-2 text-sm"
               >
                 <span>
-                  <span className="font-mono text-xs">{programme.code}</span>{" "}
-                  {programme.name}
+                  <span className="font-mono text-xs">{programme.code}</span> {programme.name}
                 </span>
                 <span className="text-destructive text-xs font-medium">
                   expires {date(programme.accredited_until, institution?.locale)}
@@ -107,9 +105,7 @@ export default async function CurriculumOverview() {
         />
         <StatTile
           label="Awaiting approval"
-          value={number(
-            (byStatus.get("submitted") ?? 0) + (byStatus.get("recommended") ?? 0),
-          )}
+          value={number((byStatus.get("submitted") ?? 0) + (byStatus.get("recommended") ?? 0))}
           icon={<Icons.Stamp className="size-4" />}
           footnote="With a faculty board or Senate"
         />
@@ -160,18 +156,15 @@ export default async function CurriculumOverview() {
               formatValue={(v) => number(v)}
             />
           ) : (
-            <p className="text-muted-foreground py-6 text-center text-sm">
-              No programmes yet.
-            </p>
+            <p className="text-muted-foreground py-6 text-center text-sm">No programmes yet.</p>
           )}
         </ChartFrame>
 
-        <div className="bg-card rounded-lg border p-4">
+        <div className="bg-card shadow-card rounded-lg p-4">
           <h3 className="text-base font-semibold">Approval chain</h3>
           <p className="text-muted-foreground mt-1 text-sm">
-            Drafted in the department, recommended by the faculty board,
-            approved by Senate — three grants and three people. The submitter is
-            refused at the approval step.
+            Drafted in the department, recommended by the faculty board, approved by Senate — three
+            grants and three people. The submitter is refused at the approval step.
           </p>
           <ul className="mt-4 space-y-2">
             {(
@@ -200,10 +193,9 @@ export default async function CurriculumOverview() {
             ))}
           </ul>
           <p className="text-muted-foreground mt-3 border-t pt-3 text-xs leading-relaxed">
-            An approved version is frozen. Changing the credit weight of a
-            course a cohort has already sat would retroactively change their
-            CGPA, so a change is a new version with its own effective date —
-            never an edit.
+            An approved version is frozen. Changing the credit weight of a course a cohort has
+            already sat would retroactively change their CGPA, so a change is a new version with its
+            own effective date — never an edit.
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 
 import { MobileNav } from "@acmis/ui/components/mobile-nav"
+import { ThemeToggle } from "@acmis/ui/components/theme-toggle"
 import { cn } from "@acmis/ui/lib/utils"
 
 /**
@@ -17,6 +18,19 @@ import { cn } from "@acmis/ui/lib/utils"
  * interactivity of its own, so a page using it costs no client JavaScript for
  * the frame.
  */
+
+/**
+ * First letter of the first and last name, which is what a person recognises
+ * their own avatar by. Falls back to one letter rather than to a blank circle,
+ * and to nothing at all rather than to a crash, because `display_name` comes
+ * from the institution's own records and one of them will be a single word.
+ */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
+}
 
 export interface NavItem {
   href: string
@@ -42,6 +56,7 @@ export function AppShell({
   user,
   launcher,
   banner,
+  primaryNav,
   children,
 }: {
   moduleKey: string
@@ -56,6 +71,11 @@ export function AppShell({
   launcher?: ReactNode
   /** An institution-wide notice. Renders above everything, unmissable. */
   banner?: ReactNode
+  /**
+   * The phone tab bar's four destinations. Defaults to the first four in nav
+   * order; see `MobileNav`.
+   */
+  primaryNav?: NavItem[]
   children: ReactNode
 }) {
   return (
@@ -66,8 +86,8 @@ export function AppShell({
         // as much as to the support engineer. A banner nobody can dismiss is
         // the point.
         <div className="bg-warning text-warning-foreground no-print px-4 py-1.5 text-center text-xs font-medium">
-          Support session — read-only. Every action is recorded in this
-          institution&rsquo;s audit trail.
+          Support session — read-only. Every action is recorded in this institution&rsquo;s audit
+          trail.
         </div>
       ) : null}
       {banner}
@@ -88,21 +108,24 @@ export function AppShell({
               // arbitrary URL the institution supplied, which `next/image`
               // would refuse without every deployment listing every tenant's
               // host in `remotePatterns`.
-              <img
-                src={crestUrl}
-                alt=""
-                className="size-7 shrink-0 rounded object-contain"
-              />
+              <img src={crestUrl} alt="" className="size-7 shrink-0 rounded object-contain" />
             ) : (
               <span className="bg-module/15 text-module grid size-7 shrink-0 place-items-center rounded text-xs font-bold">
                 {(institutionShortName ?? institutionName).slice(0, 3).toUpperCase()}
               </span>
             )}
             <div className="min-w-0">
-              <p className="truncate text-sm leading-tight font-semibold" title={institutionName}>
+              {/* The institution's name is the one piece of chrome that should
+                  read as an institution rather than as an app, so it takes the
+                  display face. The module under it stays on the interface face
+                  — it is a label for where you are, not a title. */}
+              <p
+                className="font-display truncate text-sm font-bold leading-tight tracking-tight"
+                title={institutionName}
+              >
                 {institutionShortName ?? institutionName}
               </p>
-              <p className="text-module truncate text-[11px] leading-tight font-medium">
+              <p className="text-module truncate text-[11px] font-medium leading-tight">
                 {moduleName}
               </p>
             </div>
@@ -111,11 +134,7 @@ export function AppShell({
           <nav className="space-y-5 px-2 py-4" aria-label={`${moduleName} navigation`}>
             {sections.map((section, index) => (
               <div key={section.title ?? index}>
-                {section.title ? (
-                  <p className="text-muted-foreground mb-1.5 px-2 text-[11px] font-medium tracking-wide uppercase">
-                    {section.title}
-                  </p>
-                ) : null}
+                {section.title ? <p className="eyebrow mb-1.5 px-2">{section.title}</p> : null}
                 <ul className="space-y-0.5">
                   {section.items.map((item) => {
                     const active =
@@ -138,7 +157,7 @@ export function AppShell({
                             // is a shape as well as a colour.
                             <span
                               aria-hidden
-                              className="bg-module absolute top-1/2 left-0 h-4 w-[2px] -translate-y-1/2 rounded-full"
+                              className="bg-module absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-full"
                             />
                           ) : null}
                           {item.icon ? (
@@ -161,27 +180,45 @@ export function AppShell({
         </aside>
 
         <div className="min-w-0">
-          <header className="bg-background/95 no-print sticky top-0 z-20 flex h-14 items-center gap-2 border-b px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:gap-3 sm:px-4">
+          <header className="bg-background/95 no-print supports-[backdrop-filter]:bg-background/80 sticky top-0 z-20 flex h-14 items-center gap-2 border-b px-3 backdrop-blur sm:gap-3 sm:px-4">
             <MobileNav
               sections={sections}
               currentPath={currentPath}
               moduleName={moduleName}
+              moduleKey={moduleKey}
+              primary={primaryNav}
             />
             <span className="bg-module/15 text-module truncate rounded px-2 py-0.5 text-xs font-semibold lg:hidden">
               {moduleName}
             </span>
             <div className="flex-1" />
             {launcher}
+            {/* The toggle was written, exported and imported here, and never
+                rendered — so the whole `.dark` palette in `globals.css` was
+                unreachable. It sits before the identity block because it is a
+                control and the identity block is not. */}
+            <ThemeToggle />
             {/* The name is dropped below `sm` rather than truncated: on a
                 360px screen the module chip and the launcher are what the user
-                needs, and their own name is the least useful thing there. */}
-            <div className="hidden text-right sm:block">
-              <p className="max-w-[12rem] truncate text-sm leading-tight font-medium">
-                {user.display_name}
-              </p>
-              <p className="text-muted-foreground text-[11px] leading-tight capitalize">
-                {user.kind}
-              </p>
+                needs, and their own name is the least useful thing there. The
+                initials survive, because on a shared registry machine the one
+                question worth answering at a glance is whose session this is. */}
+            <div className="flex items-center gap-2">
+              <div className="hidden text-right sm:block">
+                <p className="max-w-[12rem] truncate text-sm font-medium leading-tight">
+                  {user.display_name}
+                </p>
+                <p className="text-muted-foreground text-[11px] capitalize leading-tight">
+                  {user.kind}
+                </p>
+              </div>
+              <span
+                aria-hidden
+                title={user.display_name}
+                className="bg-module/12 text-module ring-module/20 font-display grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-bold ring-1"
+              >
+                {initials(user.display_name)}
+              </span>
             </div>
           </header>
 
@@ -190,7 +227,14 @@ export function AppShell({
               page scrolls horizontally instead of the table. */}
           <main
             className="mx-auto min-w-0 max-w-7xl space-y-5 px-3 py-5 sm:space-y-6 sm:px-6 sm:py-6"
-            style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
+            style={{
+              // Below `sm` the tab bar is a 56px-tall fixed layer across the
+              // foot of the screen, so the page has to end above it or its
+              // last row — usually the pagination — sits underneath and cannot
+              // be tapped. The bar is `sm:hidden`, and so is this clearance:
+              // `--tab-bar` is set to zero from `sm` up by the rule below.
+              paddingBottom: "calc(1.25rem + var(--tab-bar, 3.5rem) + env(safe-area-inset-bottom))",
+            }}
           >
             {children}
           </main>

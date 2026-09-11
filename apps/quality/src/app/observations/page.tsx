@@ -83,9 +83,7 @@ export default async function ObservationsPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
   ]
@@ -93,6 +91,7 @@ export default async function ObservationsPage({
   return (
     <QualityShell user={user} institution={institution} currentPath="/observations">
       <PageHeader
+        icon={<Icons.Eye />}
         title="Observations"
         description="Yours, and the ones you wrote. A developmental observation belongs to the member of staff observed and is not evidence in a decision about them."
       />
@@ -106,9 +105,7 @@ export default async function ObservationsPage({
           <div className="space-y-1">
             <div className="flex justify-between gap-3">
               <span className="font-medium">{humaniseStatus(row.purpose)}</span>
-              <span className="tabular-nums">
-                {row.overall_score?.toFixed(2) ?? "—"}
-              </span>
+              <span className="tabular-nums">{row.overall_score?.toFixed(2) ?? "—"}</span>
             </div>
             <div className="text-muted-foreground text-xs">
               {date(row.observed_on)} · {humaniseStatus(row.status)}
@@ -131,7 +128,7 @@ export default async function ObservationsPage({
             .filter((row) => row.strengths || row.areas_to_develop)
             .slice(0, 3)
             .map((row) => (
-              <article key={row.id} className="bg-card space-y-2 rounded-lg border p-4">
+              <article key={row.id} className="bg-card shadow-card space-y-2 rounded-lg p-4">
                 <header className="text-muted-foreground flex items-baseline justify-between text-xs">
                   <span>{date(row.observed_on)}</span>
                   <span>{humaniseStatus(row.purpose)}</span>

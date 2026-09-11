@@ -37,6 +37,7 @@ export default async function DevelopersOverview() {
   return (
     <DevelopersShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.Terminal />}
         title="Developers"
         description={`Build against ${institution?.name ?? "this institution"}'s ACMIS. Sandbox clients are approved immediately; a live client waits for an integration administrator to grant its scopes.`}
       />
@@ -47,13 +48,12 @@ export default async function DevelopersOverview() {
           What a token can and cannot do
         </h2>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-          A client&rsquo;s effective authority is the <strong>intersection</strong>{" "}
-          of its granted scopes and the permissions of the account that owns it.
-          Granting <code className="bg-muted rounded px-1 font-mono text-xs">results:approve</code>{" "}
-          to a client owned by a lecturer grants nothing. Interactive-only
-          actions — conferring an award, releasing results, waiving fees,
-          changing a policy — are refused to machine tokens entirely, whatever
-          their scopes.
+          A client&rsquo;s effective authority is the <strong>intersection</strong> of its granted
+          scopes and the permissions of the account that owns it. Granting{" "}
+          <code className="bg-muted rounded px-1 font-mono text-xs">results:approve</code> to a
+          client owned by a lecturer grants nothing. Interactive-only actions — conferring an award,
+          releasing results, waiving fees, changing a policy — are refused to machine tokens
+          entirely, whatever their scopes.
         </p>
       </section>
 
@@ -108,7 +108,7 @@ export default async function DevelopersOverview() {
             {items.map((apiClient) => (
               <li
                 key={apiClient.id}
-                className="bg-card flex flex-wrap items-start justify-between gap-3 rounded-lg border p-4"
+                className="bg-card shadow-card flex flex-wrap items-start justify-between gap-3 rounded-lg p-4"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -153,11 +153,11 @@ export default async function DevelopersOverview() {
         )}
       </section>
 
-      <section className="bg-card rounded-lg border p-4">
+      <section className="bg-card shadow-card rounded-lg p-4">
         <h2 className="text-base font-semibold">Standards supported</h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          ACMIS speaks the interoperability standards your existing systems
-          already use, so adopting it does not mean migrating everything.
+          ACMIS speaks the interoperability standards your existing systems already use, so adopting
+          it does not mean migrating everything.
         </p>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
           <Standard
@@ -192,15 +192,7 @@ export default async function DevelopersOverview() {
   )
 }
 
-function Standard({
-  title,
-  detail,
-  path,
-}: {
-  title: string
-  detail: string
-  path: string
-}) {
+function Standard({ title, detail, path }: { title: string; detail: string; path: string }) {
   return (
     <div>
       <dt className="text-sm font-semibold">

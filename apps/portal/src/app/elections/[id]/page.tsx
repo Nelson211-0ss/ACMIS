@@ -21,11 +21,7 @@ import { BallotPaper, ReceiptChecker } from "./ballot"
  * ballot, not a wall of turnout statistics; a voter arriving after it closed
  * should meet the result. Everything else is below whichever of those applies.
  */
-export default async function ElectionPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function ElectionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireUser(APP)
   const client = await acmis(APP)
@@ -59,6 +55,7 @@ export default async function ElectionPage({
   return (
     <PortalShell user={user} institution={institution} currentPath="/elections">
       <PageHeader
+        icon={<Icons.Vote />}
         title={election.title}
         breadcrumbs={
           <Link href="/elections" className="text-muted-foreground text-xs hover:underline">
@@ -73,7 +70,7 @@ export default async function ElectionPage({
         }
       />
 
-      <dl className="bg-card grid grid-cols-2 gap-4 rounded-lg border p-4 sm:grid-cols-4">
+      <dl className="bg-card shadow-card grid grid-cols-2 gap-4 rounded-lg p-4 sm:grid-cols-4">
         <Fact label="Reference" value={election.reference} mono />
         <Fact label="Kind" value={humaniseStatus(election.kind)} />
         <Fact label="Voting opens" value={dateTime(election.voting_opens_at)} />
@@ -88,9 +85,9 @@ export default async function ElectionPage({
               You have already voted
             </h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              Recorded {dateTime(entitlement.voted_at)}. A ballot cannot be
-              changed or withdrawn — that is what makes it worth anything. If
-              you kept your receipt you can confirm it is in the count below.
+              Recorded {dateTime(entitlement.voted_at)}. A ballot cannot be changed or withdrawn —
+              that is what makes it worth anything. If you kept your receipt you can confirm it is
+              in the count below.
             </p>
           </section>
         ) : entitlement?.eligible === false ? (
@@ -99,11 +96,9 @@ export default async function ElectionPage({
               You cannot vote in this election
             </h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              {entitlement.reason ??
-                "You are not on the roll for this election."}{" "}
-              The reason is stated so you know what to appeal. Appeals go to the
-              returning officer, and the roll closes before the poll opens — an
-              appeal lodged during voting is usually too late.
+              {entitlement.reason ?? "You are not on the roll for this election."} The reason is
+              stated so you know what to appeal. Appeals go to the returning officer, and the roll
+              closes before the poll opens — an appeal lodged during voting is usually too late.
             </p>
           </section>
         ) : null
@@ -112,11 +107,7 @@ export default async function ElectionPage({
       {canVote ? (
         <section className="space-y-3">
           <h2 className="text-sm font-semibold">Your ballot</h2>
-          <BallotPaper
-            electionId={election.id}
-            positions={positions}
-            candidates={candidates}
-          />
+          <BallotPaper electionId={election.id} positions={positions} candidates={candidates} />
         </section>
       ) : null}
 
@@ -133,14 +124,11 @@ export default async function ElectionPage({
             .map((result) => {
               const position = positions.find((p) => p.id === result.position_id)
               return (
-                <div key={result.id} className="bg-card rounded-lg border p-4">
+                <div key={result.id} className="bg-card shadow-card rounded-lg p-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-                    <h3 className="text-sm font-semibold">
-                      {position?.title ?? "Position"}
-                    </h3>
+                    <h3 className="text-sm font-semibold">{position?.title ?? "Position"}</h3>
                     <p className="text-muted-foreground text-xs">
-                      {number(result.ballots_cast)} of {number(result.eligible_count)}{" "}
-                      voted
+                      {number(result.ballots_cast)} of {number(result.eligible_count)} voted
                       {result.turnout_percent !== null
                         ? ` · ${percent(result.turnout_percent, "en-UG", 1)} turnout`
                         : ""}
@@ -154,9 +142,7 @@ export default async function ElectionPage({
                           <span className={row.elected ? "font-semibold" : ""}>
                             {row.ballot_name}
                             {row.elected ? (
-                              <span className="text-success ml-2 text-xs font-medium">
-                                elected
-                              </span>
+                              <span className="text-success ml-2 text-xs font-medium">elected</span>
                             ) : null}
                           </span>
                           <span className="tabular shrink-0">
@@ -180,9 +166,8 @@ export default async function ElectionPage({
                     ))}
                   </ul>
                   <p className="text-muted-foreground mt-3 text-xs">
-                    {number(result.abstentions)} abstentions ·{" "}
-                    {number(result.spoilt)} spoilt · declared{" "}
-                    {dateTime(result.declared_at)}
+                    {number(result.abstentions)} abstentions · {number(result.spoilt)} spoilt ·
+                    declared {dateTime(result.declared_at)}
                   </p>
                   {result.tie_break_note ? (
                     <p className="text-warning-foreground mt-2 text-xs">
@@ -212,12 +197,11 @@ export default async function ElectionPage({
                   .sort((a, b) => a.ballot_order - b.ballot_order)
                 if (standing.length === 0) return null
                 return (
-                  <li key={position.id} className="bg-card rounded-lg border p-4">
+                  <li key={position.id} className="bg-card shadow-card rounded-lg p-4">
                     <h3 className="text-sm font-semibold">{position.title}</h3>
                     <p className="text-muted-foreground text-xs">
                       {number(position.seats)} seat
-                      {position.seats === 1 ? "" : "s"} ·{" "}
-                      {number(standing.length)} standing
+                      {position.seats === 1 ? "" : "s"} · {number(standing.length)} standing
                     </p>
                     <ul className="mt-3 space-y-2 text-sm">
                       {standing.map((candidate) => (
@@ -239,8 +223,8 @@ export default async function ElectionPage({
                       ))}
                     </ul>
                     <p className="text-muted-foreground mt-3 text-xs">
-                      Ballot order was drawn by lot from a recorded seed, not set
-                      alphabetically — being first on the paper is worth votes.
+                      Ballot order was drawn by lot from a recorded seed, not set alphabetically —
+                      being first on the paper is worth votes.
                     </p>
                   </li>
                 )
@@ -253,7 +237,7 @@ export default async function ElectionPage({
       {turnout ? (
         <section className="space-y-3">
           <h2 className="text-sm font-semibold">Turnout</h2>
-          <div className="bg-card rounded-lg border p-4">
+          <div className="bg-card shadow-card rounded-lg p-4">
             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <Fact label="On the roll" value={number(turnout.eligible)} />
               <Fact label="Ballots cast" value={number(turnout.cast)} />
@@ -293,28 +277,27 @@ export default async function ElectionPage({
                   })}
                 </ul>
                 <p className="text-muted-foreground mt-2 text-xs">
-                  {number(turnout.most_from_one_device)} ballots came from the
-                  busiest single device. A high figure is the shape ballot
-                  stuffing actually takes, which is why it is published rather
-                  than only monitored.
+                  {number(turnout.most_from_one_device)} ballots came from the busiest single
+                  device. A high figure is the shape ballot stuffing actually takes, which is why it
+                  is published rather than only monitored.
                 </p>
               </div>
             ) : null}
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Turnout only. There is no running tally while a poll is open — a
-            live count changes how people vote and whether they bother, so the
-            API refuses one to everybody, including the returning officer.
+            Turnout only. There is no running tally while a poll is open — a live count changes how
+            people vote and whether they bother, so the API refuses one to everybody, including the
+            returning officer.
           </p>
         </section>
       ) : null}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">Check a receipt</h2>
-        <div className="bg-card max-w-md rounded-lg border p-4">
+        <div className="bg-card shadow-card max-w-md rounded-lg p-4">
           <p className="text-muted-foreground mb-3 text-sm">
-            Paste a receipt token to confirm the ballot is in the count. It will
-            never tell you — or anyone else — what the ballot said.
+            Paste a receipt token to confirm the ballot is in the count. It will never tell you — or
+            anyone else — what the ballot said.
           </p>
           <ReceiptChecker />
         </div>
@@ -335,13 +318,10 @@ export default async function ElectionPage({
                     {humaniseStatus(petition.status)}
                   </StatusBadge>
                 </div>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {petition.submission}
-                </p>
+                <p className="text-muted-foreground mt-1 text-xs">{petition.submission}</p>
                 {petition.determination ? (
                   <p className="mt-1 text-xs">
-                    <span className="font-medium">Determination:</span>{" "}
-                    {petition.determination}
+                    <span className="font-medium">Determination:</span> {petition.determination}
                     {petition.remedy ? ` Remedy: ${petition.remedy}` : ""}
                   </p>
                 ) : null}
@@ -354,21 +334,11 @@ export default async function ElectionPage({
   )
 }
 
-function Fact({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string
-  value: string
-  mono?: boolean
-}) {
+function Fact({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="min-w-0">
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className={mono ? "mt-0.5 font-mono text-sm" : "mt-0.5 text-sm font-medium"}>
-        {value}
-      </dd>
+      <dd className={mono ? "mt-0.5 font-mono text-sm" : "mt-0.5 text-sm font-medium"}>{value}</dd>
     </div>
   )
 }

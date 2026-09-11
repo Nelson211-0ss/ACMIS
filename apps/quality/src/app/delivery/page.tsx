@@ -38,9 +38,7 @@ export default async function DeliveryPage() {
     client.public.institution().catch(() => null),
     client.reference.currentSemester().catch(() => null),
   ])
-  const delivery = semester
-    ? await client.quality.delivery(semester.id).catch(() => null)
-    : null
+  const delivery = semester ? await client.quality.delivery(semester.id).catch(() => null) : null
 
   const rows = (delivery?.offerings ?? []) as Row[]
   const columns: Array<Column<Row>> = [
@@ -103,6 +101,7 @@ export default async function DeliveryPage() {
   return (
     <QualityShell user={user} institution={institution} currentPath="/delivery">
       <PageHeader
+        icon={<Icons.CalendarCheck />}
         title="Teaching delivery"
         description={
           semester
@@ -147,13 +146,9 @@ export default async function DeliveryPage() {
         mobileCard={(row) => (
           <div className="space-y-1">
             <div className="flex justify-between gap-3">
-              <span className="font-mono text-xs">
-                {row.course_offering_id.slice(0, 8)}
-              </span>
+              <span className="font-mono text-xs">{row.course_offering_id.slice(0, 8)}</span>
               <span className="tabular-nums">
-                {row.delivery_percent === null
-                  ? "—"
-                  : `${row.delivery_percent.toFixed(0)}%`}
+                {row.delivery_percent === null ? "—" : `${row.delivery_percent.toFixed(0)}%`}
               </span>
             </div>
             <div className="text-muted-foreground text-xs">
@@ -171,9 +166,8 @@ export default async function DeliveryPage() {
       />
 
       <p className="text-muted-foreground text-xs">
-        The denominator counts only classes whose date has passed, so a course
-        halfway through the semester is not marked down for the classes still to
-        come.
+        The denominator counts only classes whose date has passed, so a course halfway through the
+        semester is not marked down for the classes still to come.
       </p>
     </QualityShell>
   )

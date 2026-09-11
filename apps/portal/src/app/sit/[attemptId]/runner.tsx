@@ -157,9 +157,9 @@ export function ExamRunner({
   useEffect(() => {
     if (remaining !== null && remaining <= 0) {
       void flush().then(() => {
-        document.getElementById("acmis-submit-form")?.dispatchEvent(
-          new Event("submit", { cancelable: true, bubbles: true }),
-        )
+        document
+          .getElementById("acmis-submit-form")
+          ?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }))
       })
     }
   }, [remaining, flush])
@@ -243,18 +243,14 @@ export function ExamRunner({
             <div
               className={cn(
                 "tabular rounded-md px-2.5 py-1 text-right font-mono text-base font-semibold sm:text-lg",
-                lowTime
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-muted text-foreground",
+                lowTime ? "bg-destructive/10 text-destructive" : "bg-muted text-foreground",
               )}
               role="timer"
               aria-live={lowTime ? "polite" : "off"}
               aria-label="Time remaining"
             >
               {countdown(remaining)}
-              <span className="text-muted-foreground block text-[10px] font-normal">
-                remaining
-              </span>
+              <span className="text-muted-foreground block text-[10px] font-normal">remaining</span>
             </div>
           ) : null}
 
@@ -267,8 +263,8 @@ export function ExamRunner({
           role="alert"
           className="bg-destructive text-destructive-foreground px-3 py-2 text-center text-sm font-medium"
         >
-          {save.pending} answer{save.pending === 1 ? "" : "s"} not yet saved. Stay on
-          this page — it keeps retrying. Do not close the browser.
+          {save.pending} answer{save.pending === 1 ? "" : "s"} not yet saved. Stay on this page — it
+          keeps retrying. Do not close the browser.
         </p>
       ) : null}
 
@@ -373,13 +369,7 @@ export function ExamRunner({
   )
 }
 
-function SaveIndicator({
-  state,
-  onRetry,
-}: {
-  state: SaveState
-  onRetry: () => void
-}) {
+function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
   const label = {
     saved: "Saved",
     saving: "Saving…",
@@ -447,7 +437,7 @@ function SubmitDialog({
         className="bg-foreground/50 absolute inset-0"
       />
       {/* A sheet on a phone, a dialog on a desktop. */}
-      <div className="bg-card relative w-full max-w-md rounded-t-xl border p-5 sm:rounded-xl">
+      <div className="bg-card shadow-card relative w-full max-w-md rounded-t-xl p-5 sm:rounded-xl">
         <h2 id="submit-title" className="text-lg font-semibold">
           Submit this paper?
         </h2>
@@ -465,8 +455,8 @@ function SubmitDialog({
         </p>
         {unsaved > 0 ? (
           <p className="border-warning/40 bg-warning/10 text-warning-foreground mt-3 rounded-md border px-3 py-2 text-sm">
-            {unsaved} answer{unsaved === 1 ? "" : "s"} not yet saved. Submitting
-            will try to save {unsaved === 1 ? "it" : "them"} first.
+            {unsaved} answer{unsaved === 1 ? "" : "s"} not yet saved. Submitting will try to save{" "}
+            {unsaved === 1 ? "it" : "them"} first.
           </p>
         ) : null}
         <p className="text-muted-foreground mt-3 text-xs">
@@ -526,13 +516,13 @@ function QuestionCard({
   total: number
 }) {
   return (
-    <section className="bg-card rounded-lg border p-4 sm:p-5">
+    <section className="bg-card shadow-card rounded-lg p-4 sm:p-5">
       <header className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-muted-foreground text-xs">
             Question {position} of {total}
-            {question.section ? ` · ${question.section}` : ""} ·{" "}
-            {question.marks} mark{question.marks === 1 ? "" : "s"}
+            {question.section ? ` · ${question.section}` : ""} · {question.marks} mark
+            {question.marks === 1 ? "" : "s"}
           </p>
         </div>
         <button
@@ -551,9 +541,7 @@ function QuestionCard({
 
       {/* `text-pretty` so a long stem does not leave one word on the last
           line, and `break-words` so an unbroken formula cannot overflow. */}
-      <p className="mb-4 text-[15px] leading-relaxed break-words text-pretty">
-        {question.stem}
-      </p>
+      <p className="mb-4 text-pretty break-words text-[15px] leading-relaxed">{question.stem}</p>
 
       <QuestionInput question={question} answer={answer} onAnswer={onAnswer} />
     </section>
@@ -612,8 +600,8 @@ function QuestionInput({
       return (
         <>
           <p className="text-muted-foreground mb-2 text-xs">
-            Select all that apply. Partial credit is given, and an incorrect
-            selection cancels a correct one.
+            Select all that apply. Partial credit is given, and an incorrect selection cancels a
+            correct one.
           </p>
           <ul className="space-y-2">
             {question.options.map((option) => {
@@ -669,9 +657,7 @@ function QuestionInput({
             className="border-input bg-background min-h-11 w-full max-w-xs rounded-md border px-3 text-base"
             placeholder="e.g. 9.81"
           />
-          <p className="text-muted-foreground text-xs">
-            A small rounding difference is accepted.
-          </p>
+          <p className="text-muted-foreground text-xs">A small rounding difference is accepted.</p>
         </div>
       )
 
@@ -706,8 +692,8 @@ function QuestionInput({
             className="border-input bg-background w-full resize-y rounded-md border p-3 text-base leading-relaxed"
           />
           <p className="text-muted-foreground text-xs">
-            Saved as you type. This answer is marked by a person, so your score
-            appears once marking is complete.
+            Saved as you type. This answer is marked by a person, so your score appears once marking
+            is complete.
           </p>
         </div>
       )
@@ -771,9 +757,7 @@ function OrderingInput({
           <span className="text-muted-foreground tabular w-6 shrink-0 text-center text-xs">
             {position + 1}
           </span>
-          <span className="min-w-0 flex-1 text-sm break-words">
-            {byLabel.get(label) ?? label}
-          </span>
+          <span className="min-w-0 flex-1 break-words text-sm">{byLabel.get(label) ?? label}</span>
           <span className="flex shrink-0 gap-1">
             <button
               type="button"

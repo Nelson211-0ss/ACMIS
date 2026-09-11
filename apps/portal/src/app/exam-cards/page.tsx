@@ -48,6 +48,7 @@ export default async function ExamCardsPage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/exam-cards">
       <PageHeader
+        icon={<Icons.Ticket />}
         title="Exam cards"
         description="An examination card is permission to sit a specific set of papers. Bring it, with your campus ID, to every paper — an invigilator who cannot verify you is required to turn you away."
       />
@@ -58,11 +59,10 @@ export default async function ExamCardsPage() {
             No card yet for {current.semester_name ?? "this semester"}
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Cards are issued by the faculty office once three things hold: your
-            registration is approved, your fees have reached the threshold your
-            institution sets, and your attendance is not short in any course
-            where a register was kept. Where any of those is outstanding the
-            card is refused with the reason, not silently withheld.
+            Cards are issued by the faculty office once three things hold: your registration is
+            approved, your fees have reached the threshold your institution sets, and your
+            attendance is not short in any course where a register was kept. Where any of those is
+            outstanding the card is refused with the reason, not silently withheld.
           </p>
           <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-3">
             <div>
@@ -96,12 +96,12 @@ export default async function ExamCardsPage() {
           {cards.map((card) => {
             const snapshot = card.clearance_snapshot as Snapshot
             return (
-              <li key={card.id} className="bg-card overflow-hidden rounded-lg border">
+              <li key={card.id} className="bg-card shadow-card overflow-hidden rounded-lg">
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b p-4">
                   <div>
                     <p className="font-semibold">
-                      {card.semester_name ?? "Semester"} ·{" "}
-                      {humaniseStatus(card.session)} examinations
+                      {card.semester_name ?? "Semester"} · {humaniseStatus(card.session)}{" "}
+                      examinations
                     </p>
                     <p className="text-muted-foreground mt-0.5 text-xs">
                       Issued {dateTime(card.issued_at)}
@@ -115,13 +115,12 @@ export default async function ExamCardsPage() {
 
                 <div className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto]">
                   <div>
-                    <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
                       Papers this card admits you to
                     </p>
                     {card.papers.length === 0 ? (
                       <p className="text-muted-foreground mt-1 text-sm">
-                        None recorded. Query this with your faculty office before
-                        the first paper.
+                        None recorded. Query this with your faculty office before the first paper.
                       </p>
                     ) : (
                       <ul className="mt-2 space-y-1 text-sm">
@@ -134,13 +133,13 @@ export default async function ExamCardsPage() {
                       </ul>
                     )}
                     <p className="text-muted-foreground mt-2 text-xs">
-                      A paper not on this list is one you are not registered
-                      for. Sitting it produces a mark that cannot be boarded.
+                      A paper not on this list is one you are not registered for. Sitting it
+                      produces a mark that cannot be boarded.
                     </p>
                   </div>
 
                   <div className="bg-muted/50 rounded-md border p-3 text-center">
-                    <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                    <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
                       Verification code
                     </p>
                     <p className="mt-1 font-mono text-lg font-semibold tracking-widest">
@@ -191,8 +190,8 @@ export default async function ExamCardsPage() {
 
                 {card.status === "revoked" ? (
                   <p className="text-destructive bg-destructive/10 border-t px-4 py-3 text-xs">
-                    This card has been revoked. It will not verify at the hall
-                    door. Speak to your faculty office before the next paper.
+                    This card has been revoked. It will not verify at the hall door. Speak to your
+                    faculty office before the next paper.
                   </p>
                 ) : null}
               </li>

@@ -32,18 +32,17 @@ export default async function CataloguingPage() {
   return (
     <LibraryShell user={user} institution={institution} currentPath="/cataloguing">
       <PageHeader
+        icon={<Icons.Library />}
         title="Cataloguing"
         description="A record is the work; a copy is the thing on the shelf. Keeping them apart is what lets the library answer both “do you have this” and “where is accession 004512”."
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <CatalogueForm
-          branches={
-            (branches as Array<{ id: string; code: string; name: string }>).map((b) => ({
-              id: b.id,
-              label: `${b.code} — ${b.name}`,
-            }))
-          }
+          branches={(branches as Array<{ id: string; code: string; name: string }>).map((b) => ({
+            id: b.id,
+            label: `${b.code} — ${b.name}`,
+          }))}
         />
 
         <aside className="text-muted-foreground space-y-4 text-sm">
@@ -53,9 +52,9 @@ export default async function CataloguingPage() {
               Call numbers
             </h2>
             <p className="mt-2 text-xs">
-              The classification goes on the record and the full call number on the
-              copy, because branches shelve differently. A relabelled book keeps its
-              accession number, which is what a stock-take reconciles against.
+              The classification goes on the record and the full call number on the copy, because
+              branches shelve differently. A relabelled book keeps its accession number, which is
+              what a stock-take reconciles against.
             </p>
           </div>
           <div className="bg-muted/40 rounded-lg border p-4">
@@ -64,9 +63,9 @@ export default async function CataloguingPage() {
               Loan class
             </h2>
             <p className="mt-2 text-xs">
-              One copy of a set on short loan is how a library serves sixty students
-              from four copies. Reference stock never leaves the reading room, and the
-              desk cannot issue it by mistake.
+              One copy of a set on short loan is how a library serves sixty students from four
+              copies. Reference stock never leaves the reading room, and the desk cannot issue it by
+              mistake.
             </p>
           </div>
         </aside>

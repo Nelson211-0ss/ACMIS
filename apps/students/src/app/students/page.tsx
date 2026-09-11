@@ -50,9 +50,7 @@ export default async function StudentsListPage({
       key: "status",
       header: "Standing",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
     {
@@ -72,9 +70,7 @@ export default async function StudentsListPage({
       secondary: true,
       render: (row) => {
         const primary = row.programmes.find((p) => p.is_primary)
-        return primary?.cgpa !== null && primary?.cgpa !== undefined
-          ? primary.cgpa.toFixed(2)
-          : "—"
+        return primary?.cgpa !== null && primary?.cgpa !== undefined ? primary.cgpa.toFixed(2) : "—"
       },
     },
     {
@@ -97,6 +93,7 @@ export default async function StudentsListPage({
   return (
     <StudentsShell user={user} institution={institution} currentPath="/students">
       <PageHeader
+        icon={<Icons.Users />}
         title="Students"
         description="Restricted to the faculties and departments you have reach over. A filter naming a unit outside your reach is intersected with it rather than refused."
       />
@@ -142,10 +139,7 @@ export default async function StudentsListPage({
           </select>
         </div>
         <div className="space-y-1">
-          <label
-            htmlFor="year_of_study"
-            className="text-muted-foreground text-xs font-medium"
-          >
+          <label htmlFor="year_of_study" className="text-muted-foreground text-xs font-medium">
             Year
           </label>
           <select

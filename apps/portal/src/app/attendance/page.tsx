@@ -42,6 +42,7 @@ export default async function AttendancePage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/attendance">
       <PageHeader
+        icon={<Icons.UserCheck />}
         title="Attendance"
         description={`Counted from closed registers only — a class whose register is still open does not count against you. ${REQUIRED}% is the threshold below which an examination card is refused.`}
       />
@@ -91,12 +92,11 @@ export default async function AttendancePage() {
                   : `${short.length} courses are below the threshold`}
               </h2>
               <p className="text-muted-foreground mt-1 text-sm">
-                An examination card can be refused on this. If any of these
-                absences was for a reason the institution accepts — illness,
-                bereavement, a university duty — take the evidence to your
-                lecturer now so the register is marked excused rather than
-                absent. After the card is refused it is an appeal, which is
-                slower and less likely to succeed.
+                An examination card can be refused on this. If any of these absences was for a
+                reason the institution accepts — illness, bereavement, a university duty — take the
+                evidence to your lecturer now so the register is marked excused rather than absent.
+                After the card is refused it is an appeal, which is slower and less likely to
+                succeed.
               </p>
               <ul className="mt-3 space-y-1 text-sm">
                 {short.map((row) => (
@@ -126,7 +126,7 @@ export default async function AttendancePage() {
                         ? "info"
                         : "success"
                 return (
-                  <li key={row.course_offering_id} className="bg-card rounded-lg border p-4">
+                  <li key={row.course_offering_id} className="bg-card shadow-card rounded-lg p-4">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                       <p className="min-w-0 text-sm font-medium">
                         <span className="font-mono text-xs">{row.course_code || "—"}</span>
@@ -176,9 +176,7 @@ export default async function AttendancePage() {
                         .map(([status, count]) => (
                           <span key={status}>
                             <dt className="inline">{humaniseStatus(status)}: </dt>
-                            <dd className="text-foreground inline font-medium">
-                              {number(count)}
-                            </dd>
+                            <dd className="text-foreground inline font-medium">{number(count)}</dd>
                           </span>
                         ))}
                     </dl>
@@ -189,12 +187,11 @@ export default async function AttendancePage() {
           </section>
 
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Excused sessions are removed from the denominator rather than
-            counted as attended, so an excused absence neither helps nor harms
-            the percentage. If a register says you were absent from a class you
-            attended, raise it with the lecturer who closed it — the register
-            itself cannot be edited after closing, so the correction is recorded
-            as a dispute against the entry with a reason and a decision.
+            Excused sessions are removed from the denominator rather than counted as attended, so an
+            excused absence neither helps nor harms the percentage. If a register says you were
+            absent from a class you attended, raise it with the lecturer who closed it — the
+            register itself cannot be edited after closing, so the correction is recorded as a
+            dispute against the entry with a reason and a decision.
           </p>
         </>
       )}

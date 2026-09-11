@@ -39,7 +39,9 @@ export function DevelopersShell({
       title: "Integrations",
       items: [
         { href: "/webhooks", label: "Webhooks", icon: <Icons.Webhook /> },
-        ...(has("interop:manage_tools") ? [{ href: "/lti", label: "LTI tools", icon: <Icons.Puzzle /> }] : []),
+        ...(has("interop:manage_tools")
+          ? [{ href: "/lti", label: "LTI tools", icon: <Icons.Puzzle /> }]
+          : []),
         { href: "/logs", label: "Request logs", icon: <Icons.Terminal /> },
       ],
     },

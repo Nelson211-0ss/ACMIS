@@ -40,6 +40,7 @@ export default async function MyTeachingPage() {
   return (
     <LearningShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.GraduationCap />}
         title="My teaching"
         description={
           semester
@@ -70,11 +71,11 @@ export default async function MyTeachingPage() {
         />
         <StatTile
           label="With the boards"
-          value={(sheets?.items ?? []).filter((s) =>
-            ["submitted", "moderated", "board_approved", "faculty_approved"].includes(
-              s.status,
-            ),
-          ).length}
+          value={
+            (sheets?.items ?? []).filter((s) =>
+              ["submitted", "moderated", "board_approved", "faculty_approved"].includes(s.status),
+            ).length
+          }
           icon={<Icons.Users className="size-4" />}
           footnote="Submitted and moving through approval"
         />
@@ -87,7 +88,7 @@ export default async function MyTeachingPage() {
             {sheets.items.map((sheet) => (
               <li
                 key={sheet.id}
-                className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
+                className="bg-card shadow-card flex flex-wrap items-center justify-between gap-3 rounded-lg p-3"
               >
                 <div className="min-w-0">
                   <p className="font-mono text-xs">{sheet.course_offering_id.slice(0, 8)}</p>

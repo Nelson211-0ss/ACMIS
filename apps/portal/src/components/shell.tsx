@@ -42,9 +42,7 @@ export function PortalShell({
     },
     {
       title: "Guild",
-      items: [
-        { href: "/elections", label: "Elections", icon: <Icons.Vote /> },
-      ],
+      items: [{ href: "/elections", label: "Elections", icon: <Icons.Vote /> }],
     },
   ]
 
@@ -57,6 +55,17 @@ export function PortalShell({
       crestUrl={institution?.crest_url}
       sections={sections}
       currentPath={currentPath}
+      // The tab bar's default — the first four nav items — is wrong for a
+      // student. Nav order is written for the drawer, where related things sit
+      // together; the four screens a student actually alternates between on a
+      // phone are what they owe, what they must do, when, and what they got.
+      // Fees is the ninth nav item and the second thing they open.
+      primaryNav={[
+        { href: "/", label: "Overview", icon: <Icons.Home /> },
+        { href: "/fees", label: "Fees", icon: <Icons.Wallet /> },
+        { href: "/registration", label: "Registration", icon: <Icons.ClipboardList /> },
+        { href: "/results", label: "Results", icon: <Icons.Award /> },
+      ]}
       user={{ display_name: user.display_name, kind: user.kind }}
     >
       {children}

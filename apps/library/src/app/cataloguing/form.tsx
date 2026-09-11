@@ -5,18 +5,13 @@ import { useActionState } from "react"
 import { catalogueWork } from "./actions"
 
 /** The cataloguing form. Client-side only so the outcome lands in place. */
-export function CatalogueForm({
-  branches,
-}: {
-  branches: Array<{ id: string; label: string }>
-}) {
+export function CatalogueForm({ branches }: { branches: Array<{ id: string; label: string }> }) {
   const [result, action, pending] = useActionState(catalogueWork, null)
 
-  const field =
-    "border-input bg-background w-full rounded-md border px-3 py-2 text-base sm:text-sm"
+  const field = "border-input bg-background w-full rounded-md border px-3 py-2 text-base sm:text-sm"
 
   return (
-    <form action={action} className="bg-card space-y-5 rounded-lg border p-5">
+    <form action={action} className="bg-card shadow-card space-y-5 rounded-lg p-5">
       {result?.ok ? (
         <p
           role="status"
@@ -106,13 +101,11 @@ export function CatalogueForm({
               Kind
             </label>
             <select id="material_kind" name="material_kind" className={field}>
-              {["book", "journal", "thesis", "report", "e_book", "audio", "video"].map(
-                (value) => (
-                  <option key={value} value={value}>
-                    {value.replace(/_/g, " ")}
-                  </option>
-                ),
-              )}
+              {["book", "journal", "thesis", "report", "e_book", "audio", "video"].map((value) => (
+                <option key={value} value={value}>
+                  {value.replace(/_/g, " ")}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-1.5">
@@ -149,12 +142,7 @@ export function CatalogueForm({
             <label htmlFor="call_number" className="text-sm font-medium">
               Call number
             </label>
-            <input
-              id="call_number"
-              name="call_number"
-              placeholder="005.74 SIL"
-              className={field}
-            />
+            <input id="call_number" name="call_number" placeholder="005.74 SIL" className={field} />
           </div>
           <div className="space-y-1.5">
             <label htmlFor="copies" className="text-sm font-medium">
@@ -174,17 +162,10 @@ export function CatalogueForm({
             <label htmlFor="price" className="text-sm font-medium">
               Price each
             </label>
-            <input
-              id="price"
-              name="price"
-              type="number"
-              min={0}
-              step="0.01"
-              className={field}
-            />
+            <input id="price" name="price" type="number" min={0} step="0.01" className={field} />
             <p className="text-muted-foreground text-xs">
-              What a replacement charge is based on. A lost book charged at a guessed
-              price is a charge that gets waived.
+              What a replacement charge is based on. A lost book charged at a guessed price is a
+              charge that gets waived.
             </p>
           </div>
         </div>

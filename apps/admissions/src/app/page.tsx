@@ -41,6 +41,7 @@ export default async function AdmissionsOverview() {
       counts={{ review: underReview, awaitingFee }}
     >
       <PageHeader
+        icon={<Icons.UserPlus />}
         title="Admissions"
         description={
           openScheme
@@ -85,9 +86,7 @@ export default async function AdmissionsOverview() {
             <ChartFrame
               title="Where applications stand"
               subtitle={`All ${number(total)} applications under ${openScheme.code}, by status.`}
-              series={[
-                { key: "count", label: "Applications", slot: 1 },
-              ]}
+              series={[{ key: "count", label: "Applications", slot: 1 }]}
               table={
                 <table className="tabular w-full text-sm">
                   <thead>
@@ -157,15 +156,11 @@ export default async function AdmissionsOverview() {
                         <td className="py-1.5 pr-3 font-mono text-xs">
                           {intake.programme_id.slice(0, 8)}
                         </td>
-                        <td className="py-1.5 pr-3 text-right">
-                          {number(intake.approved_intake)}
-                        </td>
+                        <td className="py-1.5 pr-3 text-right">{number(intake.approved_intake)}</td>
                         <td className="py-1.5 pr-3 text-right">
                           {number(intake.applications_received)}
                         </td>
-                        <td className="py-1.5 text-right">
-                          {intake.competition_ratio ?? "—"}
-                        </td>
+                        <td className="py-1.5 text-right">{intake.competition_ratio ?? "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -194,7 +189,7 @@ export default async function AdmissionsOverview() {
             </ChartFrame>
           </div>
 
-          <div className="bg-card rounded-lg border p-4">
+          <div className="bg-card shadow-card rounded-lg p-4">
             <h3 className="text-base font-semibold">Intake fill</h3>
             <p className="text-muted-foreground mt-1 text-sm">
               Offers issued, accepted and enrolled against approved seats, per programme.
@@ -203,9 +198,7 @@ export default async function AdmissionsOverview() {
               {(stats?.intakes ?? []).slice(0, 6).map((intake) => (
                 <div key={intake.programme_intake_id}>
                   <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                    <span className="font-mono text-xs">
-                      {intake.programme_id.slice(0, 8)}
-                    </span>
+                    <span className="font-mono text-xs">{intake.programme_id.slice(0, 8)}</span>
                     <span className="text-muted-foreground tabular text-xs">
                       {number(intake.enrolled)} enrolled of {number(intake.approved_intake)} seats
                     </span>
@@ -251,7 +244,7 @@ export default async function AdmissionsOverview() {
             {schemes.items.map((scheme) => (
               <li
                 key={scheme.id}
-                className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
+                className="bg-card shadow-card flex flex-wrap items-center justify-between gap-3 rounded-lg p-3"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{scheme.name}</p>

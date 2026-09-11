@@ -47,10 +47,14 @@ export function ModuleLauncher({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="hover:bg-muted flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium"
+        className="hover:bg-muted hover:border-module/40 flex h-9 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors"
       >
         <Icons.LayoutGrid className="size-3.5" aria-hidden />
-        Modules
+        <span className="hidden sm:inline">Modules</span>
+        <Icons.ChevronDown
+          aria-hidden
+          className={cn("size-3 transition-transform", open && "rotate-180")}
+        />
       </button>
 
       {open ? (
@@ -58,11 +62,7 @@ export function ModuleLauncher({
           {/* A click-away layer rather than a focus trap: this is a launcher,
               and trapping focus in it makes keyboard escape harder than the
               modal behaviour is worth. Escape closes it. */}
-          <div
-            className="fixed inset-0 z-30"
-            aria-hidden
-            onClick={() => setOpen(false)}
-          />
+          <div className="fixed inset-0 z-30" aria-hidden onClick={() => setOpen(false)} />
           <div
             role="menu"
             // Width is clamped to the viewport, and the grid collapses to one
@@ -90,9 +90,19 @@ export function ModuleLauncher({
                         isCurrent && "bg-muted/70",
                       )}
                     >
-                      <span className="flex items-center gap-1.5">
-                        <Icon className="text-module size-4 shrink-0" aria-hidden />
-                        <span className="truncate text-xs font-semibold">
+                      <span className="flex items-center gap-2">
+                        {/* The glyph sits on its own accent-tinted chip rather
+                            than loose against the tile. Twelve bare icons in
+                            twelve hues read as decoration; twelve chips read
+                            as twelve things, which is what makes the accents
+                            learnable in the one place they appear together. */}
+                        <span
+                          aria-hidden
+                          className="bg-module/12 text-module grid size-6 shrink-0 place-items-center rounded-md"
+                        >
+                          <Icon className="size-3.5" />
+                        </span>
+                        <span className="font-display truncate text-xs font-bold tracking-tight">
                           {module.name}
                         </span>
                       </span>

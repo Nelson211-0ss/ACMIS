@@ -28,9 +28,7 @@ export default async function LibraryOverview() {
       client.library.loans({ overdue_only: true, limit: 20, with_total: true }).catch(() => null),
       client.library.fines({ unpaid_only: true, limit: 50, with_total: true }).catch(() => null),
       client.library.eResources({ expiring_days: 90 }).catch(() => []),
-      client.library
-        .acquisitions({ limit: 50, with_total: true })
-        .catch(() => null),
+      client.library.acquisitions({ limit: 50, with_total: true }).catch(() => null),
       client.library.members({ with_debt: true, limit: 1, with_total: true }).catch(() => null),
     ])
 
@@ -48,6 +46,7 @@ export default async function LibraryOverview() {
   return (
     <LibraryShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.Library />}
         title="Library"
         description="The catalogue is what the institution wants known; who borrowed what is not. Circulation records are readable at the desk and by the reader, and by nobody else — not a head of department, and not a report."
       />
@@ -59,8 +58,8 @@ export default async function LibraryOverview() {
         >
           <h2 className="text-destructive flex items-center gap-2 text-sm font-semibold">
             <Icons.AlertTriangle className="size-4" aria-hidden />
-            {expiring.length} subscription{expiring.length === 1 ? "" : "s"} lapsing within
-            three months
+            {expiring.length} subscription{expiring.length === 1 ? "" : "s"} lapsing within three
+            months
           </h2>
           <ul className="mt-2 space-y-1 text-sm">
             {expiring.slice(0, 4).map((row) => (
@@ -116,9 +115,7 @@ export default async function LibraryOverview() {
         <ChartFrame
           title="What the fines are for"
           subtitle="Overdues are a nudge; losses are the collection shrinking."
-          footnote={
-            byReason.size === 0 ? "No unpaid charges." : undefined
-          }
+          footnote={byReason.size === 0 ? "No unpaid charges." : undefined}
         >
           <BarRows
             rows={[...byReason.entries()]
@@ -137,9 +134,7 @@ export default async function LibraryOverview() {
             {(overdue?.items ?? []).slice(0, 6).map((loan) => {
               const days = Math.max(
                 0,
-                Math.round(
-                  (Date.now() - new Date(loan.due_on).getTime()) / 86_400_000,
-                ),
+                Math.round((Date.now() - new Date(loan.due_on).getTime()) / 86_400_000),
               )
               return (
                 <li key={loan.id} className="flex items-baseline justify-between gap-4 py-2">
@@ -150,7 +145,8 @@ export default async function LibraryOverview() {
                     </span>
                   </span>
                   <span className="text-muted-foreground shrink-0 tabular-nums">
-                    {days} day{days === 1 ? "" : "s"} · {money(days * loan.fine_per_day_minor, currency)}
+                    {days} day{days === 1 ? "" : "s"} ·{" "}
+                    {money(days * loan.fine_per_day_minor, currency)}
                   </span>
                 </li>
               )
@@ -160,8 +156,8 @@ export default async function LibraryOverview() {
             ) : null}
           </ul>
           <p className="text-muted-foreground text-xs">
-            The accrued figure is capped by the loan policy, so a book out for a year
-            does not owe a year of fines.
+            The accrued figure is capped by the loan policy, so a book out for a year does not owe a
+            year of fines.
           </p>
         </section>
       </div>

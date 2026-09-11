@@ -37,16 +37,26 @@ export function AssessmentShell({
     {
       title: "Boards",
       items: [
-        ...(has("results:moderate") ? [{ href: "/moderation", label: "Moderation", icon: <Icons.Scale /> }] : []),
-        ...(has("results:board_approve", "results:faculty_approve") ? [{ href: "/boards", label: "Boards of examiners", icon: <Icons.Users /> }] : []),
-        ...(has("results:senate_approve") ? [{ href: "/releases", label: "Results release", icon: <Icons.Send /> }] : []),
+        ...(has("results:moderate")
+          ? [{ href: "/moderation", label: "Moderation", icon: <Icons.Scale /> }]
+          : []),
+        ...(has("results:board_approve", "results:faculty_approve")
+          ? [{ href: "/boards", label: "Boards of examiners", icon: <Icons.Users /> }]
+          : []),
+        ...(has("results:senate_approve")
+          ? [{ href: "/releases", label: "Results release", icon: <Icons.Send /> }]
+          : []),
       ],
     },
     {
       title: "Awards",
       items: [
-        ...(has("award:prepare", "award:confer") ? [{ href: "/graduation", label: "Graduation lists", icon: <Icons.GraduationCap /> }] : []),
-        ...(has("transcript:issue") ? [{ href: "/transcripts", label: "Transcripts", icon: <Icons.FileText /> }] : []),
+        ...(has("award:prepare", "award:confer")
+          ? [{ href: "/graduation", label: "Graduation lists", icon: <Icons.GraduationCap /> }]
+          : []),
+        ...(has("transcript:issue")
+          ? [{ href: "/transcripts", label: "Transcripts", icon: <Icons.FileText /> }]
+          : []),
       ],
     },
   ]

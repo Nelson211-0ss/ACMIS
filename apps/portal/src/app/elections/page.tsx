@@ -47,6 +47,7 @@ export default async function ElectionsPage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/elections">
       <PageHeader
+        icon={<Icons.Vote />}
         title="Elections"
         description="Guild and faculty elections. Your ballot is secret: it is stored with no link to your name, and the receipt you are given proves your vote was counted without revealing what it said."
       />
@@ -128,8 +129,7 @@ export default async function ElectionsPage() {
                         <StatusBadge tone={toneForStatus(election.status)} dot={false}>
                           {humaniseStatus(election.status)}
                         </StatusBadge>
-                        {election.status === "declared" &&
-                        election.turnout_percent !== null ? (
+                        {election.status === "declared" && election.turnout_percent !== null ? (
                           <p className="text-muted-foreground mt-1 text-xs">
                             {percent(election.turnout_percent, "en-UG", 0)} turnout
                           </p>
@@ -148,24 +148,23 @@ export default async function ElectionsPage() {
         <h2 className="text-sm font-semibold">How the secret ballot works here</h2>
         <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-xs leading-relaxed">
           <li>
-            Two records are written when you vote, and there is no key joining
-            them: one says <em>you voted</em>, the other says{" "}
-            <em>what was chosen</em>. The time on the ballot is rounded to the
-            minute so it cannot be matched back to you by ordering.
+            Two records are written when you vote, and there is no key joining them: one says{" "}
+            <em>you voted</em>, the other says <em>what was chosen</em>. The time on the ballot is
+            rounded to the minute so it cannot be matched back to you by ordering.
           </li>
           <li>
-            You get a receipt token for each position. Keep it: it is the only
-            thing that can confirm your ballot is in the count, and the
-            university does not hold a copy against your name.
+            You get a receipt token for each position. Keep it: it is the only thing that can
+            confirm your ballot is in the count, and the university does not hold a copy against
+            your name.
           </li>
           <li>
-            No one — not the returning officer, not a system administrator — can
-            read an individual ballot. There is no endpoint that returns one,
-            and the policy bundle denies the attempt to everybody.
+            No one — not the returning officer, not a system administrator — can read an individual
+            ballot. There is no endpoint that returns one, and the policy bundle denies the attempt
+            to everybody.
           </li>
           <li>
-            An empty choice is a deliberate abstention. It counts toward
-            turnout, which is what makes a quorum meaningful.
+            An empty choice is a deliberate abstention. It counts toward turnout, which is what
+            makes a quorum meaningful.
           </li>
         </ul>
       </section>

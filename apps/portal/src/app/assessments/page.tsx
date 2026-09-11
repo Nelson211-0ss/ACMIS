@@ -39,6 +39,7 @@ export default async function AssessmentsPage({
   return (
     <PortalShell user={user} institution={institution} currentPath="/assessments">
       <PageHeader
+        icon={<Icons.FileQuestion />}
         title="Tests &amp; assignments"
         description="Papers open to you, and everything you have sat. A score appears once your lecturer releases it — before that it is provisional and may still be moderated."
       />
@@ -64,8 +65,7 @@ export default async function AssessmentsPage({
                 <div className="min-w-0">
                   <p className="font-medium">{attempt.assessment_title}</p>
                   <p className="text-muted-foreground text-xs">
-                    Attempt {attempt.attempt_number} ·{" "}
-                    {number(attempt.total_marks)} marks
+                    Attempt {attempt.attempt_number} · {number(attempt.total_marks)} marks
                     {attempt.expires_at
                       ? ` · closes ${dateTime(attempt.expires_at, institution?.locale, institution?.timezone)}`
                       : ""}
@@ -98,13 +98,12 @@ export default async function AssessmentsPage({
             {finished.map((attempt) => (
               <li
                 key={attempt.id}
-                className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4"
+                className="bg-card shadow-card flex flex-wrap items-center justify-between gap-3 rounded-lg p-4"
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{attempt.assessment_title}</p>
                   <p className="text-muted-foreground text-xs">
-                    {humaniseStatus(attempt.assessment_kind)} · attempt{" "}
-                    {attempt.attempt_number}
+                    {humaniseStatus(attempt.assessment_kind)} · attempt {attempt.attempt_number}
                     {attempt.submitted_at
                       ? ` · submitted ${dateTime(attempt.submitted_at, institution?.locale, institution?.timezone)}`
                       : ""}

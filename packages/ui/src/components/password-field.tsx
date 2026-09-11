@@ -5,8 +5,7 @@ import { Eye, EyeOff } from "lucide-react"
 
 import { cn } from "@acmis/ui/lib/utils"
 
-export interface PasswordFieldProps
-  extends Omit<React.ComponentProps<"input">, "type"> {
+export interface PasswordFieldProps extends Omit<React.ComponentProps<"input">, "type"> {
   /** Shown under the field. Use for a rule, not for an error. */
   hint?: string
 }
@@ -36,12 +35,7 @@ export interface PasswordFieldProps
  * * 44px of touch target on small screens, and `text-base` so iOS does not
  *   zoom the page on focus.
  */
-export function PasswordField({
-  className,
-  hint,
-  id,
-  ...props
-}: PasswordFieldProps) {
+export function PasswordField({ className, hint, id, ...props }: PasswordFieldProps) {
   const [revealed, setRevealed] = React.useState(false)
   const hintId = hint && id ? `${id}-hint` : undefined
 
@@ -60,10 +54,12 @@ export function PasswordField({
           spellCheck={false}
           data-slot="password-input"
           className={cn(
-            "border-input bg-background focus-visible:ring-ring w-full rounded-md border py-2 pl-3 text-base focus-visible:ring-2 focus-visible:outline-none md:text-sm",
-            // Room for the toggle, and enough of it that the button never
-            // sits on top of the last characters typed.
-            "pr-12",
+            // `field` is the shared filled-input style; see `globals.css`.
+            "field",
+            // `.field` sets no horizontal padding — see the note on it in
+            // `globals.css`. `pr-12` is room for the toggle, and enough of it
+            // that the button never sits on top of the last characters typed.
+            "pl-3 pr-12",
             className,
           )}
         />
@@ -74,7 +70,7 @@ export function PasswordField({
           aria-label={revealed ? "Hide password" : "Show password"}
           title={revealed ? "Hide password" : "Show password"}
           tabIndex={-1}
-          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-md focus-visible:ring-2 focus-visible:outline-none"
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute inset-y-0 right-0 grid w-11 place-items-center rounded-r-lg focus-visible:outline-none focus-visible:ring-2"
         >
           {revealed ? (
             <EyeOff className="size-4" aria-hidden />

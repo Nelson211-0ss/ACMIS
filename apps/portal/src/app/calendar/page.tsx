@@ -12,15 +12,7 @@ import { APP } from "@/lib/config"
 
 export const metadata = { title: "Calendar" }
 
-const DAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-]
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 /**
  * The three calendars a student needs, on one page.
@@ -61,6 +53,7 @@ export default async function CalendarPage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/calendar">
       <PageHeader
+        icon={<Icons.CalendarDays />}
         title="Calendar"
         description={
           semester
@@ -70,7 +63,7 @@ export default async function CalendarPage() {
       />
 
       {semester ? (
-        <section className="bg-card grid grid-cols-2 gap-4 rounded-lg border p-4 sm:grid-cols-4">
+        <section className="bg-card shadow-card grid grid-cols-2 gap-4 rounded-lg p-4 sm:grid-cols-4">
           <Deadline label="Registration closes" on={semester.registration_closes_on} />
           <Deadline label="Add/drop closes" on={semester.add_drop_closes_on} />
           <Deadline label="Withdrawal deadline" on={semester.withdrawal_deadline_on} />
@@ -99,9 +92,7 @@ export default async function CalendarPage() {
                     <span className="ml-2">{sitting.title}</span>
                   </p>
                   <p className="text-muted-foreground mt-0.5 text-xs">
-                    {sitting.rooms.length > 0
-                      ? sitting.rooms.join(", ")
-                      : "Hall not yet allocated"}
+                    {sitting.rooms.length > 0 ? sitting.rooms.join(", ") : "Hall not yet allocated"}
                     {sitting.session !== "main"
                       ? ` · ${humaniseStatus(sitting.session)} sitting`
                       : ""}
@@ -119,9 +110,9 @@ export default async function CalendarPage() {
         )}
         {(timetable?.exams ?? []).length > 0 ? (
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Bring your examination card and your campus ID to every paper. Two
-            papers at the same time is a clash the examinations office has to
-            resolve — report it the day you notice, not the week of the exam.
+            Bring your examination card and your campus ID to every paper. Two papers at the same
+            time is a clash the examinations office has to resolve — report it the day you notice,
+            not the week of the exam.
           </p>
         ) : null}
       </section>
@@ -140,7 +131,7 @@ export default async function CalendarPage() {
               const slots = byDay.get(index + 1) ?? []
               if (slots.length === 0) return null
               return (
-                <div key={name} className="bg-card rounded-lg border p-4">
+                <div key={name} className="bg-card shadow-card rounded-lg p-4">
                   <h3 className="text-sm font-semibold">{name}</h3>
                   <ul className="mt-2 space-y-2 text-sm">
                     {slots.map((slot, position) => (
@@ -200,9 +191,7 @@ export default async function CalendarPage() {
 
       {past.length > 0 ? (
         <details className="rounded-lg border p-4">
-          <summary className="cursor-pointer text-sm font-medium">
-            Earlier this year
-          </summary>
+          <summary className="cursor-pointer text-sm font-medium">Earlier this year</summary>
           <ul className="divide-border mt-2 divide-y">
             {past.map((event) => (
               <Entry key={event.id} event={event} muted />

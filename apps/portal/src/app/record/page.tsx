@@ -46,6 +46,7 @@ export default async function RecordPage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/record">
       <PageHeader
+        icon={<Icons.User />}
         title="My record"
         description="What the registry holds about you. Contact details you may correct yourself; name, date of birth, programme and sponsorship are registry-owned and need documentary evidence to change."
         actions={
@@ -80,7 +81,7 @@ export default async function RecordPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">Identity</h2>
-        <dl className="bg-card grid gap-4 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="bg-card shadow-card grid gap-4 rounded-lg p-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Student number" value={student.student_number} mono />
           <Field label="Name" value={surnameFirst(student)} />
           <Field label="Date of birth" value={date(student.date_of_birth)} />
@@ -100,7 +101,7 @@ export default async function RecordPage() {
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">Contact</h2>
-        <dl className="bg-card grid gap-4 rounded-lg border p-4 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="bg-card shadow-card grid gap-4 rounded-lg p-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="University email" value={student.email} />
           <Field label="Phone" value={student.phone} />
           <Field label="Next of kin" value={student.next_of_kin_name} />
@@ -113,9 +114,9 @@ export default async function RecordPage() {
           />
         </dl>
         <p className="text-muted-foreground text-xs">
-          Corrections to contact details are made at the registry counter or by
-          your faculty administrator. They take effect immediately; a change of
-          name or date of birth goes to a status-change decision instead.
+          Corrections to contact details are made at the registry counter or by your faculty
+          administrator. They take effect immediately; a change of name or date of birth goes to a
+          status-change decision instead.
         </p>
       </section>
 
@@ -128,7 +129,7 @@ export default async function RecordPage() {
         ) : (
           <ul className="space-y-3">
             {student.programmes.map((programme) => (
-              <li key={programme.id} className="bg-card rounded-lg border p-4">
+              <li key={programme.id} className="bg-card shadow-card rounded-lg p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm font-medium">
                     Year {programme.current_year_of_study}, semester{" "}
@@ -176,7 +177,7 @@ export default async function RecordPage() {
       {timeOff ? (
         <section className="space-y-3">
           <h2 className="text-sm font-semibold">Time away from study</h2>
-          <div className="bg-card rounded-lg border p-4">
+          <div className="bg-card shadow-card rounded-lg p-4">
             <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Dead semesters taken" value={number(timeOff.dead_semesters)} />
               <Field label="Dead years taken" value={number(timeOff.dead_years)} />
@@ -195,8 +196,7 @@ export default async function RecordPage() {
                     : "text-muted-foreground mt-3 text-sm"
               }
             >
-              {timeOff.reason ??
-                "Within the maximum period of study your programme allows."}
+              {timeOff.reason ?? "Within the maximum period of study your programme allows."}
             </p>
           </div>
         </section>
@@ -226,10 +226,9 @@ export default async function RecordPage() {
             ))}
           </ul>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Every office has to clear you before you can graduate. They are
-            listed together so you can start on the slow ones — the library and
-            the hall of residence — rather than discovering them in the week
-            the list closes.
+            Every office has to clear you before you can graduate. They are listed together so you
+            can start on the slow ones — the library and the hall of residence — rather than
+            discovering them in the week the list closes.
           </p>
         </section>
       ) : null}
@@ -256,8 +255,8 @@ function Field({
           restricted
             ? "text-muted-foreground mt-0.5 text-sm italic"
             : mono
-              ? "mt-0.5 font-mono text-sm break-words"
-              : "mt-0.5 text-sm break-words"
+              ? "mt-0.5 break-words font-mono text-sm"
+              : "mt-0.5 break-words text-sm"
         }
       >
         {restricted ? "Restricted" : (value ?? "—")}

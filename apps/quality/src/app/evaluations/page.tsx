@@ -45,10 +45,7 @@ export default async function EvaluationsPage({
       key: "offering",
       header: "Offering",
       render: (row) => (
-        <a
-          className="font-mono text-xs underline"
-          href={`/evaluations/${row.id}`}
-        >
+        <a className="font-mono text-xs underline" href={`/evaluations/${row.id}`}>
           {row.course_offering_id.slice(0, 8)}
         </a>
       ),
@@ -91,9 +88,7 @@ export default async function EvaluationsPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
   ]
@@ -101,6 +96,7 @@ export default async function EvaluationsPage({
   return (
     <QualityShell user={user} institution={institution} currentPath="/evaluations">
       <PageHeader
+        icon={<Icons.MessagesSquare />}
         title="Course evaluations"
         description="Anonymous within a window, sealed until after the marking deadline. Nothing links a response to the student who wrote it — not even a hashed identifier, because a hash over a class of thirty is reversible by anyone who can list it."
       />
@@ -115,10 +111,9 @@ export default async function EvaluationsPage({
             `Fewer than ${threshold.minimum_responses} responses cannot be broken down without identifying the respondents.`}
         </p>
         <p className="text-muted-foreground text-xs">
-          The invitation list records <em>that</em> a student answered and never what
-          they said. The two live in different tables with no key between them, and the
-          response table is append-only in the database — so nobody can add a column
-          later to work backwards.
+          The invitation list records <em>that</em> a student answered and never what they said. The
+          two live in different tables with no key between them, and the response table is
+          append-only in the database — so nobody can add a column later to work backwards.
         </p>
       </section>
 

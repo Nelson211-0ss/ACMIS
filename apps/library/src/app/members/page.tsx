@@ -74,9 +74,7 @@ export default async function MembersPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
   ]
@@ -84,6 +82,7 @@ export default async function MembersPage({
   return (
     <LibraryShell user={user} institution={institution} currentPath="/members">
       <PageHeader
+        icon={<Icons.Users />}
         title="Members"
         description="Readers, including the ones the academic system does not know: visiting researchers, alumni, staff of partner institutions."
       />

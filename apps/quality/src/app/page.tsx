@@ -37,9 +37,7 @@ export default async function QualityOverview() {
 
   const deliveryRate =
     delivery && delivery.sessions_held + delivery.unannounced_absences > 0
-      ? (delivery.sessions_held /
-          (delivery.sessions_held + delivery.unannounced_absences)) *
-        100
+      ? (delivery.sessions_held / (delivery.sessions_held + delivery.unannounced_absences)) * 100
       : null
 
   const openFindings = (openAudits?.items ?? []).reduce(
@@ -57,6 +55,7 @@ export default async function QualityOverview() {
   return (
     <QualityShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.BadgeCheck />}
         title="Quality assurance"
         description="One question in four ways: is the teaching that was promised actually happening, and is it any good? Evaluation responses carry no identity at all — a student who thinks their lecturer can work out who wrote a comment does not write one."
       />
@@ -69,13 +68,11 @@ export default async function QualityOverview() {
           <h2 className="text-destructive flex items-center gap-2 text-sm font-semibold">
             <Icons.CalendarX className="size-4" aria-hidden />
             {delivery.unannounced_absences} class
-            {delivery.unannounced_absences === 1 ? "" : "es"} did not happen and were not
-            announced
+            {delivery.unannounced_absences === 1 ? "" : "es"} did not happen and were not announced
           </h2>
           <p className="text-muted-foreground mt-2 text-xs">
-            An announced cancellation is a decision. A class that simply did not happen
-            is a delivery failure, and it is invisible in any system that records both
-            as “cancelled”.
+            An announced cancellation is a decision. A class that simply did not happen is a
+            delivery failure, and it is invisible in any system that records both as “cancelled”.
           </p>
           <a href="/delivery" className="text-primary mt-2 inline-block text-sm underline">
             Which courses →
@@ -87,9 +84,7 @@ export default async function QualityOverview() {
         <StatTile
           label="Teaching delivered"
           value={deliveryRate !== null ? `${deliveryRate.toFixed(1)}%` : "—"}
-          footnote={
-            delivery ? `${number(delivery.sessions_held)} sessions held` : "No semester"
-          }
+          footnote={delivery ? `${number(delivery.sessions_held)} sessions held` : "No semester"}
           icon={<Icons.CalendarCheck />}
         />
         <StatTile
@@ -131,9 +126,7 @@ export default async function QualityOverview() {
               />
             ))}
             {latest.size === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No indicators computed yet.
-              </p>
+              <p className="text-muted-foreground text-sm">No indicators computed yet.</p>
             ) : null}
           </div>
         </ChartFrame>

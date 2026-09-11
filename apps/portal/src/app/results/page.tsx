@@ -35,30 +35,25 @@ export default async function ResultsPage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/results">
       <PageHeader
+        icon={<Icons.Award />}
         title="Results"
         description="Only results that Senate has approved and released appear here. A mark you have been told informally is provisional until it is on this page."
       />
 
       {primary ? (
-        <section className="bg-card grid grid-cols-2 gap-4 rounded-lg border p-4 sm:grid-cols-4">
-          <Figure
-            label="CGPA"
-            value={primary.cgpa !== null ? primary.cgpa.toFixed(2) : "—"}
-          />
+        <section className="bg-card shadow-card grid grid-cols-2 gap-4 rounded-lg p-4 sm:grid-cols-4">
+          <Figure label="CGPA" value={primary.cgpa !== null ? primary.cgpa.toFixed(2) : "—"} />
           <Figure label="Credits earned" value={number(primary.credits_earned)} />
           <Figure label="Credits required" value={number(primary.credits_required)} />
-          <Figure
-            label="Standing"
-            value={humaniseStatus(primary.progression_status)}
-          />
+          <Figure label="Standing" value={humaniseStatus(primary.progression_status)} />
         </section>
       ) : null}
 
       {primary && primary.outstanding_retakes > 0 ? (
         <p className="border-warning/40 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm">
           You have {primary.outstanding_retakes} outstanding retake
-          {primary.outstanding_retakes === 1 ? "" : "s"}. Your award cannot be
-          classified until they are cleared.
+          {primary.outstanding_retakes === 1 ? "" : "s"}. Your award cannot be classified until they
+          are cleared.
         </p>
       ) : null}
 
@@ -110,18 +105,14 @@ export default async function ResultsPage() {
                       </span>
                     ) : null}
                     {result.is_superseded ? (
-                      <span className="ml-2 text-xs italic">
-                        superseded by a later attempt
-                      </span>
+                      <span className="ml-2 text-xs italic">superseded by a later attempt</span>
                     ) : null}
                   </td>
                   <td className="px-3 py-2.5 text-right">{result.credit_units}</td>
                   <td className="px-3 py-2.5 text-right font-medium">
                     {result.final_mark?.toFixed(1) ?? "—"}
                   </td>
-                  <td className="px-3 py-2.5 text-center font-medium">
-                    {result.grade ?? "—"}
-                  </td>
+                  <td className="px-3 py-2.5 text-center font-medium">{result.grade ?? "—"}</td>
                   <td className="px-3 py-2.5">
                     <StatusBadge tone={toneForStatus(result.outcome)} dot={false}>
                       {humaniseStatus(result.outcome)}
@@ -136,12 +127,11 @@ export default async function ResultsPage() {
 
       {results.length > 0 ? (
         <p className="text-muted-foreground text-xs leading-relaxed">
-          {number(counted.length)} of {number(results.length)} attempts count
-          toward your CGPA. A failed attempt is shown alongside the retake that
-          replaced it — your transcript records what happened, not only the best
-          outcome. If you believe a mark is wrong, an appeal must be lodged
-          within the window your institution sets, which runs from the release
-          date rather than from when you saw it.
+          {number(counted.length)} of {number(results.length)} attempts count toward your CGPA. A
+          failed attempt is shown alongside the retake that replaced it — your transcript records
+          what happened, not only the best outcome. If you believe a mark is wrong, an appeal must
+          be lodged within the window your institution sets, which runs from the release date rather
+          than from when you saw it.
         </p>
       ) : null}
     </PortalShell>

@@ -35,13 +35,12 @@ export default async function GovernanceOverview() {
 
   const totalDenials = (denials?.by_actor ?? []).reduce((sum, a) => sum + a.denials, 0)
   const enumerating = (denials?.by_actor ?? []).filter((a) => a.looks_like_enumeration)
-  const defaultDenies = (denials?.by_policy ?? []).filter(
-    (p) => p.policy === "(denied by default)",
-  )
+  const defaultDenies = (denials?.by_policy ?? []).filter((p) => p.policy === "(denied by default)")
 
   return (
     <GovernanceShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.ShieldCheck />}
         title="Governance &amp; audit"
         description="Reading the audit trail is itself audited. An audit log only its subjects can see is not oversight; one anyone can read is a directory of who has looked at whom."
       />
@@ -84,24 +83,19 @@ export default async function GovernanceOverview() {
         <section className="border-primary/30 bg-primary/5 rounded-lg border p-4">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <Icons.FileQuestion className="size-4" aria-hidden />
-            {number(
-              defaultDenies.reduce((sum, row) => sum + row.denials, 0),
-            )}{" "}
-            denials with no applicable policy
+            {number(defaultDenies.reduce((sum, row) => sum + row.denials, 0))} denials with no
+            applicable policy
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Nobody wrote a rule for these, so they were refused by default.
-            Distinct from a rule that decided to refuse — which is a control
-            working — this is a gap, and it is the most useful number on an
-            access review: somebody is trying to do their job and the bundle
-            has nothing to say about it.
+            Nobody wrote a rule for these, so they were refused by default. Distinct from a rule
+            that decided to refuse — which is a control working — this is a gap, and it is the most
+            useful number on an access review: somebody is trying to do their job and the bundle has
+            nothing to say about it.
           </p>
           <ul className="mt-3 space-y-1 text-sm">
             {defaultDenies.slice(0, 5).map((row) => (
               <li key={row.action} className="flex justify-between gap-4">
-                <span className="text-muted-foreground font-mono text-xs">
-                  {row.action}
-                </span>
+                <span className="text-muted-foreground font-mono text-xs">{row.action}</span>
                 <strong className="tabular-nums">{number(row.denials)}</strong>
               </li>
             ))}
@@ -117,31 +111,27 @@ export default async function GovernanceOverview() {
             {enumerating.length === 1 ? "" : "s"} showing an enumeration pattern
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Denied repeatedly across many different records in a short window.
-            That shape is what distinguishes somebody probing from somebody
-            confused.
+            Denied repeatedly across many different records in a short window. That shape is what
+            distinguishes somebody probing from somebody confused.
           </p>
           <ul className="mt-3 space-y-2">
             {enumerating.map((actor) => (
               <li
                 key={actor.actor_id ?? actor.actor_label ?? "unknown"}
-                className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-md border p-3"
+                className="bg-card shadow-card flex flex-wrap items-center justify-between gap-3 rounded-md p-3"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
                     {actor.actor_label ?? "Unknown actor"}
                   </p>
-                  <p className="text-muted-foreground font-mono text-xs">
-                    {actor.actor_id ?? "—"}
-                  </p>
+                  <p className="text-muted-foreground font-mono text-xs">{actor.actor_id ?? "—"}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3 text-xs">
                   <span>
                     <strong className="tabular">{number(actor.denials)}</strong> denials
                   </span>
                   <span>
-                    <strong className="tabular">{number(actor.distinct_resources)}</strong>{" "}
-                    records
+                    <strong className="tabular">{number(actor.distinct_resources)}</strong> records
                   </span>
                   {actor.actor_id ? (
                     <a
@@ -208,11 +198,11 @@ export default async function GovernanceOverview() {
           )}
         </ChartFrame>
 
-        <div className="bg-card rounded-lg border p-4">
+        <div className="bg-card shadow-card rounded-lg p-4">
           <h3 className="text-base font-semibold">Most recent denials</h3>
           <p className="text-muted-foreground mt-1 text-sm">
-            Each carries the deciding policy and rule, so a refusal can be
-            explained rather than guessed at.
+            Each carries the deciding policy and rule, so a refusal can be explained rather than
+            guessed at.
           </p>
           {(recent?.items ?? []).length === 0 ? (
             <p className="text-muted-foreground mt-4 text-sm">Nothing recent.</p>
@@ -253,9 +243,7 @@ export default async function GovernanceOverview() {
 
       {bundle?.lint && bundle.lint.length > 0 ? (
         <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-          <h2 className="text-warning-foreground text-sm font-semibold">
-            Policy bundle warnings
-          </h2>
+          <h2 className="text-warning-foreground text-sm font-semibold">Policy bundle warnings</h2>
           <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
             {bundle.lint.map((issue) => (
               <li key={issue}>{issue}</li>

@@ -24,22 +24,19 @@ export default async function FeesPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, record, statement, penalties, plans, reminders, rules] =
-    await Promise.all([
-      client.public.institution().catch(() => null),
-      client.students.myRecord().catch(() => null),
-      client.finance.myStatement().catch(() => null),
-      client.finance.penalties({ limit: 20 }).catch(() => null),
-      client.finance.paymentPlans({ limit: 10 }).catch(() => null),
-      client.finance.reminders({ limit: 10 }).catch(() => null),
-      client.finance.latePaymentRules().catch(() => []),
-    ])
+  const [institution, record, statement, penalties, plans, reminders, rules] = await Promise.all([
+    client.public.institution().catch(() => null),
+    client.students.myRecord().catch(() => null),
+    client.finance.myStatement().catch(() => null),
+    client.finance.penalties({ limit: 20 }).catch(() => null),
+    client.finance.paymentPlans({ limit: 10 }).catch(() => null),
+    client.finance.reminders({ limit: 10 }).catch(() => null),
+    client.finance.latePaymentRules().catch(() => []),
+  ])
 
   const currency = institution?.currency ?? "UGX"
   const student = record?.data
-  const blocks = student
-    ? await client.finance.blocks(student.id).catch(() => null)
-    : null
+  const blocks = student ? await client.finance.blocks(student.id).catch(() => null) : null
 
   const activePlan = (plans?.items ?? []).find((row) => row.status === "active")
   const rule = rules.find((row) => row.status === "approved") ?? rules[0]
@@ -48,6 +45,7 @@ export default async function FeesPage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/fees">
       <PageHeader
+        icon={<Icons.Wallet />}
         title="Fees"
         description="Recomputed from the ledger every time this page loads rather than read from a cache, because it is the number you are asked to act on."
       />
@@ -91,9 +89,9 @@ export default async function FeesPage() {
           <ul className="mt-2 space-y-2 text-sm">
             {blocks.blocks.map((block) => (
               <li key={`${block.gate}-${block.invoice}`}>
-                <span className="font-medium">{humaniseStatus(block.gate)}</span> —
-                invoice <span className="font-mono text-xs">{block.invoice}</span>,{" "}
-                {block.days_overdue} days overdue.
+                <span className="font-medium">{humaniseStatus(block.gate)}</span> — invoice{" "}
+                <span className="font-mono text-xs">{block.invoice}</span>, {block.days_overdue}{" "}
+                days overdue.
                 <span className="text-muted-foreground block text-xs">
                   Clears when: {block.clears_when}
                   {block.waivable
@@ -113,8 +111,8 @@ export default async function FeesPage() {
             You have an agreed payment plan
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            While you keep to it you are not treated as late: no surcharge is
-            applied and nothing is blocked, whatever the invoice due date says.
+            While you keep to it you are not treated as late: no surcharge is applied and nothing is
+            blocked, whatever the invoice due date says.
             {activePlan.missed_count > 0
               ? ` You have missed ${activePlan.missed_count} instalment${activePlan.missed_count === 1 ? "" : "s"}.`
               : ""}
@@ -177,9 +175,7 @@ export default async function FeesPage() {
                         {humaniseStatus(invoice.kind)}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap">
-                      {date(invoice.due_on)}
-                    </td>
+                    <td className="whitespace-nowrap px-3 py-2.5">{date(invoice.due_on)}</td>
                     <td className="px-3 py-2.5 text-right">
                       {money(invoice.total_minor, currency)}
                     </td>
@@ -225,9 +221,7 @@ export default async function FeesPage() {
                   </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-3">
-                  <span className="text-muted-foreground text-xs">
-                    {date(payment.value_date)}
-                  </span>
+                  <span className="text-muted-foreground text-xs">{date(payment.value_date)}</span>
                   <StatusBadge tone={toneForStatus(payment.status)} dot={false}>
                     {humaniseStatus(payment.status)}
                   </StatusBadge>
@@ -236,9 +230,8 @@ export default async function FeesPage() {
             ))}
           </ul>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            A bank deposit that does not appear here is usually one whose
-            reference could not be matched to a student number. Take the slip to
-            the bursary rather than paying again.
+            A bank deposit that does not appear here is usually one whose reference could not be
+            matched to a student number. Take the slip to the bursary rather than paying again.
           </p>
         </section>
       ) : null}
@@ -257,8 +250,7 @@ export default async function FeesPage() {
                     {money(charge.amount_minor, currency)}
                   </span>
                   <span className="text-muted-foreground ml-2 text-xs">
-                    {charge.days_overdue} day{charge.days_overdue === 1 ? "" : "s"} past
-                    due
+                    {charge.days_overdue} day{charge.days_overdue === 1 ? "" : "s"} past due
                     {charge.percent_applied !== null
                       ? ` · ${charge.percent_applied}% of ${money(charge.balance_at_charge_minor, currency)}`
                       : ""}
@@ -271,9 +263,9 @@ export default async function FeesPage() {
             ))}
           </ul>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            The arithmetic is shown because you are entitled to check it. If a
-            payment had already been made when a charge was applied, ask the
-            bursary to reverse it — reversals are recorded, not erased.
+            The arithmetic is shown because you are entitled to check it. If a payment had already
+            been made when a charge was applied, ask the bursary to reverse it — reversals are
+            recorded, not erased.
           </p>
         </section>
       ) : null}
@@ -289,26 +281,22 @@ export default async function FeesPage() {
                 ? `${rule.charge_percent}% of the outstanding balance`
                 : money(rule.charge_flat_minor, currency)}
               {rule.recurrence !== "once" ? `, ${humaniseStatus(rule.recurrence)}` : ""}
-              {rule.charge_cap_minor
-                ? `, capped at ${money(rule.charge_cap_minor, currency)}`
-                : ""}
+              {rule.charge_cap_minor ? `, capped at ${money(rule.charge_cap_minor, currency)}` : ""}
               .
             </li>
             {rule.blocks_registration_after_days ? (
               <li>Registration is blocked after {rule.blocks_registration_after_days} days.</li>
             ) : null}
             {rule.blocks_exam_card_after_days ? (
-              <li>
-                An examination card is refused after {rule.blocks_exam_card_after_days} days.
-              </li>
+              <li>An examination card is refused after {rule.blocks_exam_card_after_days} days.</li>
             ) : null}
             {rule.blocks_results_after_days ? (
               <li>Results are withheld after {rule.blocks_results_after_days} days.</li>
             ) : null}
             {rule.is_waivable ? (
               <li>
-                Hardship is considered. Ask the dean of students about a payment
-                plan <em>before</em> a block applies, not after.
+                Hardship is considered. Ask the dean of students about a payment plan{" "}
+                <em>before</em> a block applies, not after.
               </li>
             ) : null}
           </ul>

@@ -61,6 +61,7 @@ export default async function EvaluationResultsPage({
   return (
     <QualityShell user={user} institution={institution} currentPath="/evaluations">
       <PageHeader
+        icon={<Icons.MessagesSquare />}
         title="Evaluation results"
         description="The aggregate, and never the individual returns. Comments are released on a stricter rule than the scores, because a comment can identify its author by content alone."
         breadcrumbs={
@@ -109,7 +110,11 @@ export default async function EvaluationResultsPage({
             />
             <StatTile
               label="Overall"
-              value={results?.overall !== null && results?.overall !== undefined ? results.overall.toFixed(2) : "—"}
+              value={
+                results?.overall !== null && results?.overall !== undefined
+                  ? results.overall.toFixed(2)
+                  : "—"
+              }
               unit="/ 5"
               footnote="Mean across every scored question"
               icon={<Icons.Star />}
@@ -162,10 +167,7 @@ export default async function EvaluationResultsPage({
                 {results.comments
                   .filter((comment): comment is string => Boolean(comment))
                   .map((comment, index) => (
-                    <li
-                      key={index}
-                      className="bg-card rounded-md border px-3 py-2 text-sm"
-                    >
+                    <li key={index} className="bg-card shadow-card rounded-md px-3 py-2 text-sm">
                       {comment}
                     </li>
                   ))}

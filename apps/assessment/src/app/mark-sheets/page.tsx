@@ -47,9 +47,7 @@ export default async function MarkSheetsPage({
       key: "status",
       header: "Stage",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
     {
@@ -75,9 +73,7 @@ export default async function MarkSheetsPage({
       numeric: true,
       secondary: true,
       render: (row) =>
-        row.entered_count > 0
-          ? `${Math.round((row.pass_count / row.entered_count) * 100)}%`
-          : "—",
+        row.entered_count > 0 ? `${Math.round((row.pass_count / row.entered_count) * 100)}%` : "—",
     },
     {
       key: "due",
@@ -101,6 +97,7 @@ export default async function MarkSheetsPage({
   return (
     <AssessmentShell user={user} institution={institution} currentPath="/mark-sheets">
       <PageHeader
+        icon={<Icons.ClipboardCheck />}
         title="Mark sheets"
         description="A sheet's statistics are shown before its marks. A 92% failure rate or a mean of 78 is a question about the assessment before it is a question about the candidates."
       />
@@ -154,9 +151,7 @@ export default async function MarkSheetsPage({
         mobileCard={(row) => (
           <div className="space-y-1.5">
             <div className="flex items-start justify-between gap-2">
-              <span className="font-mono text-xs">
-                {row.course_offering_id.slice(0, 8)}
-              </span>
+              <span className="font-mono text-xs">{row.course_offering_id.slice(0, 8)}</span>
               <StatusBadge tone={toneForStatus(row.status)}>
                 {humaniseStatus(row.status)}
               </StatusBadge>

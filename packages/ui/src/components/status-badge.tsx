@@ -1,3 +1,4 @@
+import * as Icons from "lucide-react"
 import type { ReactNode } from "react"
 
 import { cn } from "@acmis/ui/lib/utils"
@@ -7,10 +8,11 @@ import { cn } from "@acmis/ui/lib/utils"
  *
  * Two rules, both from the design system:
  *
- * **Never colour alone.** Every variant carries a text label, and the ones
- * that matter carry a dot with a distinct shape-in-context as well. A reader
- * with colour-vision deficiency, or looking at a printed mark sheet, gets the
- * same information.
+ * **Never colour alone.** Every variant carries a text label, and the five
+ * that mean something carry a glyph whose *silhouette* differs — a tick, a
+ * clock, a cross, an `i`, a seal — not six dots in six colours. A reader with
+ * a colour-vision deficiency, or holding a printed mark sheet, gets the state
+ * from the shape.
  *
  * **Semantic colours mean what they say.** `success` is a fee cleared or a
  * result approved; `warning` is an action still owed; `danger` is a record
@@ -18,13 +20,7 @@ import { cn } from "@acmis/ui/lib/utils"
  * green is pretty teaches staff to ignore the colour.
  */
 
-export type StatusTone =
-  | "neutral"
-  | "info"
-  | "success"
-  | "warning"
-  | "danger"
-  | "gold"
+export type StatusTone = "neutral" | "info" | "success" | "warning" | "danger" | "gold"
 
 const TONES: Record<StatusTone, string> = {
   neutral: "bg-muted text-muted-foreground ring-border",
@@ -44,6 +40,29 @@ const DOTS: Record<StatusTone, string> = {
   gold: "bg-gold",
 }
 
+/**
+ * A distinct glyph per tone.
+ *
+ * The docblock above has always promised "a dot with a distinct shape", and
+ * the dot has always been the same circle in six colours — so on a printed
+ * mark sheet, or to a reader with a colour-vision deficiency, the mark carried
+ * nothing the label did not already say, and six identical dots down a column
+ * read as a list of bullets rather than as six different states.
+ *
+ * These are six genuinely different silhouettes: a tick, a clock, a cross, an
+ * `i`, a seal, and — for neutral — no glyph at all, because "nothing is
+ * happening here" is best drawn as the absence of a mark. Neutral keeps the
+ * plain dot so the badge does not change width when a record moves out of a
+ * meaningful state.
+ */
+const GLYPHS: Partial<Record<StatusTone, Icons.LucideIcon>> = {
+  info: Icons.Info,
+  success: Icons.CheckCircle2,
+  warning: Icons.Clock3,
+  danger: Icons.XCircle,
+  gold: Icons.Award,
+}
+
 export function StatusBadge({
   tone = "neutral",
   children,
@@ -55,19 +74,21 @@ export function StatusBadge({
   dot?: boolean
   className?: string
 }) {
+  const Glyph = GLYPHS[tone]
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset whitespace-nowrap",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
         TONES[tone],
         className,
       )}
     >
       {dot ? (
-        <span
-          aria-hidden
-          className={cn("size-1.5 shrink-0 rounded-full", DOTS[tone])}
-        />
+        Glyph ? (
+          <Glyph aria-hidden className="size-3 shrink-0" strokeWidth={2.25} />
+        ) : (
+          <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", DOTS[tone])} />
+        )
       ) : null}
       {children}
     </span>
@@ -87,29 +108,67 @@ export function toneForStatus(status: string | null | undefined): StatusTone {
 
   if (
     [
-      "active", "approved", "released", "published", "settled", "paid",
-      "admitted", "enrolled", "senate_approved", "graduated", "cleared",
-      "marked", "succeeded", "open", "verified", "balanced",
+      "active",
+      "approved",
+      "released",
+      "published",
+      "settled",
+      "paid",
+      "admitted",
+      "enrolled",
+      "senate_approved",
+      "graduated",
+      "cleared",
+      "marked",
+      "succeeded",
+      "open",
+      "verified",
+      "balanced",
     ].includes(value)
   ) {
     return "success"
   }
   if (
     [
-      "submitted", "under_review", "review", "pending", "awaiting_fee",
-      "part_paid", "probation", "moderated", "board_approved",
-      "faculty_approved", "in_progress", "scheduled", "requested",
-      "second_marking", "reconciliation_required", "unmatched", "on_leave",
-      "waitlisted", "returned", "supervisor_approved",
+      "submitted",
+      "under_review",
+      "review",
+      "pending",
+      "awaiting_fee",
+      "part_paid",
+      "probation",
+      "moderated",
+      "board_approved",
+      "faculty_approved",
+      "in_progress",
+      "scheduled",
+      "requested",
+      "second_marking",
+      "reconciliation_required",
+      "unmatched",
+      "on_leave",
+      "waitlisted",
+      "returned",
+      "supervisor_approved",
     ].includes(value)
   ) {
     return "warning"
   }
   if (
     [
-      "rejected", "failed", "reversed", "suspended", "discontinued",
-      "withdrawn", "revoked", "voided", "expired", "denied", "overdue",
-      "abandoned", "deceased",
+      "rejected",
+      "failed",
+      "reversed",
+      "suspended",
+      "discontinued",
+      "withdrawn",
+      "revoked",
+      "voided",
+      "expired",
+      "denied",
+      "overdue",
+      "abandoned",
+      "deceased",
     ].includes(value)
   ) {
     return "danger"

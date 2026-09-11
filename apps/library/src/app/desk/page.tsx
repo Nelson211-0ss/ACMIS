@@ -1,3 +1,4 @@
+import * as Icons from "lucide-react"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge } from "@acmis/ui/components/status-badge"
@@ -36,6 +37,7 @@ export default async function DeskPage() {
   return (
     <LibraryShell user={user} institution={institution} currentPath="/desk">
       <PageHeader
+        icon={<Icons.ScanLine />}
         title="Issue & return"
         description="Two scans to issue, one to take back. A refusal says what the reader can do about it rather than just refusing."
       />

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 
+import { ThemeProvider } from "@acmis/ui/components/theme-provider"
 import { fontVariables } from "@acmis/ui/lib/fonts"
 
 import { MODULE_NAME } from "@/lib/config"
@@ -28,7 +29,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={fontVariables} suppressHydrationWarning>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   )
 }

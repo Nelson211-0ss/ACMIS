@@ -37,9 +37,7 @@ export default async function CoursesPage() {
   // row, so this does not create anything for a student who has not started.
   const registration =
     student && semester
-      ? await client.students
-          .openRegistration(student.id, semester.id)
-          .catch(() => null)
+      ? await client.students.openRegistration(student.id, semester.id).catch(() => null)
       : null
 
   const courses = registration?.courses ?? []
@@ -47,6 +45,7 @@ export default async function CoursesPage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/courses">
       <PageHeader
+        icon={<Icons.BookOpen />}
         title="My courses"
         description={
           semester
@@ -79,12 +78,10 @@ export default async function CoursesPage() {
             <li key={course.id}>
               <a
                 href={`/courses/${course.course_offering_id}`}
-                className="bg-card hover:border-module/50 block h-full rounded-lg border p-4 transition-colors"
+                className="bg-card shadow-card block h-full rounded-lg p-4 transition-colors"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="font-mono text-xs">
-                    {course.course_offering_id.slice(0, 8)}
-                  </span>
+                  <span className="font-mono text-xs">{course.course_offering_id.slice(0, 8)}</span>
                   <span className="text-muted-foreground shrink-0 text-xs">
                     {number(course.credit_units)} CU
                   </span>
@@ -108,10 +105,9 @@ export default async function CoursesPage() {
 
       {primary ? (
         <p className="text-muted-foreground text-xs leading-relaxed">
-          Your course list comes from your curriculum version, not from a
-          general catalogue — which is why a course another student can take may
-          not appear for you. Registration is also what makes notes and tests
-          available: material is refused for a course you are not registered
+          Your course list comes from your curriculum version, not from a general catalogue — which
+          is why a course another student can take may not appear for you. Registration is also what
+          makes notes and tests available: material is refused for a course you are not registered
           for.
         </p>
       ) : null}

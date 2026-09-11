@@ -48,16 +48,12 @@ export default async function AttendancePage({
     client.reference.currentSemester().catch(() => null),
   ])
 
-  const delivery = semester
-    ? await client.quality.delivery(semester.id).catch(() => null)
-    : null
+  const delivery = semester ? await client.quality.delivery(semester.id).catch(() => null) : null
   const offerings = delivery?.offerings ?? []
   const selected = offering ?? offerings[0]?.course_offering_id
 
   const rows = selected
-    ? ((await client.quality
-        .offeringAttendance(selected)
-        .catch(() => [])) as Row[])
+    ? ((await client.quality.offeringAttendance(selected).catch(() => [])) as Row[])
     : []
 
   const belowThreshold = rows.filter(
@@ -110,6 +106,7 @@ export default async function AttendancePage({
   return (
     <QualityShell user={user} institution={institution} currentPath="/attendance">
       <PageHeader
+        icon={<Icons.UserCheck />}
         title="Attendance"
         description={`Per student, worst first. Excused absences leave the denominator; lateness counts as attendance. ${REQUIRED_PERCENT}% is the usual threshold for sitting an examination.`}
       />
@@ -179,8 +176,8 @@ export default async function AttendancePage({
       {belowThreshold.length > 0 ? (
         <p className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
           {belowThreshold.length} student{belowThreshold.length === 1 ? "" : "s"} below the
-          threshold. Found now, this is a conversation; found at examination clearance, it
-          is an appeal.
+          threshold. Found now, this is a conversation; found at examination clearance, it is an
+          appeal.
         </p>
       ) : null}
 

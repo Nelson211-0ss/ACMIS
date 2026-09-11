@@ -27,11 +27,7 @@ import { APP } from "@/lib/config"
  * is worse than no button.
  */
 
-export default async function ApplicationPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function ApplicationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireUser(APP)
   const client = await acmis(APP)
@@ -69,11 +65,11 @@ export default async function ApplicationPage({
   return (
     <AdmissionsShell user={user} institution={institution} currentPath="/applications">
       <PageHeader
+        icon={<Icons.FileText />}
         title={fullName || application.number}
         description={
           <>
-            Application {application.number} ·{" "}
-            {humaniseStatus(application.status)}
+            Application {application.number} · {humaniseStatus(application.status)}
             {application.is_late ? " · submitted late" : ""}
           </>
         }
@@ -105,13 +101,13 @@ export default async function ApplicationPage({
           <Icons.EyeOff className="mr-1.5 inline size-3.5" aria-hidden />
           {masked.size} field{masked.size === 1 ? "" : "s"} on this record
           {masked.size === 1 ? " is" : " are"} withheld from your role:{" "}
-          {[...masked].join(", ").replace(/_/g, " ")}. Every read of them is logged
-          against the reader.
+          {[...masked].join(", ").replace(/_/g, " ")}. Every read of them is logged against the
+          reader.
         </p>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <section className="bg-card space-y-3 rounded-lg border p-4 lg:col-span-2">
+        <section className="bg-card shadow-card space-y-3 rounded-lg p-4 lg:col-span-2">
           <h2 className="text-base font-semibold">Applicant</h2>
           <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
             <Field label="Full name" value={fullName} />
@@ -137,13 +133,10 @@ export default async function ApplicationPage({
           </dl>
         </section>
 
-        <section className="bg-card space-y-3 rounded-lg border p-4">
+        <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
           <h2 className="text-base font-semibold">Scoring</h2>
           <dl className="space-y-3 text-sm">
-            <Field
-              label="Aggregate"
-              value={application.aggregate_score?.toFixed(2) ?? null}
-            />
+            <Field label="Aggregate" value={application.aggregate_score?.toFixed(2) ?? null} />
             <Field label="Final score" value={application.final_score?.toFixed(2) ?? null} />
             <Field
               label="Waitlist position"
@@ -159,18 +152,18 @@ export default async function ApplicationPage({
             />
           </dl>
           <p className="text-muted-foreground border-t pt-3 text-xs leading-relaxed">
-            The weights used to compute this score are copied onto the
-            application when it is scored. A score recomputed under a later
-            year&rsquo;s weights is not the score the candidate was ranked on.
+            The weights used to compute this score are copied onto the application when it is
+            scored. A score recomputed under a later year&rsquo;s weights is not the score the
+            candidate was ranked on.
           </p>
         </section>
       </div>
 
-      <section className="bg-card rounded-lg border p-4">
+      <section className="bg-card shadow-card rounded-lg p-4">
         <h2 className="text-base font-semibold">Programme choices</h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Ranked by the applicant. Eligibility was computed at submission
-          against the requirements in force then.
+          Ranked by the applicant. Eligibility was computed at submission against the requirements
+          in force then.
         </p>
         <ol className="mt-3 space-y-2">
           {(application.choices ?? []).map((choice) => {
@@ -217,7 +210,7 @@ export default async function ApplicationPage({
       </section>
 
       {application.decision_reason ? (
-        <section className="bg-card rounded-lg border p-4">
+        <section className="bg-card shadow-card rounded-lg p-4">
           <h2 className="text-base font-semibold">Decision</h2>
           <p className="text-muted-foreground mt-1 text-xs">
             {date(application.decided_at, institution?.locale)}

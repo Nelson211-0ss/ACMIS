@@ -55,9 +55,7 @@ export default async function ApplicationsPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
     {
@@ -103,9 +101,7 @@ export default async function ApplicationsPage({
       secondary: true,
       render: (row) =>
         row.flags.length > 0 ? (
-          <span className="text-warning-foreground text-xs">
-            {row.flags.join(", ")}
-          </span>
+          <span className="text-warning-foreground text-xs">{row.flags.join(", ")}</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         ),
@@ -115,6 +111,7 @@ export default async function ApplicationsPage({
   return (
     <AdmissionsShell user={user} institution={institution} currentPath="/applications">
       <PageHeader
+        icon={<Icons.FileText />}
         title="Applications"
         description="Only applications ranked to a faculty you have reach over are listed. A selector without the office-wide grant sees their own faculties only."
       />

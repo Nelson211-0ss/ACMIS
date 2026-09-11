@@ -37,14 +37,20 @@ export function PeopleShell({
     {
       title: "Employment",
       items: [
-        ...(has("people:admin", "people:approve") ? [{ href: "/appointments", label: "Appointments", icon: <Icons.FileSignature /> }] : []),
-        ...(has("people:admin", "people:approve") ? [{ href: "/establishment", label: "Establishment", icon: <Icons.Building /> }] : []),
+        ...(has("people:admin", "people:approve")
+          ? [{ href: "/appointments", label: "Appointments", icon: <Icons.FileSignature /> }]
+          : []),
+        ...(has("people:admin", "people:approve")
+          ? [{ href: "/establishment", label: "Establishment", icon: <Icons.Building /> }]
+          : []),
       ],
     },
     {
       title: "Operations",
       items: [
-        ...(has("people:manage_unit", "people:admin") ? [{ href: "/workload", label: "Workload", icon: <Icons.Gauge /> }] : []),
+        ...(has("people:manage_unit", "people:admin")
+          ? [{ href: "/workload", label: "Workload", icon: <Icons.Gauge /> }]
+          : []),
         { href: "/leave", label: "Leave", icon: <Icons.CalendarOff /> },
       ],
     },

@@ -112,9 +112,7 @@ export default async function AuditsPage({
         row.overall_outcome ? (
           <StatusBadge tone={toneForStatus(row.status)}>{row.overall_outcome}</StatusBadge>
         ) : (
-          <StatusBadge tone={toneForStatus(row.status)}>
-            {humaniseStatus(row.status)}
-          </StatusBadge>
+          <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
         ),
     },
   ]
@@ -122,6 +120,7 @@ export default async function AuditsPage({
   return (
     <QualityShell user={user} institution={institution} currentPath="/audits">
       <PageHeader
+        icon={<Icons.ClipboardList />}
         title="Audits"
         description="Internal, external and regulator reviews. The audited unit reads its own report and closes its own findings — an audit the unit cannot see is a report about them rather than a review with them."
       />
@@ -133,8 +132,8 @@ export default async function AuditsPage({
         >
           <h2 className="text-destructive flex items-center gap-2 text-sm font-semibold">
             <Icons.AlarmClock className="size-4" aria-hidden />
-            {overdue.length} finding{overdue.length === 1 ? "" : "s"} past the date they
-            were due to close
+            {overdue.length} finding{overdue.length === 1 ? "" : "s"} past the date they were due to
+            close
           </h2>
           <ul className="mt-2 space-y-1 text-sm">
             {overdue.slice(0, 4).map(({ audit, finding }, index) => (

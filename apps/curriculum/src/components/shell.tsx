@@ -38,15 +38,21 @@ export function CurriculumShell({
     {
       title: "Approval",
       items: [
-        ...(has("curriculum:author", "curriculum:recommend", "curriculum:approve") ? [{ href: "/versions", label: "Curriculum versions", icon: <Icons.GitBranch /> }] : []),
-        ...(has("curriculum:recommend", "curriculum:approve") ? [{ href: "/approvals", label: "Awaiting approval", icon: <Icons.Stamp /> }] : []),
+        ...(has("curriculum:author", "curriculum:recommend", "curriculum:approve")
+          ? [{ href: "/versions", label: "Curriculum versions", icon: <Icons.GitBranch /> }]
+          : []),
+        ...(has("curriculum:recommend", "curriculum:approve")
+          ? [{ href: "/approvals", label: "Awaiting approval", icon: <Icons.Stamp /> }]
+          : []),
       ],
     },
     {
       title: "Delivery",
       items: [
         { href: "/offerings", label: "Course offerings", icon: <Icons.CalendarRange /> },
-        ...(has("timetable:manage") ? [{ href: "/timetable", label: "Timetable", icon: <Icons.Clock /> }] : []),
+        ...(has("timetable:manage")
+          ? [{ href: "/timetable", label: "Timetable", icon: <Icons.Clock /> }]
+          : []),
       ],
     },
   ]

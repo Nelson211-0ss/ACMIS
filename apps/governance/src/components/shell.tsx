@@ -31,23 +31,37 @@ export function GovernanceShell({
     {
       items: [
         { href: "/", label: "Overview", icon: <Icons.LayoutDashboard /> },
-        ...(has("audit:read", "governance:oversight") ? [{ href: "/audit", label: "Audit trail", icon: <Icons.ScrollText /> }] : []),
+        ...(has("audit:read", "governance:oversight")
+          ? [{ href: "/audit", label: "Audit trail", icon: <Icons.ScrollText /> }]
+          : []),
       ],
     },
     {
       title: "Access review",
       items: [
-        ...(has("audit:read", "governance:oversight") ? [{ href: "/denials", label: "Denials", icon: <Icons.ShieldAlert /> }] : []),
-        ...(has("audit:read", "governance:oversight") ? [{ href: "/access-log", label: "Who looked", icon: <Icons.Eye /> }] : []),
-        ...(has("policy:admin") ? [{ href: "/policies", label: "Authorization policies", icon: <Icons.Gavel /> }] : []),
+        ...(has("audit:read", "governance:oversight")
+          ? [{ href: "/denials", label: "Denials", icon: <Icons.ShieldAlert /> }]
+          : []),
+        ...(has("audit:read", "governance:oversight")
+          ? [{ href: "/access-log", label: "Who looked", icon: <Icons.Eye /> }]
+          : []),
+        ...(has("policy:admin")
+          ? [{ href: "/policies", label: "Authorization policies", icon: <Icons.Gavel /> }]
+          : []),
       ],
     },
     {
       title: "Reporting",
       items: [
-        ...(has("reporting:run") ? [{ href: "/reports", label: "Reports", icon: <Icons.BarChart3 /> }] : []),
-        ...(has("reporting:submit_statutory") ? [{ href: "/returns", label: "Statutory returns", icon: <Icons.Building2 /> }] : []),
-        ...(has("governance:oversight") ? [{ href: "/data-requests", label: "Data requests", icon: <Icons.UserSearch /> }] : []),
+        ...(has("reporting:run")
+          ? [{ href: "/reports", label: "Reports", icon: <Icons.BarChart3 /> }]
+          : []),
+        ...(has("reporting:submit_statutory")
+          ? [{ href: "/returns", label: "Statutory returns", icon: <Icons.Building2 /> }]
+          : []),
+        ...(has("governance:oversight")
+          ? [{ href: "/data-requests", label: "Data requests", icon: <Icons.UserSearch /> }]
+          : []),
       ],
     },
   ]

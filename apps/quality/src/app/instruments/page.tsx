@@ -35,6 +35,7 @@ export default async function InstrumentsPage() {
   return (
     <QualityShell user={user} institution={institution} currentPath="/instruments">
       <PageHeader
+        icon={<Icons.ListChecks />}
         title="Questionnaires"
         description="Versioned, because the numbers have to be comparable. An instrument in use is never edited — a new version is published and the old one retired."
       />
@@ -60,40 +61,28 @@ export default async function InstrumentsPage() {
                 .map((instrument) => (
                   <article
                     key={instrument.id}
-                    className="bg-card space-y-3 rounded-lg border p-4"
+                    className="bg-card shadow-card space-y-3 rounded-lg p-4"
                   >
                     <header className="flex flex-wrap items-baseline justify-between gap-2">
                       <h3 className="font-medium">
                         {instrument.name}{" "}
-                        <span className="text-muted-foreground text-sm">
-                          v{instrument.version}
-                        </span>
+                        <span className="text-muted-foreground text-sm">v{instrument.version}</span>
                       </h3>
-                      <StatusBadge
-                        tone={instrument.is_published ? "success" : "neutral"}
-                      >
+                      <StatusBadge tone={instrument.is_published ? "success" : "neutral"}>
                         {instrument.is_published ? "published" : "draft"}
                       </StatusBadge>
                     </header>
                     {instrument.introduction ? (
-                      <p className="text-muted-foreground text-sm">
-                        {instrument.introduction}
-                      </p>
+                      <p className="text-muted-foreground text-sm">{instrument.introduction}</p>
                     ) : null}
                     <ol className="space-y-1.5 text-sm">
                       {instrument.questions.map((question, index) => {
-                        const text = String(
-                          (question as Record<string, unknown>).text ?? "",
-                        )
+                        const text = String((question as Record<string, unknown>).text ?? "")
                         const dimension = (question as Record<string, unknown>).dimension
-                        const kind = String(
-                          (question as Record<string, unknown>).kind ?? "",
-                        )
+                        const kind = String((question as Record<string, unknown>).kind ?? "")
                         return (
                           <li key={index} className="flex flex-wrap gap-2">
-                            <span className="text-muted-foreground tabular-nums">
-                              {index + 1}.
-                            </span>
+                            <span className="text-muted-foreground tabular-nums">{index + 1}.</span>
                             <span className="flex-1">{text}</span>
                             {dimension ? (
                               <StatusBadge tone="neutral" dot={false}>

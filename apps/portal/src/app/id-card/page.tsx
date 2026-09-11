@@ -43,13 +43,14 @@ export default async function IdCardPage() {
   return (
     <PortalShell user={user} institution={institution} currentPath="/id-card">
       <PageHeader
+        icon={<Icons.IdCard />}
         title="Campus ID"
         description="Your identity card, as the registry issued it. Carry it to every examination — an examination card alone is not proof of who you are."
       />
 
       {active && student ? (
         <section className="space-y-4">
-          <div className="bg-card max-w-md overflow-hidden rounded-xl border shadow-sm">
+          <div className="bg-card shadow-card max-w-md overflow-hidden rounded-xl shadow-sm">
             <div className="bg-module/10 border-module/30 flex items-center gap-3 border-b px-4 py-3">
               {institution?.crest_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -102,9 +103,7 @@ export default async function IdCardPage() {
               {active.barcode ? (
                 <div className="border-t pt-3">
                   <p className="text-muted-foreground text-xs">Barcode</p>
-                  <p className="mt-0.5 font-mono text-sm tracking-widest">
-                    {active.barcode}
-                  </p>
+                  <p className="mt-0.5 font-mono text-sm tracking-widest">{active.barcode}</p>
                 </div>
               ) : null}
             </div>
@@ -120,20 +119,17 @@ export default async function IdCardPage() {
 
           {active.collected_at ? null : (
             <p className="text-warning-foreground border-warning/40 bg-warning/10 max-w-md rounded-lg border px-4 py-3 text-sm">
-              This card has been issued but not collected. Pick it up from the
-              registry counter; bring something else with your photograph on it.
+              This card has been issued but not collected. Pick it up from the registry counter;
+              bring something else with your photograph on it.
             </p>
           )}
 
           <details className="max-w-md rounded-lg border p-4">
-            <summary className="cursor-pointer text-sm font-medium">
-              I have lost this card
-            </summary>
+            <summary className="cursor-pointer text-sm font-medium">I have lost this card</summary>
             <p className="text-muted-foreground mt-2 text-sm">
-              Reporting it stops the card verifying anywhere on campus — at the
-              library desk, the hall door and the gate — immediately. This
-              cannot be undone; if the card turns up you will still need the
-              replacement.
+              Reporting it stops the card verifying anywhere on campus — at the library desk, the
+              hall door and the gate — immediately. This cannot be undone; if the card turns up you
+              will still need the replacement.
               {active.replacement_fee_minor
                 ? ` A replacement costs ${money(active.replacement_fee_minor, currency)}.`
                 : ""}
@@ -168,9 +164,7 @@ export default async function IdCardPage() {
                   <span className="font-mono text-xs">{card.serial}</span>
                   <span className="text-muted-foreground ml-2 text-xs">
                     {humaniseStatus(card.reason)} · issued {date(card.issued_on)}
-                    {card.reported_lost_on
-                      ? ` · reported lost ${date(card.reported_lost_on)}`
-                      : ""}
+                    {card.reported_lost_on ? ` · reported lost ${date(card.reported_lost_on)}` : ""}
                   </span>
                 </span>
                 <StatusBadge tone={toneForStatus(card.status)} dot={false}>
@@ -180,9 +174,8 @@ export default async function IdCardPage() {
             ))}
           </ul>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Superseded cards stay on the record rather than being deleted. When
-            a card is presented months later, the question is which card it was
-            and when it stopped being valid.
+            Superseded cards stay on the record rather than being deleted. When a card is presented
+            months later, the question is which card it was and when it stopped being valid.
           </p>
         </section>
       ) : null}

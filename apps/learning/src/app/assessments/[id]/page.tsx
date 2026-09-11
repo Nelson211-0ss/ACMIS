@@ -64,14 +64,12 @@ export default async function AssessmentPage({
   return (
     <LearningShell user={user} institution={institution} currentPath="/assessments">
       <PageHeader
+        icon={<Icons.FileQuestion />}
         title={assessment.title}
         description={
           <>
-            {humaniseStatus(assessment.kind)} ·{" "}
-            {number(assessment.total_marks)} marks ·{" "}
-            {assessment.duration_minutes
-              ? duration(assessment.duration_minutes)
-              : "no time limit"}
+            {humaniseStatus(assessment.kind)} · {number(assessment.total_marks)} marks ·{" "}
+            {assessment.duration_minutes ? duration(assessment.duration_minutes) : "no time limit"}
             {countsForCredit
               ? " · counts toward the course result"
               : " · does not count toward the course result"}
@@ -93,8 +91,7 @@ export default async function AssessmentPage({
             </StatusBadge>
             {/* Every button below is drawn from the server's own decision.
                 A button that appears and then 403s is worse than no button. */}
-            {can("online_assessment:submit_for_review") &&
-            assessment.status === "draft" ? (
+            {can("online_assessment:submit_for_review") && assessment.status === "draft" ? (
               <form action={submitForReview.bind(null, assessment.id)}>
                 <button
                   type="submit"
@@ -148,7 +145,7 @@ export default async function AssessmentPage({
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <section className="bg-card space-y-4 rounded-lg border p-4 lg:col-span-2">
+        <section className="bg-card shadow-card space-y-4 rounded-lg p-4 lg:col-span-2">
           <h2 className="text-base font-semibold">Progress</h2>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -175,9 +172,7 @@ export default async function AssessmentPage({
                 <Figure
                   label="Median"
                   value={
-                    assessment.median_score !== null
-                      ? assessment.median_score.toFixed(1)
-                      : "—"
+                    assessment.median_score !== null ? assessment.median_score.toFixed(1) : "—"
                   }
                 />
                 <Figure
@@ -190,12 +185,11 @@ export default async function AssessmentPage({
                 />
               </div>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                A mean far below the pass mark, or a spread near zero, is a
-                question about the paper before it is a question about the
-                candidates. Item statistics per question are on the review tab —
-                a question with high facility and near-zero discrimination is
-                measuring nothing, and a negative discrimination almost always
-                means the answer key is wrong.
+                A mean far below the pass mark, or a spread near zero, is a question about the paper
+                before it is a question about the candidates. Item statistics per question are on
+                the review tab — a question with high facility and near-zero discrimination is
+                measuring nothing, and a negative discrimination almost always means the answer key
+                is wrong.
               </p>
             </div>
           ) : null}
@@ -204,10 +198,7 @@ export default async function AssessmentPage({
             <div className="border-t pt-4">
               <Meter
                 label="Marking progress"
-                value={Math.max(
-                  0,
-                  assessment.submitted_count - assessment.pending_manual_marking,
-                )}
+                value={Math.max(0, assessment.submitted_count - assessment.pending_manual_marking)}
                 max={assessment.submitted_count || 1}
                 tone="warning"
                 formatValue={(v) => number(v)}
@@ -221,28 +212,26 @@ export default async function AssessmentPage({
                 {assessment.pending_manual_marking === 1 ? "" : "s"}
               </a>
               <p className="text-muted-foreground mt-2 text-xs">
-                Grouped by question rather than by candidate — marking every
-                script&rsquo;s question 3 together is both faster and more
-                consistent.
+                Grouped by question rather than by candidate — marking every script&rsquo;s question
+                3 together is both faster and more consistent.
               </p>
             </div>
           ) : null}
         </section>
 
-        <section className="bg-card space-y-3 rounded-lg border p-4">
+        <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
           <h2 className="text-base font-semibold">Lifecycle</h2>
           <ApprovalChain steps={chain} />
           <p className="text-muted-foreground border-t pt-3 text-xs leading-relaxed">
-            Releasing scores and writing them into the academic record are
-            separate acts. The push writes a component score onto a{" "}
-            <em>draft</em> mark sheet and nothing more — moderation, the
-            department board, the faculty board and Senate still govern every
-            mark that reaches a transcript.
+            Releasing scores and writing them into the academic record are separate acts. The push
+            writes a component score onto a <em>draft</em> mark sheet and nothing more — moderation,
+            the department board, the faculty board and Senate still govern every mark that reaches
+            a transcript.
           </p>
         </section>
       </div>
 
-      <section className="bg-card rounded-lg border p-4">
+      <section className="bg-card shadow-card rounded-lg p-4">
         <h2 className="text-base font-semibold">Settings</h2>
         <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <Setting
@@ -358,19 +347,13 @@ function buildChain(assessment: OnlineAssessment): ChainStep[] {
   const step = (key: string, label: string, index: number, note?: string): ChainStep => ({
     key,
     label,
-    state:
-      position > index ? "done" : position === index ? "current" : "pending",
+    state: position > index ? "done" : position === index ? "current" : "pending",
     note,
   })
 
   return [
     step("draft", "Drafted", 0),
-    step(
-      "review",
-      "Reviewed by a second examiner",
-      1,
-      assessment.review_comments ?? undefined,
-    ),
+    step("review", "Reviewed by a second examiner", 1, assessment.review_comments ?? undefined),
     step("scheduled", "Scheduled", 2),
     step("open", "Open to candidates", 3),
     step("closed", "Closed", 4),
@@ -385,9 +368,7 @@ function buildChain(assessment: OnlineAssessment): ChainStep[] {
       key: "pushed",
       label: "Written to the mark sheet",
       state: assessment.pushed_to_mark_sheet_at ? "done" : "pending",
-      at: assessment.pushed_to_mark_sheet_at
-        ? dateTime(assessment.pushed_to_mark_sheet_at)
-        : null,
+      at: assessment.pushed_to_mark_sheet_at ? dateTime(assessment.pushed_to_mark_sheet_at) : null,
       note: assessment.pushed_to_mark_sheet_at
         ? null
         : "Lands as a component score on a draft mark sheet, never as a final mark.",
@@ -420,22 +401,12 @@ function Figure({
   )
 }
 
-function Setting({
-  label,
-  value,
-  note,
-}: {
-  label: string
-  value: string
-  note?: string
-}) {
+function Setting({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div>
       <dt className="text-muted-foreground text-xs">{label}</dt>
       <dd className="mt-0.5 font-medium">{value}</dd>
-      {note ? (
-        <p className="text-muted-foreground mt-1 text-xs leading-relaxed">{note}</p>
-      ) : null}
+      {note ? <p className="text-muted-foreground mt-1 text-xs leading-relaxed">{note}</p> : null}
     </div>
   )
 }

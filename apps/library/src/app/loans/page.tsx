@@ -62,9 +62,7 @@ export default async function LoansPage({
     {
       key: "member",
       header: "Borrower",
-      render: (row) => (
-        <span className="font-mono text-xs">{row.membership_number ?? "—"}</span>
-      ),
+      render: (row) => <span className="font-mono text-xs">{row.membership_number ?? "—"}</span>,
     },
     {
       key: "due",
@@ -102,9 +100,7 @@ export default async function LoansPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
   ]
@@ -112,6 +108,7 @@ export default async function LoansPage({
   return (
     <LibraryShell user={user} institution={institution} currentPath="/loans">
       <PageHeader
+        icon={<Icons.BookMarked />}
         title="Loans"
         description="Desk work only. Reading this list is recorded in the audit trail — borrowing history is among the most sensitive data the institution holds."
       />
@@ -160,9 +157,7 @@ export default async function LoansPage({
             icon={<Icons.BookCheck />}
             title={overdueOnly ? "Nothing overdue" : "Nothing on loan"}
             reason={
-              overdueOnly
-                ? "Every book out is within its loan period."
-                : "The shelves are full."
+              overdueOnly ? "Every book out is within its loan period." : "The shelves are full."
             }
           />
         }

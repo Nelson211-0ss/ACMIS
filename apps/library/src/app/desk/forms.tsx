@@ -55,7 +55,7 @@ export function IssueForm() {
   }, [result])
 
   return (
-    <form action={action} className="bg-card space-y-4 rounded-lg border p-5">
+    <form action={action} className="bg-card shadow-card space-y-4 rounded-lg p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold">
         <Icons.ScanLine className="size-4" aria-hidden />
         Issue
@@ -100,9 +100,9 @@ export function IssueForm() {
         {pending ? "Issuing…" : "Issue"}
       </button>
       <p className="text-muted-foreground text-xs">
-        The loan period comes from the reader&rsquo;s category and the copy&rsquo;s class
-        — a postgraduate borrowing normal stock gets longer than an undergraduate
-        borrowing a short loan.
+        The loan period comes from the reader&rsquo;s category and the copy&rsquo;s class — a
+        postgraduate borrowing normal stock gets longer than an undergraduate borrowing a short
+        loan.
       </p>
     </form>
   )
@@ -117,7 +117,7 @@ export function ReturnForm() {
   }, [result])
 
   return (
-    <form action={action} className="bg-card space-y-4 rounded-lg border p-5">
+    <form action={action} className="bg-card shadow-card space-y-4 rounded-lg p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold">
         <Icons.Undo2 className="size-4" aria-hidden />
         Return
@@ -164,8 +164,8 @@ export function ReturnForm() {
         {pending ? "Taking back…" : "Take back"}
       </button>
       <p className="text-muted-foreground text-xs">
-        A damage charge has to be justified against the condition the copy went out
-        in, which is why this is recorded rather than remembered.
+        A damage charge has to be justified against the condition the copy went out in, which is why
+        this is recorded rather than remembered.
       </p>
     </form>
   )

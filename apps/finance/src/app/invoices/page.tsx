@@ -74,9 +74,7 @@ export default async function InvoicesPage({
       numeric: true,
       render: (row) =>
         row.balance_minor > 0 ? (
-          <span className="tabular-nums font-medium">
-            {money(row.balance_minor, currency)}
-          </span>
+          <span className="font-medium tabular-nums">{money(row.balance_minor, currency)}</span>
         ) : (
           <span className="text-muted-foreground">settled</span>
         ),
@@ -91,9 +89,7 @@ export default async function InvoicesPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
   ]
@@ -103,6 +99,7 @@ export default async function InvoicesPage({
   return (
     <FinanceShell user={user} institution={institution} currentPath="/invoices">
       <PageHeader
+        icon={<Icons.FileText />}
         title="Invoices"
         description="What was billed, what the sponsor covers, and what is still owed. A student on an agreed instalment plan is not late, whatever the due date says."
       />

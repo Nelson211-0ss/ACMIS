@@ -46,14 +46,13 @@ export default async function RegistrationPage() {
     student ? client.finance.blocks(student.id).catch(() => null) : Promise.resolve(null),
   ])
 
-  const registrationBlocks = (blocks?.blocks ?? []).filter(
-    (block) => block.gate === "registration",
-  )
+  const registrationBlocks = (blocks?.blocks ?? []).filter((block) => block.gate === "registration")
   const holds = (student?.holds ?? []).filter((hold) => !hold.cleared_at)
 
   return (
     <PortalShell user={user} institution={institution} currentPath="/registration">
       <PageHeader
+        icon={<Icons.ClipboardList />}
         title="Registration"
         description={
           semester
@@ -101,15 +100,13 @@ export default async function RegistrationPage() {
 
       {blocks?.protected_by_plan ? (
         <p className="text-success border-success/30 bg-success/10 rounded-lg border px-4 py-3 text-sm">
-          An approved payment plan is holding your blocks off. Keep to the
-          instalments and registration stays open.
+          An approved payment plan is holding your blocks off. Keep to the instalments and
+          registration stays open.
         </p>
       ) : null}
 
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold">
-          {semester ? semester.name : "Current semester"}
-        </h2>
+        <h2 className="text-sm font-semibold">{semester ? semester.name : "Current semester"}</h2>
 
         {!semester ? (
           <EmptyState
@@ -133,7 +130,7 @@ export default async function RegistrationPage() {
             }
           />
         ) : (
-          <div className="bg-card space-y-4 rounded-lg border p-4">
+          <div className="bg-card shadow-card space-y-4 rounded-lg p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <StatusBadge tone={toneForStatus(current.status)}>
@@ -147,8 +144,8 @@ export default async function RegistrationPage() {
               </div>
               <p className="text-muted-foreground text-sm">
                 {number(current.courses.length)} course
-                {current.courses.length === 1 ? "" : "s"} ·{" "}
-                {number(current.total_credits)} credit units
+                {current.courses.length === 1 ? "" : "s"} · {number(current.total_credits)} credit
+                units
                 {current.retake_credits > 0
                   ? ` (${number(current.retake_credits)} on retakes)`
                   : ""}
@@ -157,9 +154,8 @@ export default async function RegistrationPage() {
 
             {current.courses.length === 0 ? (
               <p className="text-muted-foreground text-sm">
-                No courses on it yet. Your department adds the courses for your
-                year and semester; anything elective you choose yourself has to
-                be added before you submit.
+                No courses on it yet. Your department adds the courses for your year and semester;
+                anything elective you choose yourself has to be added before you submit.
               </p>
             ) : (
               <ul className="divide-border divide-y text-sm">
@@ -206,9 +202,8 @@ export default async function RegistrationPage() {
               </div>
             ) : current.status === "submitted" ? (
               <p className="text-muted-foreground border-t pt-3 text-sm">
-                With your department for approval. Nothing further is needed
-                from you; chase your head of department if it sits here past the
-                close of the registration window.
+                With your department for approval. Nothing further is needed from you; chase your
+                head of department if it sits here past the close of the registration window.
               </p>
             ) : null}
           </div>
@@ -224,8 +219,7 @@ export default async function RegistrationPage() {
                 <span>
                   {row.semester_name ?? "Semester"}
                   <span className="text-muted-foreground ml-2 text-xs">
-                    {number(row.courses.length)} courses ·{" "}
-                    {number(row.total_credits)} CU
+                    {number(row.courses.length)} courses · {number(row.total_credits)} CU
                   </span>
                 </span>
                 <StatusBadge tone={toneForStatus(row.status)} dot={false}>

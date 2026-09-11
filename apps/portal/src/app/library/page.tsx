@@ -4,7 +4,7 @@ import { acmis, requireUser } from "@acmis/auth/server"
 import { EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatRow, StatTile } from "@acmis/ui/components/stat-tile"
-import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
+import { StatusBadge } from "@acmis/ui/components/status-badge"
 import { date, humaniseStatus, money, number } from "@acmis/ui/lib/format"
 
 import { PortalShell } from "@/components/shell"
@@ -45,14 +45,13 @@ export default async function LibraryPage({
   const member = membership?.member
   const loans = membership?.loans ?? []
   const overdue = loans.filter((loan) => loan.overdue)
-  const unpaidFines = (membership?.fines ?? []).filter(
-    (fine) => fine.reason !== "waived",
-  )
+  const unpaidFines = (membership?.fines ?? []).filter((fine) => fine.reason !== "waived")
   const owed = unpaidFines.reduce((total, fine) => total + fine.amount_minor, 0)
 
   return (
     <PortalShell user={user} institution={institution} currentPath="/library">
       <PageHeader
+        icon={<Icons.Library />}
         title="Library"
         description="Your loans, your queue, what you owe, and the catalogue. Everything on this page is your own borrowing record — the circulation register as a whole is not readable by borrowers, by design."
       />
@@ -100,9 +99,7 @@ export default async function LibraryPage({
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">On loan to you</h2>
             {loans.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Nothing out at the moment.
-              </p>
+              <p className="text-muted-foreground text-sm">Nothing out at the moment.</p>
             ) : (
               <ul className="divide-border divide-y rounded-lg border">
                 {loans.map((loan) => (
@@ -135,9 +132,8 @@ export default async function LibraryPage({
             )}
             {overdue.length > 0 ? (
               <p className="text-destructive text-xs leading-relaxed">
-                An overdue item accrues a fine every day it is out, and an
-                unpaid library fine blocks graduation clearance. Returning it is
-                cheaper than renewing it late.
+                An overdue item accrues a fine every day it is out, and an unpaid library fine
+                blocks graduation clearance. Returning it is cheaper than renewing it late.
               </p>
             ) : null}
           </section>
@@ -154,8 +150,7 @@ export default async function LibraryPage({
                     <div className="min-w-0">
                       <p className="text-sm font-medium">{reservation.title}</p>
                       <p className="text-muted-foreground mt-0.5 text-xs">
-                        Position {reservation.queue_position} ·{" "}
-                        {humaniseStatus(reservation.status)}
+                        Position {reservation.queue_position} · {humaniseStatus(reservation.status)}
                         {reservation.collect_by
                           ? ` · collect by ${date(reservation.collect_by)}`
                           : ""}
@@ -171,9 +166,9 @@ export default async function LibraryPage({
                 ))}
               </ul>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                A copy on the hold shelf is kept for you for a fixed number of
-                days and then passed to the next reader. Cancel one you no
-                longer need rather than letting it expire — it moves the queue.
+                A copy on the hold shelf is kept for you for a fixed number of days and then passed
+                to the next reader. Cancel one you no longer need rather than letting it expire — it
+                moves the queue.
               </p>
             </section>
           ) : null}
@@ -193,9 +188,7 @@ export default async function LibraryPage({
                       </span>
                       <span className="text-muted-foreground ml-2 text-xs">
                         {humaniseStatus(fine.reason)}
-                        {fine.days_overdue !== null
-                          ? ` · ${fine.days_overdue} days overdue`
-                          : ""}
+                        {fine.days_overdue !== null ? ` · ${fine.days_overdue} days overdue` : ""}
                       </span>
                     </span>
                     <span className="text-muted-foreground shrink-0 text-xs">
@@ -205,9 +198,8 @@ export default async function LibraryPage({
                 ))}
               </ul>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                Fines are paid at the library desk or the bursary. A fine raised
-                in error is waived by the librarian with a reason recorded — it
-                is not deleted.
+                Fines are paid at the library desk or the bursary. A fine raised in error is waived
+                by the librarian with a reason recorded — it is not deleted.
               </p>
             </section>
           ) : null}
@@ -262,9 +254,7 @@ export default async function LibraryPage({
                       <p className="text-sm font-medium">
                         {record.title}
                         {record.subtitle ? (
-                          <span className="text-muted-foreground">
-                            : {record.subtitle}
-                          </span>
+                          <span className="text-muted-foreground">: {record.subtitle}</span>
                         ) : null}
                       </p>
                       <p className="text-muted-foreground mt-0.5 text-xs">
@@ -318,7 +308,7 @@ export default async function LibraryPage({
             {eResources
               .filter((resource) => resource.is_active)
               .map((resource) => (
-                <li key={resource.id} className="bg-card rounded-lg border p-4">
+                <li key={resource.id} className="bg-card shadow-card rounded-lg p-4">
                   <p className="text-sm font-medium">{resource.name}</p>
                   <p className="text-muted-foreground mt-0.5 text-xs">
                     {resource.provider} · {humaniseStatus(resource.kind)}

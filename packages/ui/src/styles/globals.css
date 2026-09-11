@@ -87,14 +87,14 @@
 
      Assign these in order and never cycle: a ninth series folds into "Other"
      or becomes a small multiple. */
-  --chart-1: oklch(0.455 0.170 264); /* senate blue   */
+  --chart-1: oklch(0.455 0.17 264); /* senate blue   */
   --chart-2: oklch(0.605 0.125 196); /* harbour teal  */
-  --chart-3: oklch(0.505 0.190 28);  /* examiner red  */
-  --chart-4: oklch(0.615 0.135 78);  /* degree gold   */
+  --chart-3: oklch(0.505 0.19 28); /* examiner red  */
+  --chart-4: oklch(0.615 0.135 78); /* degree gold   */
   --chart-5: oklch(0.455 0.155 292); /* violet        */
-  --chart-6: oklch(0.590 0.135 148); /* ledger green  */
-  --chart-7: oklch(0.470 0.180 336); /* magenta       */
-  --chart-8: oklch(0.620 0.110 232); /* pale blue     */
+  --chart-6: oklch(0.59 0.135 148); /* ledger green  */
+  --chart-7: oklch(0.47 0.18 336); /* magenta       */
+  --chart-8: oklch(0.62 0.11 232); /* pale blue     */
 
   /* --- sidebar ----------------------------------------------------------- */
   --sidebar: oklch(0.985 0.004 264);
@@ -105,6 +105,39 @@
   --sidebar-accent-foreground: oklch(0.29 0.04 264);
   --sidebar-border: oklch(0.912 0.009 264);
   --sidebar-ring: oklch(0.452 0.132 263);
+
+  /* --- elevation ----------------------------------------------------------
+     A dashboard card is lifted off the page rather than drawn onto it.
+
+     A hairline round every panel turns a dashboard of twenty tiles into a
+     wireframe — the lines carry no information and compete with the table
+     rules and the section dividers, which do. Elevation groups the same
+     content without adding a mark.
+
+     The first layer of each stack is a *hairline drawn as a shadow*
+     (`0 0 0 1px`), not a border. That matters twice over: it costs no layout
+     box, so swapping a card from `border` to this shifts nothing by a pixel;
+     and it means one token carries the whole treatment, so the dark theme can
+     lean on the line and the light theme on the blur without the markup
+     knowing which theme it is in.
+
+     The tint is the ink colour, not black. A neutral-black shadow over a page
+     that is very slightly blue reads as a grey smudge; the same shadow in the
+     page's own hue reads as depth.
+     --------------------------------------------------------------------- */
+  --shadow-card:
+    0 0 0 1px oklch(0.216 0.019 266 / 0.04), 0 1px 2px -1px oklch(0.216 0.019 266 / 0.08),
+    0 4px 12px -4px oklch(0.216 0.019 266 / 0.07);
+
+  /* Lift on hover, for a card that is a link to the queue it counts. */
+  --shadow-card-hover:
+    0 0 0 1px oklch(0.216 0.019 266 / 0.07), 0 2px 4px -2px oklch(0.216 0.019 266 / 0.1),
+    0 10px 22px -8px oklch(0.216 0.019 266 / 0.12);
+
+  /* A form or a dialog sits above the page, not on it. */
+  --shadow-raised:
+    0 0 0 1px oklch(0.216 0.019 266 / 0.05), 0 2px 4px -2px oklch(0.216 0.019 266 / 0.06),
+    0 12px 28px -8px oklch(0.216 0.019 266 / 0.1), 0 32px 56px -24px oklch(0.216 0.019 266 / 0.12);
 }
 
 .dark {
@@ -143,14 +176,14 @@
      light ones: the band there is L 0.48-0.67, and the first attempt at this
      ramp sat above it (up to 0.82) as well as dropping one hue below the
      chroma floor, where it read as grey. Same validation, same order. */
-  --chart-1: oklch(0.520 0.165 264);
-  --chart-2: oklch(0.660 0.120 196);
-  --chart-3: oklch(0.560 0.185 28);
-  --chart-4: oklch(0.665 0.130 78);
-  --chart-5: oklch(0.515 0.150 292);
+  --chart-1: oklch(0.52 0.165 264);
+  --chart-2: oklch(0.66 0.12 196);
+  --chart-3: oklch(0.56 0.185 28);
+  --chart-4: oklch(0.665 0.13 78);
+  --chart-5: oklch(0.515 0.15 292);
   --chart-6: oklch(0.645 0.135 148);
-  --chart-7: oklch(0.530 0.175 336);
-  --chart-8: oklch(0.660 0.105 232);
+  --chart-7: oklch(0.53 0.175 336);
+  --chart-8: oklch(0.66 0.105 232);
 
   --sidebar: oklch(0.216 0.019 266);
   --sidebar-foreground: oklch(0.961 0.005 264);
@@ -160,6 +193,30 @@
   --sidebar-accent-foreground: oklch(0.961 0.005 264);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.702 0.126 262);
+
+  /* Elevation, rebuilt for a dark ground rather than reused from the light
+     theme. A drop shadow is a darkening, and there is very little headroom
+     to darken below a page at L 0.17 — a light-theme shadow on a dark
+     dashboard is simply invisible, which is how "elevated" cards end up
+     floating with no edge at all.
+
+     So the weighting inverts: the hairline does most of the work and is a
+     *light* one (white at low alpha, catching an imagined light from above),
+     and the blur beneath it is near-black and deeper, to seat the card rather
+     than to outline it. The card is also lighter than the page in this theme,
+     so luminance already separates the two and the line only has to confirm
+     the edge. */
+  --shadow-card:
+    0 0 0 1px oklch(1 0 0 / 0.07), 0 1px 2px -1px oklch(0 0 0 / 0.5),
+    0 6px 16px -6px oklch(0 0 0 / 0.45);
+
+  --shadow-card-hover:
+    0 0 0 1px oklch(1 0 0 / 0.13), 0 2px 4px -2px oklch(0 0 0 / 0.55),
+    0 12px 26px -8px oklch(0 0 0 / 0.55);
+
+  --shadow-raised:
+    0 0 0 1px oklch(1 0 0 / 0.09), 0 2px 4px -2px oklch(0 0 0 / 0.5),
+    0 14px 32px -10px oklch(0 0 0 / 0.6), 0 36px 60px -28px oklch(0 0 0 / 0.7);
 }
 
 /* ==========================================================================
@@ -173,37 +230,100 @@
    Set `data-module` on <html>; `--module` is what the chrome reads.
    ========================================================================== */
 
-:root { --module: var(--primary); --module-contrast: var(--primary-foreground); }
+:root {
+  --module: var(--primary);
+  --module-contrast: var(--primary-foreground);
+}
 
 /* `shell` is deliberately absent below: the launcher is the neutral home and
    keeps Senate Blue, so arriving there feels like arriving nowhere in
    particular. Every other app declares its own. */
 
-[data-module="admissions"]  { --module: oklch(0.512 0.118 216); } /* harbour blue */
-[data-module="students"]    { --module: oklch(0.452 0.132 263); } /* senate blue  */
-[data-module="curriculum"]  { --module: oklch(0.492 0.142 296); } /* violet       */
-[data-module="finance"]     { --module: oklch(0.482 0.108 162); } /* ledger green */
-[data-module="people"]      { --module: oklch(0.548 0.128 52);  } /* umber        */
-[data-module="assessment"]  { --module: oklch(0.532 0.162 12);  } /* examiner red */
-[data-module="governance"]  { --module: oklch(0.402 0.062 258); } /* slate        */
-[data-module="developers"]  { --module: oklch(0.522 0.108 196); } /* cyan         */
-[data-module="learning"]    { --module: oklch(0.472 0.122 135); } /* teaching green */
-[data-module="library"]     { --module: oklch(0.478 0.138 332); } /* plum         */
-[data-module="quality"]     { --module: oklch(0.512 0.112 108); } /* moss         */
-[data-module="portal"]      { --module: oklch(0.498 0.128 174); } /* teal         */
+[data-module="admissions"] {
+  --module: oklch(0.512 0.118 216);
+} /* harbour blue */
+[data-module="students"] {
+  --module: oklch(0.452 0.132 263);
+} /* senate blue  */
+[data-module="curriculum"] {
+  --module: oklch(0.492 0.142 296);
+} /* violet       */
+[data-module="finance"] {
+  --module: oklch(0.482 0.108 162);
+} /* ledger green */
+[data-module="people"] {
+  --module: oklch(0.548 0.128 52);
+} /* umber        */
+[data-module="assessment"] {
+  --module: oklch(0.532 0.162 12);
+} /* examiner red */
+[data-module="governance"] {
+  --module: oklch(0.402 0.062 258);
+} /* slate        */
+[data-module="developers"] {
+  --module: oklch(0.522 0.108 196);
+} /* cyan         */
+[data-module="learning"] {
+  --module: oklch(0.472 0.122 135);
+} /* teaching green */
+[data-module="library"] {
+  --module: oklch(0.478 0.138 332);
+} /* plum         */
+[data-module="quality"] {
+  --module: oklch(0.512 0.112 108);
+} /* moss         */
+[data-module="portal"] {
+  --module: oklch(0.498 0.128 174);
+} /* teal         */
 
-.dark [data-module="admissions"], .dark[data-module="admissions"]  { --module: oklch(0.722 0.108 216); }
-.dark [data-module="students"],   .dark[data-module="students"]    { --module: oklch(0.702 0.126 262); }
-.dark [data-module="curriculum"], .dark[data-module="curriculum"]  { --module: oklch(0.712 0.132 296); }
-.dark [data-module="finance"],    .dark[data-module="finance"]     { --module: oklch(0.712 0.108 162); }
-.dark [data-module="people"],     .dark[data-module="people"]      { --module: oklch(0.762 0.118 58);  }
-.dark [data-module="assessment"], .dark[data-module="assessment"]  { --module: oklch(0.712 0.148 16);  }
-.dark [data-module="governance"], .dark[data-module="governance"]  { --module: oklch(0.688 0.058 258); }
-.dark [data-module="developers"], .dark[data-module="developers"]  { --module: oklch(0.732 0.102 196); }
-.dark [data-module="learning"],   .dark[data-module="learning"]    { --module: oklch(0.726 0.106 135); }
-.dark [data-module="library"],    .dark[data-module="library"]     { --module: oklch(0.712 0.112 332); }
-.dark [data-module="quality"],    .dark[data-module="quality"]     { --module: oklch(0.748 0.102 108); }
-.dark [data-module="portal"],     .dark[data-module="portal"]      { --module: oklch(0.718 0.118 174); }
+.dark [data-module="admissions"],
+.dark[data-module="admissions"] {
+  --module: oklch(0.722 0.108 216);
+}
+.dark [data-module="students"],
+.dark[data-module="students"] {
+  --module: oklch(0.702 0.126 262);
+}
+.dark [data-module="curriculum"],
+.dark[data-module="curriculum"] {
+  --module: oklch(0.712 0.132 296);
+}
+.dark [data-module="finance"],
+.dark[data-module="finance"] {
+  --module: oklch(0.712 0.108 162);
+}
+.dark [data-module="people"],
+.dark[data-module="people"] {
+  --module: oklch(0.762 0.118 58);
+}
+.dark [data-module="assessment"],
+.dark[data-module="assessment"] {
+  --module: oklch(0.712 0.148 16);
+}
+.dark [data-module="governance"],
+.dark[data-module="governance"] {
+  --module: oklch(0.688 0.058 258);
+}
+.dark [data-module="developers"],
+.dark[data-module="developers"] {
+  --module: oklch(0.732 0.102 196);
+}
+.dark [data-module="learning"],
+.dark[data-module="learning"] {
+  --module: oklch(0.726 0.106 135);
+}
+.dark [data-module="library"],
+.dark[data-module="library"] {
+  --module: oklch(0.712 0.112 332);
+}
+.dark [data-module="quality"],
+.dark[data-module="quality"] {
+  --module: oklch(0.748 0.102 108);
+}
+.dark [data-module="portal"],
+.dark[data-module="portal"] {
+  --module: oklch(0.718 0.118 174);
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -253,45 +373,138 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Typography.
-     Inter for the interface — it was cut for dense UI and its numerals line
-     up in a table, which matters when a bursar scans 400 fee balances.
-     Source Serif 4 for documents and page titles — transcripts, testimonials
-     and admission letters are legal instruments and should not look like a
-     web app. JetBrains Mono for anything a human reads aloud digit by digit:
+  /* Typography — the Foundation's pairing. See `lib/fonts.ts` for why each
+     face is here and why the figures are not set in the interface face.
+
+     Vistol Sans is the interface: nav, labels, fields, prose. Overpass is
+     headings *and* figures — it is the only one of the three that ships
+     tabular numerals, which is what makes a column of fee balances a column.
+     JetBrains Mono is for identifiers a human reads aloud digit by digit:
      student numbers, receipt references, API keys. */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-vistol), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-overpass), var(--font-vistol), ui-sans-serif, system-ui, sans-serif;
+  --font-numeric: var(--font-overpass), var(--font-vistol), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* `shadow-card`, `shadow-card-hover`, `shadow-raised`. Each already carries
+     its own hairline, so a card using one takes no `border`. */
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+  --shadow-raised: var(--shadow-raised);
 }
 
 @layer base {
-  * { @apply border-border outline-ring/50; }
+  * {
+    @apply border-border outline-ring/50;
+  }
 
-  html { -webkit-text-size-adjust: 100%; }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    /* Contextual alternates on, but no ligatures in data: "fi" in a surname is
-       fine, an ff-ligature in a document number is not. */
-    font-feature-settings: "cv11", "ss01";
+    /* Kerning on, and that is the whole list. The previous value asked Inter
+       for `cv11` and `ss01`; Vistol ships neither (its only GSUB feature is
+       `liga`), and an unsupported feature tag is not an error — it is silence,
+       which is how a setting outlives the face it was written for. */
+    font-feature-settings: "kern" 1;
     font-variation-settings: normal;
+    letter-spacing: -0.006em;
   }
 
-  /* Tabular figures wherever numbers are compared vertically. */
-  table, .tabular, [data-slot="table"] { font-variant-numeric: tabular-nums; }
+  /* ---------------------------------------------------------- figures ----
+     Numbers that are read down a column are set in Overpass, which has real
+     tabular figures; `tabular-nums` alone was doing nothing, because the
+     interface face has one proportional set and no `tnum` to switch to.
 
-  h1, h2, h3, .font-display { @apply font-semibold tracking-tight; }
+     `lining-nums` as well as `tabular-nums`: a ledger wants figures that sit
+     on the baseline at cap height, not old-style figures with descenders.
+     ------------------------------------------------------------------- */
+  table,
+  .tabular,
+  .tabular-nums,
+  [data-slot="table"] {
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* An identifier keeps the mono face: a student number is read aloud digit by
+     digit and 0/O and 1/l have to be different shapes, which is the one thing
+     a proportional numeric face will not do for you. (The `font-mono` utility
+     already outranks the table rule above, being a utility; this is for the
+     elements that carry no class.) */
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-mono);
+  }
+
+  /* A table is mostly words — names, programme titles, statuses — and only
+     some of it is figures. So the numeric face is applied to the table and
+     then handed back for the cells that hold prose, rather than the other way
+     round, which would mean tagging every numeric cell in thirteen apps. */
+  table :is(th, td) > :is(a, p, span.prose-cell),
+  [data-slot="table"] :is(th, td) > :is(a, p, span.prose-cell) {
+    font-family: var(--font-sans);
+  }
+
+  /* --------------------------------------------------------- headings ----
+     Overpass, and heavy. The Foundation's rule is that contrast between a
+     heading and its body copy comes from weight and tracking rather than from
+     a third typeface, so headings run one family at 700–800 with the tracking
+     pulled in — where body copy sits at 400 and near-neutral tracking.
+
+     Dashboard sizes, not the public site's display sizes: nothing here is a
+     4rem hero, and a page title that competes with the data under it is a
+     page title nobody reads twice. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-2xl font-extrabold;
+    letter-spacing: -0.024em;
+  }
+  h2 {
+    @apply text-lg;
+    letter-spacing: -0.018em;
+  }
+  h3 {
+    @apply text-base;
+    letter-spacing: -0.014em;
+  }
+
+  /* Overpass is a touch wider than Vistol at the same nominal size, so a
+     heading set in it reads about half a step larger. `text-balance` stops the
+     extra width from leaving one word alone on a second line. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
 
   /* Never rely on colour alone: focus is a ring AND an offset. */
-  :focus-visible { @apply ring-ring/70 ring-offset-background outline-none ring-2 ring-offset-2; }
+  :focus-visible {
+    @apply ring-ring/70 ring-offset-background outline-none ring-2 ring-offset-2;
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -302,11 +515,96 @@
 
 @layer utilities {
   /* A 1px hairline that survives dark mode; plain border-b disappears there. */
-  .hairline { @apply border-border/70 border-b; }
+  .hairline {
+    @apply border-border/70 border-b;
+  }
+
+  /* The phone tab bar's height, as page-bottom clearance. `AppShell` reads it
+     with a 3.5rem default and this zeroes it from `sm`, which is exactly where
+     `MobileNav` stops rendering the bar — one breakpoint, declared once, so
+     the clearance cannot drift from the thing it is clearing. */
+  @media (min-width: 40rem) {
+    :root {
+      --tab-bar: 0rem;
+    }
+  }
+
+  /* ------------------------------------------------------- type roles ----
+     Three named roles, so a card title in Finance and a card title in Library
+     are the same object rather than two people's guesses at the same
+     utilities. Each is the family *and* the weight and tracking that go with
+     it — `font-display` on its own is a family swap and will read wrong at
+     regular weight, because Overpass at 400 against Vistol at 400 is a
+     mismatch rather than a contrast.
+     ------------------------------------------------------------------- */
+
+  /* A section or card heading that is not an h-tag — the title inside a link,
+     a `<dt>` that leads a group. */
+  .text-title {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight;
+    letter-spacing: -0.016em;
+  }
+
+  /* The small uppercase label above a figure or a group. It stays on the
+     interface face on purpose: it is a label, not a heading, and it should
+     read as a different voice from the thing it introduces. */
+  .eyebrow {
+    @apply text-muted-foreground text-[11px] font-semibold uppercase leading-tight;
+    font-family: var(--font-sans);
+    letter-spacing: 0.08em;
+  }
+
+  /* A figure that has to line up with the figure under it. `.tabular` is the
+     same thing and is what the existing markup uses; this is the readable
+     name for new code. */
+  .figures {
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* ------------------------------------------------------- form fields ----
+     A filled field rather than an outlined one.
+
+     An outlined input states its edge with a line whether or not anybody is
+     looking at it; a filled one states it with a change of surface, and then
+     has somewhere to go when it is focused — it lifts to the card colour and
+     takes the ring. That gives focus a much louder signal than thickening a
+     line the eye had already stopped seeing, which matters on the one screen
+     where a person is typing a password they may not be able to see.
+
+     `text-base` below the `md` breakpoint is not a style choice: iOS zooms the
+     whole page when a focused input is under 16px, and on the sign-in screen
+     that leaves the form half off-frame with the keyboard up.
+
+     Horizontal padding is deliberately NOT set here. A custom class in this
+     layer and a Tailwind utility have the same specificity, so `px-3` baked
+     into `.field` beat the `pl-9` a caller added to clear a leading icon, and
+     the glyph rendered on top of the placeholder. Each call site states its
+     own `px-*`, which is one more class to write and no chance of that.
+     ------------------------------------------------------------------- */
+  .field {
+    @apply bg-muted/70 text-foreground placeholder:text-muted-foreground w-full rounded-lg py-2.5 text-base outline-none transition-[background-color,box-shadow] md:text-sm;
+  }
+
+  .field:hover {
+    @apply bg-muted;
+  }
+
+  /* Lifts clear of the page on focus. The ring itself comes from the global
+     `:focus-visible` rule, so it is the same ring as everywhere else. */
+  .field:focus,
+  .field:focus-visible {
+    @apply bg-card;
+  }
 
   /* Print: registry staff print transcripts and mark sheets constantly. */
   @media print {
-    .no-print { display: none !important; }
-    body { @apply bg-white text-black; }
+    .no-print {
+      display: none !important;
+    }
+    body {
+      @apply bg-white text-black;
+    }
   }
 }

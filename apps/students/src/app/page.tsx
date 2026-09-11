@@ -24,15 +24,14 @@ export default async function StudentsOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester, active, probation, onLeave, completed] =
-    await Promise.all([
-      client.public.institution().catch(() => null),
-      client.reference.currentSemester().catch(() => null),
-      client.students.list({ status: "active", limit: 1, with_total: true }),
-      client.students.list({ status: "probation", limit: 1, with_total: true }),
-      client.students.list({ status: "on_leave", limit: 1, with_total: true }),
-      client.students.list({ status: "completed", limit: 1, with_total: true }),
-    ])
+  const [institution, semester, active, probation, onLeave, completed] = await Promise.all([
+    client.public.institution().catch(() => null),
+    client.reference.currentSemester().catch(() => null),
+    client.students.list({ status: "active", limit: 1, with_total: true }),
+    client.students.list({ status: "probation", limit: 1, with_total: true }),
+    client.students.list({ status: "on_leave", limit: 1, with_total: true }),
+    client.students.list({ status: "completed", limit: 1, with_total: true }),
+  ])
 
   const counts = {
     active: active.meta.total ?? 0,
@@ -51,15 +50,13 @@ export default async function StudentsOverview() {
   for (const student of sample.items) {
     const primary = student.programmes.find((p) => p.is_primary)
     if (!primary) continue
-    byYear.set(
-      primary.current_year_of_study,
-      (byYear.get(primary.current_year_of_study) ?? 0) + 1,
-    )
+    byYear.set(primary.current_year_of_study, (byYear.get(primary.current_year_of_study) ?? 0) + 1)
   }
 
   return (
     <StudentsShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.Users />}
         title="Student records"
         description={
           semester
@@ -85,9 +82,7 @@ export default async function StudentsOverview() {
           value={number(counts.probation)}
           icon={<Icons.AlertTriangle className="size-4" />}
           footnote={
-            enrolled > 0
-              ? `${percent((counts.probation / enrolled) * 100)} of enrolled`
-              : undefined
+            enrolled > 0 ? `${percent((counts.probation / enrolled) * 100)} of enrolled` : undefined
           }
         />
         <StatTile
@@ -149,7 +144,7 @@ export default async function StudentsOverview() {
           )}
         </ChartFrame>
 
-        <div className="bg-card space-y-4 rounded-lg border p-4">
+        <div className="bg-card shadow-card space-y-4 rounded-lg p-4">
           <div>
             <h3 className="text-base font-semibold">Population standing</h3>
             <p className="text-muted-foreground mt-1 text-sm">
@@ -173,10 +168,9 @@ export default async function StudentsOverview() {
             thresholdLabel="A probation rate above about 10% is usually a question about a programme rather than about its students."
           />
           <p className="text-muted-foreground border-t pt-3 text-xs leading-relaxed">
-            Standing is computed from the progression rules on each
-            student&rsquo;s own curriculum version, and the rules used are
-            stamped onto every computed result. A student put on probation in
-            2027 stays explainable under the 2027 rules.
+            Standing is computed from the progression rules on each student&rsquo;s own curriculum
+            version, and the rules used are stamped onto every computed result. A student put on
+            probation in 2027 stays explainable under the 2027 rules.
           </p>
         </div>
       </div>

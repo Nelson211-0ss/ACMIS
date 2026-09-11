@@ -65,6 +65,7 @@ export default async function AssessmentOverview() {
   return (
     <AssessmentShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.ClipboardCheck />}
         title="Assessment"
         description={
           semester
@@ -149,12 +150,12 @@ export default async function AssessmentOverview() {
           )}
         </ChartFrame>
 
-        <div className="bg-card space-y-4 rounded-lg border p-4">
+        <div className="bg-card shadow-card space-y-4 rounded-lg p-4">
           <div>
             <h3 className="text-base font-semibold">Mark entry</h3>
             <p className="text-muted-foreground mt-1 text-sm">
-              A sheet cannot be submitted while any candidate is unmarked —
-              enter a mark or record an absence.
+              A sheet cannot be submitted while any candidate is unmarked — enter a mark or record
+              an absence.
             </p>
           </div>
           <Meter
@@ -166,8 +167,7 @@ export default async function AssessmentOverview() {
           {overdue.length > 0 ? (
             <div className="border-t pt-3">
               <p className="text-warning-foreground text-sm font-medium">
-                {overdue.length} sheet{overdue.length === 1 ? "" : "s"} past the
-                deadline
+                {overdue.length} sheet{overdue.length === 1 ? "" : "s"} past the deadline
               </p>
               <ul className="mt-2 space-y-1">
                 {overdue.slice(0, 5).map((sheet) => (
@@ -179,8 +179,7 @@ export default async function AssessmentOverview() {
                       {sheet.course_offering_id.slice(0, 8)}
                     </a>
                     <span className="text-muted-foreground shrink-0">
-                      {humaniseStatus(sheet.status)} · due{" "}
-                      {date(sheet.due_on, institution?.locale)}
+                      {humaniseStatus(sheet.status)} · due {date(sheet.due_on, institution?.locale)}
                     </span>
                   </li>
                 ))}

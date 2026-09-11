@@ -23,11 +23,7 @@ export const metadata = { title: "Record" }
  * useless, "the first one is back on Tuesday" is something they can plan
  * around.
  */
-export default async function RecordPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function RecordPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireUser(APP)
   const client = await acmis(APP)
@@ -52,11 +48,7 @@ export default async function RecordPage({
       key: "call",
       header: "Call number",
       render: (row) =>
-        row.call_number ? (
-          <span className="font-mono text-xs">{row.call_number}</span>
-        ) : (
-          "—"
-        ),
+        row.call_number ? <span className="font-mono text-xs">{row.call_number}</span> : "—",
     },
     {
       key: "shelf",
@@ -77,9 +69,7 @@ export default async function RecordPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
     {
@@ -94,6 +84,7 @@ export default async function RecordPage({
   return (
     <LibraryShell user={user} institution={institution} currentPath="/catalogue">
       <PageHeader
+        icon={<Icons.Search />}
         title={record.title}
         description={record.statement_of_responsibility ?? undefined}
         breadcrumbs={
@@ -141,8 +132,8 @@ export default async function RecordPage({
 
       {availability.available === 0 && availability.earliest_due ? (
         <p className="border-primary/30 bg-primary/5 rounded-md border px-3 py-2 text-sm">
-          Every copy is out. The first is due back on {date(availability.earliest_due)} —
-          a reservation puts the reader at the head of the queue when it arrives.
+          Every copy is out. The first is due back on {date(availability.earliest_due)} — a
+          reservation puts the reader at the head of the queue when it arrives.
         </p>
       ) : null}
 

@@ -41,9 +41,7 @@ export default async function CataloguePage({
         <div>
           <div className="font-medium">{row.title}</div>
           {row.statement_of_responsibility ? (
-            <div className="text-muted-foreground text-xs">
-              {row.statement_of_responsibility}
-            </div>
+            <div className="text-muted-foreground text-xs">{row.statement_of_responsibility}</div>
           ) : null}
         </div>
       ),
@@ -66,11 +64,7 @@ export default async function CataloguePage({
       header: "Call number",
       secondary: true,
       render: (row) =>
-        row.classification ? (
-          <span className="font-mono text-xs">{row.classification}</span>
-        ) : (
-          "—"
-        ),
+        row.classification ? <span className="font-mono text-xs">{row.classification}</span> : "—",
     },
     {
       key: "kind",
@@ -86,6 +80,7 @@ export default async function CataloguePage({
   return (
     <LibraryShell user={user} institution={institution} currentPath="/catalogue">
       <PageHeader
+        icon={<Icons.Search />}
         title="Catalogue"
         description="Everything the library holds, searchable by title, author or ISBN in one box. What is on the shelf now is on each record."
       />
@@ -104,10 +99,7 @@ export default async function CataloguePage({
           />
         </div>
         <div className="space-y-1">
-          <label
-            htmlFor="material_kind"
-            className="text-muted-foreground text-xs font-medium"
-          >
+          <label htmlFor="material_kind" className="text-muted-foreground text-xs font-medium">
             Kind
           </label>
           <select
@@ -117,13 +109,11 @@ export default async function CataloguePage({
             className="border-input bg-background rounded-md border px-2.5 py-1.5 text-base sm:text-sm"
           >
             <option value="">Anything</option>
-            {["book", "journal", "thesis", "e_book", "e_journal", "audio", "video"].map(
-              (value) => (
-                <option key={value} value={value}>
-                  {value.replace(/_/g, " ")}
-                </option>
-              ),
-            )}
+            {["book", "journal", "thesis", "e_book", "e_journal", "audio", "video"].map((value) => (
+              <option key={value} value={value}>
+                {value.replace(/_/g, " ")}
+              </option>
+            ))}
           </select>
         </div>
         <button

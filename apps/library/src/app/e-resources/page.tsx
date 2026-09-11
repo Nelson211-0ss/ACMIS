@@ -76,8 +76,7 @@ export default async function EResourcesPage() {
       header: "Seats",
       numeric: true,
       secondary: true,
-      render: (row) =>
-        row.concurrent_users === null ? "Unlimited" : number(row.concurrent_users),
+      render: (row) => (row.concurrent_users === null ? "Unlimited" : number(row.concurrent_users)),
     },
     {
       key: "auth",
@@ -108,6 +107,7 @@ export default async function EResourcesPage() {
   return (
     <LibraryShell user={user} institution={institution} currentPath="/e-resources">
       <PageHeader
+        icon={<Icons.Globe />}
         title="E-resources"
         description="Subscribed databases and packages. Turnaways — readers refused because every seat was taken — are the number that justifies buying more."
       />
@@ -117,9 +117,8 @@ export default async function EResourcesPage() {
           role="alert"
           className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm"
         >
-          {lapsingSoon.length} licence{lapsingSoon.length === 1 ? "" : "s"} end within
-          three months. A renewal decision takes longer than that to get through
-          finance.
+          {lapsingSoon.length} licence{lapsingSoon.length === 1 ? "" : "s"} end within three months.
+          A renewal decision takes longer than that to get through finance.
         </p>
       ) : null}
 

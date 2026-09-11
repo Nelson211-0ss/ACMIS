@@ -25,10 +25,7 @@ export function BallotPaper({
   positions: ElectionPositionRow[]
   candidates: CandidateRow[]
 }) {
-  const [state, formAction] = useActionState<VoteResult | null, FormData>(
-    castBallot,
-    null,
-  )
+  const [state, formAction] = useActionState<VoteResult | null, FormData>(castBallot, null)
 
   if (state?.receipts) {
     return <Receipts receipts={state.receipts} castAt={state.castAt} positions={positions} />
@@ -50,7 +47,7 @@ export function BallotPaper({
         const multiple = position.max_choices > 1
 
         return (
-          <fieldset key={position.id} className="bg-card rounded-lg border p-4">
+          <fieldset key={position.id} className="bg-card shadow-card rounded-lg p-4">
             <legend className="px-1 text-sm font-semibold">
               {position.is_referendum ? position.question : position.title}
             </legend>
@@ -65,8 +62,8 @@ export function BallotPaper({
 
             {standing.length === 0 ? (
               <p className="text-muted-foreground mt-3 text-sm">
-                No candidate was validly nominated for this position. It will be
-                filled by by-election.
+                No candidate was validly nominated for this position. It will be filled by
+                by-election.
               </p>
             ) : (
               <ul className="mt-3 space-y-2">
@@ -106,9 +103,7 @@ export function BallotPaper({
                       className="size-4 shrink-0"
                       defaultChecked={!multiple}
                     />
-                    <span className="text-muted-foreground text-sm">
-                      Abstain on this position
-                    </span>
+                    <span className="text-muted-foreground text-sm">Abstain on this position</span>
                   </label>
                 </li>
               </ul>
@@ -119,10 +114,9 @@ export function BallotPaper({
 
       <div className="border-warning/40 bg-warning/10 space-y-3 rounded-lg border p-4">
         <p className="text-sm">
-          Pressing this casts your ballot. It cannot be changed or withdrawn,
-          and the receipts appear on the next screen <strong>once</strong> —
-          nothing on the server holds a copy against your name, so write them
-          down or screenshot them before you leave the page.
+          Pressing this casts your ballot. It cannot be changed or withdrawn, and the receipts
+          appear on the next screen <strong>once</strong> — nothing on the server holds a copy
+          against your name, so write them down or screenshot them before you leave the page.
         </p>
         <Submit />
       </div>
@@ -167,16 +161,15 @@ function Receipts({
         <h2 className="text-success text-sm font-semibold">Your ballot is cast</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           {castAt ? `Recorded ${new Date(castAt).toLocaleString("en-GB")}. ` : ""}
-          These are your receipts. They are the only proof your ballot is in the
-          count; they do not reveal what you chose, and they exist nowhere else
-          against your name.
+          These are your receipts. They are the only proof your ballot is in the count; they do not
+          reveal what you chose, and they exist nowhere else against your name.
         </p>
       </div>
       <ul className="space-y-2">
         {Object.entries(receipts).map(([positionId, token]) => (
-          <li key={positionId} className="bg-card rounded-md border p-3">
+          <li key={positionId} className="bg-card shadow-card rounded-md p-3">
             <p className="text-muted-foreground text-xs">{title(positionId)}</p>
-            <p className="mt-1 font-mono text-sm break-all select-all">{token}</p>
+            <p className="mt-1 select-all break-all font-mono text-sm">{token}</p>
           </li>
         ))}
       </ul>
@@ -189,10 +182,7 @@ function Receipts({
 
 /** Check a receipt against the count. */
 export function ReceiptChecker() {
-  const [state, formAction] = useActionState<CheckResult | null, FormData>(
-    checkReceipt,
-    null,
-  )
+  const [state, formAction] = useActionState<CheckResult | null, FormData>(checkReceipt, null)
 
   return (
     <form action={formAction} className="space-y-2">

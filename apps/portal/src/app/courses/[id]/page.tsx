@@ -18,11 +18,7 @@ import { APP } from "@/lib/config"
  * publishes against. An undifferentiated list of files is how a course space
  * becomes unusable by about week four.
  */
-export default async function CourseSpacePage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default async function CourseSpacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireUser(APP)
   const client = await acmis(APP)
@@ -69,6 +65,7 @@ export default async function CourseSpacePage({
   return (
     <PortalShell user={user} institution={institution} currentPath="/courses">
       <PageHeader
+        icon={<Icons.BookOpen />}
         title={`Course ${id.slice(0, 8)}`}
         description={
           space.is_published
@@ -96,7 +93,7 @@ export default async function CourseSpacePage({
             {open.map((assessment) => (
               <li
                 key={assessment.id}
-                className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-md border p-3"
+                className="bg-card shadow-card flex flex-wrap items-center justify-between gap-3 rounded-md p-3"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{assessment.title}</p>
@@ -122,8 +119,8 @@ export default async function CourseSpacePage({
             ))}
           </ul>
           <p className="text-muted-foreground mt-2 text-xs">
-            Once started, the clock runs on the server. Your answers save as you
-            give them, so a dropped connection does not lose your work.
+            Once started, the clock runs on the server. Your answers save as you give them, so a
+            dropped connection does not lose your work.
           </p>
         </section>
       ) : null}

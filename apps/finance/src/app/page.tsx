@@ -27,25 +27,18 @@ export default async function FinanceOverview() {
   const [institution, unmatched, overdue, trial] = await Promise.all([
     client.public.institution().catch(() => null),
     client.finance.unmatchedPayments({ limit: 100 }).catch(() => null),
-    client.finance
-      .invoices({ overdue_only: true, limit: 100, with_total: true })
-      .catch(() => null),
+    client.finance.invoices({ overdue_only: true, limit: 100, with_total: true }).catch(() => null),
     client.finance.trialBalance(period).catch(() => null),
   ])
 
   const currency = institution?.currency ?? "UGX"
-  const unmatchedTotal = (unmatched?.items ?? []).reduce(
-    (sum, p) => sum + p.amount_minor,
-    0,
-  )
-  const overdueTotal = (overdue?.items ?? []).reduce(
-    (sum, i) => sum + i.balance_minor,
-    0,
-  )
+  const unmatchedTotal = (unmatched?.items ?? []).reduce((sum, p) => sum + p.amount_minor, 0)
+  const overdueTotal = (overdue?.items ?? []).reduce((sum, i) => sum + i.balance_minor, 0)
 
   return (
     <FinanceShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.Landmark />}
         title="Finance"
         description="Every movement is a balanced pair of ledger entries. A student's balance is a sum over those entries — the cached figure is only a cache, and the reconciliation asserts the two agree."
       />
@@ -95,11 +88,10 @@ export default async function FinanceOverview() {
           role="alert"
           className="border-destructive/40 bg-destructive/10 text-destructive rounded-lg border px-4 py-3 text-sm"
         >
-          <strong className="font-semibold">The ledger does not balance</strong> for{" "}
-          {period}: the entries sum to{" "}
-          {money(trial.total_minor, currency, institution?.locale)} rather than
-          zero. Posting refuses unbalanced transactions, so this is a defect
-          rather than a rounding difference. Do not close the period.
+          <strong className="font-semibold">The ledger does not balance</strong> for {period}: the
+          entries sum to {money(trial.total_minor, currency, institution?.locale)} rather than zero.
+          Posting refuses unbalanced transactions, so this is a defect rather than a rounding
+          difference. Do not close the period.
         </p>
       ) : null}
 
@@ -128,9 +120,7 @@ export default async function FinanceOverview() {
                 <tbody>
                   {trial.accounts.map((account) => (
                     <tr key={account.account_code} className="border-b last:border-0">
-                      <td className="py-1.5 pr-3 font-mono text-xs">
-                        {account.account_code}
-                      </td>
+                      <td className="py-1.5 pr-3 font-mono text-xs">{account.account_code}</td>
                       <td className="py-1.5 pr-3 text-right">
                         {money(account.balance_minor, currency, institution?.locale)}
                       </td>
@@ -159,14 +149,12 @@ export default async function FinanceOverview() {
           </ChartFrame>
         ) : null}
 
-        <div className="bg-card rounded-lg border p-4">
-          <h3 className="text-base font-semibold">
-            Money waiting to be identified
-          </h3>
+        <div className="bg-card shadow-card rounded-lg p-4">
+          <h3 className="text-base font-semibold">Money waiting to be identified</h3>
           <p className="text-muted-foreground mt-1 text-sm">
-            Recorded against an unapplied-receipts account until someone decides
-            whose it is. The decision is audited with the deciding officer&rsquo;s
-            name, because it is a judgement and sometimes a wrong one.
+            Recorded against an unapplied-receipts account until someone decides whose it is. The
+            decision is audited with the deciding officer&rsquo;s name, because it is a judgement
+            and sometimes a wrong one.
           </p>
           {(unmatched?.items.length ?? 0) === 0 ? (
             <p className="text-success mt-4 text-sm font-medium">

@@ -73,9 +73,7 @@ export default async function FinesPage({
       key: "status",
       header: "Status",
       render: (row) => (
-        <StatusBadge tone={toneForStatus(row.status)}>
-          {humaniseStatus(row.status)}
-        </StatusBadge>
+        <StatusBadge tone={toneForStatus(row.status)}>{humaniseStatus(row.status)}</StatusBadge>
       ),
     },
   ]
@@ -83,14 +81,15 @@ export default async function FinesPage({
   return (
     <LibraryShell user={user} institution={institution} currentPath="/fines">
       <PageHeader
+        icon={<Icons.Receipt />}
         title="Fines"
         description="Raised here, settled through the ledger. The library owns why the money is owed; finance owns the money — which is what stops the library becoming a second, unreconciled cash system."
       />
 
       {!canWaive ? (
         <p className="text-muted-foreground bg-muted/40 rounded-md border px-3 py-2 text-xs">
-          Waiving a charge is money the institution has decided not to collect, so it
-          needs the librarian&rsquo;s grant rather than the desk&rsquo;s.
+          Waiving a charge is money the institution has decided not to collect, so it needs the
+          librarian&rsquo;s grant rather than the desk&rsquo;s.
         </p>
       ) : null}
 

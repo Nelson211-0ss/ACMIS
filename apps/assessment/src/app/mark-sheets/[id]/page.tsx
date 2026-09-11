@@ -1,3 +1,4 @@
+import * as Icons from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
@@ -63,25 +64,22 @@ export default async function MarkSheetPage({
 
   const results = await client.assessment.markSheetResults(id).catch(() => [])
 
-  const distribution = Object.entries(sheet.grade_distribution ?? {}).sort(
-    ([a], [b]) => a.localeCompare(b),
+  const distribution = Object.entries(sheet.grade_distribution ?? {}).sort(([a], [b]) =>
+    a.localeCompare(b),
   )
   // Slot assignment follows the grade order and never cycles: the same grade
   // is the same colour on every sheet in the institution.
-  const slotFor = (index: number) =>
-    (((index % 8) + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8)
+  const slotFor = (index: number) => ((index % 8) + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
 
   return (
     <AssessmentShell user={user} institution={institution} currentPath="/mark-sheets">
       <PageHeader
+        icon={<Icons.ClipboardCheck />}
         title={`Mark sheet · ${sheet.course_offering_id.slice(0, 8)}`}
         description={
           <>
-            {number(sheet.student_count)} candidates ·{" "}
-            {number(sheet.entered_count)} marked
-            {sheet.missing_count > 0
-              ? ` · ${number(sheet.missing_count)} outstanding`
-              : ""}
+            {number(sheet.student_count)} candidates · {number(sheet.entered_count)} marked
+            {sheet.missing_count > 0 ? ` · ${number(sheet.missing_count)} outstanding` : ""}
             {sheet.due_on ? ` · due ${date(sheet.due_on, institution?.locale)}` : ""}
           </>
         }
@@ -171,10 +169,8 @@ export default async function MarkSheetPage({
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <section className="bg-card space-y-4 rounded-lg border p-4 lg:col-span-2">
-          <h2 className="text-base font-semibold">
-            How the cohort performed
-          </h2>
+        <section className="bg-card shadow-card space-y-4 rounded-lg p-4 lg:col-span-2">
+          <h2 className="text-base font-semibold">How the cohort performed</h2>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Figure
@@ -188,9 +184,7 @@ export default async function MarkSheetPage({
             <Figure
               label="Spread"
               value={
-                sheet.standard_deviation !== null
-                  ? `σ ${sheet.standard_deviation.toFixed(1)}`
-                  : "—"
+                sheet.standard_deviation !== null ? `σ ${sheet.standard_deviation.toFixed(1)}` : "—"
               }
             />
             <Figure
@@ -220,8 +214,8 @@ export default async function MarkSheetPage({
           {sheet.moderation_adjustment ? (
             <p className="border-warning/40 bg-warning/10 text-warning-foreground rounded-md border px-3 py-2 text-sm">
               A cohort-wide adjustment of {sheet.moderation_adjustment > 0 ? "+" : ""}
-              {sheet.moderation_adjustment} was applied at moderation. Every mark
-              was regraded, and the original values are kept.
+              {sheet.moderation_adjustment} was applied at moderation. Every mark was regraded, and
+              the original values are kept.
             </p>
           ) : null}
 
@@ -232,18 +226,17 @@ export default async function MarkSheetPage({
           ) : null}
         </section>
 
-        <section className="bg-card space-y-3 rounded-lg border p-4">
+        <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
           <h2 className="text-base font-semibold">Approval chain</h2>
           <ApprovalChain steps={markSheetChain(sheet)} />
           <p className="text-muted-foreground border-t pt-3 text-xs leading-relaxed">
-            A sheet cannot be approved by anyone who entered marks on it, and
-            not by anyone who has declared an interest. If an approve button is
-            missing here, that is why.
+            A sheet cannot be approved by anyone who entered marks on it, and not by anyone who has
+            declared an interest. If an approve button is missing here, that is why.
           </p>
         </section>
       </div>
 
-      <section className="bg-card overflow-hidden rounded-lg border">
+      <section className="bg-card shadow-card overflow-hidden rounded-lg">
         <div className="border-b p-4">
           <h2 className="text-base font-semibold">Candidates</h2>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -255,9 +248,7 @@ export default async function MarkSheetPage({
         {results.length > 0 ? (
           <div className="tabular overflow-x-auto">
             <table className="w-full text-sm">
-              <caption className="sr-only">
-                Candidate marks for this course offering
-              </caption>
+              <caption className="sr-only">Candidate marks for this course offering</caption>
               <thead>
                 <tr className="border-b">
                   <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase">
@@ -294,15 +285,11 @@ export default async function MarkSheetPage({
                     <td className="px-3 py-2 text-right">
                       {result.coursework_mark?.toFixed(1) ?? "—"}
                     </td>
-                    <td className="px-3 py-2 text-right">
-                      {result.exam_mark?.toFixed(1) ?? "—"}
-                    </td>
+                    <td className="px-3 py-2 text-right">{result.exam_mark?.toFixed(1) ?? "—"}</td>
                     <td className="px-3 py-2 text-right font-medium">
                       {result.final_mark?.toFixed(1) ?? "—"}
                     </td>
-                    <td className="px-3 py-2 text-center font-medium">
-                      {result.grade ?? "—"}
-                    </td>
+                    <td className="px-3 py-2 text-center font-medium">{result.grade ?? "—"}</td>
                     <td className="px-3 py-2">
                       <StatusBadge tone={toneForStatus(result.outcome)} dot={false}>
                         {humaniseStatus(result.outcome)}

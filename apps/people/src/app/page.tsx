@@ -49,9 +49,7 @@ export default async function PeopleOverview() {
     byCategory.set(person.category, (byCategory.get(person.category) ?? 0) + 1)
   }
 
-  const workload = semester
-    ? await client.people.workload(semester.id).catch(() => [])
-    : []
+  const workload = semester ? await client.people.workload(semester.id).catch(() => []) : []
   const overNorm = workload.filter((row) => {
     const total = Number(row.total_load_hours ?? 0)
     const norm = row.norm_hours === null ? null : Number(row.norm_hours ?? 0)
@@ -61,6 +59,7 @@ export default async function PeopleOverview() {
   return (
     <PeopleShell user={user} institution={institution} currentPath="/">
       <PageHeader
+        icon={<Icons.Briefcase />}
         title="Faculty &amp; staff"
         description="Salary is visible to payroll and to the individual, and to nobody else — not deans, not heads of department, not the registry. Where a figure is missing from a list, that is why."
       />
@@ -69,13 +68,12 @@ export default async function PeopleOverview() {
         <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
           <h2 className="text-warning-foreground flex items-center gap-2 text-sm font-semibold">
             <Icons.CalendarClock className="size-4" aria-hidden />
-            {expiring.length} contract{expiring.length === 1 ? "" : "s"} ending
-            within three months
+            {expiring.length} contract{expiring.length === 1 ? "" : "s"} ending within three months
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            A lapsed contract revokes mark-entry authority, because that follows
-            the teaching allocation and the allocation ends with the contract.
-            A part-time lecturer mid-marking is the case to watch.
+            A lapsed contract revokes mark-entry authority, because that follows the teaching
+            allocation and the allocation ends with the contract. A part-time lecturer mid-marking
+            is the case to watch.
           </p>
           <ul className="mt-3 space-y-1.5">
             {expiring.slice(0, 8).map((person) => (
@@ -176,12 +174,12 @@ export default async function PeopleOverview() {
           )}
         </ChartFrame>
 
-        <div className="bg-card space-y-4 rounded-lg border p-4">
+        <div className="bg-card shadow-card space-y-4 rounded-lg p-4">
           <div>
             <h3 className="text-base font-semibold">Doctorate proportion</h3>
             <p className="text-muted-foreground mt-1 text-sm">
-              A headline accreditation metric, which is why it is a queryable
-              column rather than something derived from qualification rows.
+              A headline accreditation metric, which is why it is a queryable column rather than
+              something derived from qualification rows.
             </p>
           </div>
           <Meter
@@ -193,10 +191,9 @@ export default async function PeopleOverview() {
             thresholdLabel="Many regulators expect at least half of academic staff to hold a doctorate; the line is the institution's own target."
           />
           <p className="text-muted-foreground border-t pt-3 text-xs leading-relaxed">
-            Counted from verified qualifications only. An unverified doctorate
-            on an accreditation return is the kind of finding that suspends a
-            programme, so the verification step is not paperwork for its own
-            sake.
+            Counted from verified qualifications only. An unverified doctorate on an accreditation
+            return is the kind of finding that suspends a programme, so the verification step is not
+            paperwork for its own sake.
           </p>
         </div>
       </div>
