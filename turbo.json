@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "concurrency": "15",
   "globalDependencies": [".env", "packages/ui/src/styles/**"],
   "globalEnv": [
     "NODE_ENV",

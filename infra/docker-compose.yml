@@ -16,7 +16,7 @@ services:
       # provisioning works against the alpine image, which defaults to C.
       POSTGRES_INITDB_ARGS: "--locale=en_US.UTF-8 --encoding=UTF8"
       LANG: en_US.utf8
-    ports: ["5432:5432"]
+    ports: ["5433:5432"]
     volumes:
       - acmis-pgdata:/var/lib/postgresql/data
       - ./postgres-init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
