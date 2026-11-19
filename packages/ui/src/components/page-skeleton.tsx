@@ -187,11 +187,24 @@ export function ListSkeleton({
   rows = 10,
   columns = 4,
   filters = true,
+  summary = false,
   moduleKey,
 }: {
   rows?: number
   columns?: number
   filters?: boolean
+  /**
+   * The one-line total some lists render above the table — "USh 33,146,450
+   * outstanding across the invoices shown."
+   *
+   * Opt-in, because only three of the seventeen list pages have one. It is
+   * here at all because leaving it out was measurable: on `/invoices` the
+   * real table starts 44px lower than the skeleton's did, so the rows slid
+   * down the moment the data landed. That is precisely the jump this
+   * component exists to prevent, and it was invisible until the page was
+   * rendered and the two were measured against each other.
+   */
+  summary?: boolean
   moduleKey?: string
 }) {
   return (
@@ -205,6 +218,8 @@ export function ListSkeleton({
           <Skeleton className="h-9 w-24 rounded-md" />
         </div>
       ) : null}
+
+      {summary ? <Bar className="h-3 w-72 max-w-full" /> : null}
 
       {/* Cards below `sm`, a table from `sm` — the same split `DataTable`
           makes, so neither layout flashes the other on the way in. */}

@@ -147,7 +147,7 @@ export function DataUnavailable({
         className,
       )}
     >
-      <AlertTriangle className="text-warning-foreground size-5" aria-hidden />
+      <AlertTriangle className="text-warning-foreground dark:text-warning size-5" aria-hidden />
       <p className="text-sm font-semibold">
         {what.charAt(0).toUpperCase() + what.slice(1)} could not be loaded
       </p>

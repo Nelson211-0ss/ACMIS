@@ -270,9 +270,14 @@ function UnavailableTile({
       </div>
 
       <div className="mt-auto flex items-start gap-1.5 pt-2">
-        <AlertTriangle className="text-warning-foreground mt-px size-3.5 shrink-0" aria-hidden />
+        <AlertTriangle
+          className="text-warning-foreground dark:text-warning mt-px size-3.5 shrink-0"
+          aria-hidden
+        />
         <p className="text-muted-foreground text-[11px] leading-snug">
-          <span className="text-warning-foreground font-semibold">Not available.</span>{" "}
+          <span className="text-warning-foreground dark:text-warning font-semibold">
+            Not available.
+          </span>{" "}
           {unavailable.reason}
         </p>
       </div>
