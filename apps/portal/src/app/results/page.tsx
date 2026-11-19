@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { humaniseStatus, number } from "@acmis/ui/lib/format"
@@ -23,11 +24,15 @@ export default async function ResultsPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, results, record] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.assessment.myResults().catch(() => []),
-    client.students.myRecord().catch(() => null),
+  const [institutionCall, resultsCall, recordCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.assessment.myResults(), "your results"),
+    attempt(client.students.myRecord(), "your record"),
   ])
+
+  const institution = institutionCall.data
+  const results = resultsCall.data ?? []
+  const record = recordCall.data
 
   const primary = record?.data.programmes.find((p) => p.is_primary)
   const counted = results.filter((r) => !r.is_superseded)
@@ -39,6 +44,10 @@ export default async function ResultsPage() {
         title="Results"
         description="Only results that Senate has approved and released appear here. A mark you have been told informally is provisional until it is on this page."
       />
+
+      {resultsCall.problem ? (
+        <DataUnavailable unavailable={resultsCall.problem} what="your results" />
+      ) : null}
 
       {primary ? (
         <section className="bg-card shadow-card grid grid-cols-2 gap-4 rounded-lg p-4 sm:grid-cols-4">

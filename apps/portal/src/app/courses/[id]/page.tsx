@@ -1,11 +1,11 @@
 import * as Icons from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { ApiError } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { EmptyState, NotPermitted } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
+import { RecordTrail } from "@acmis/ui/components/record-trail"
 import { dateTime, duration, humaniseStatus, number } from "@acmis/ui/lib/format"
 
 import { PortalShell } from "@/components/shell"
@@ -73,13 +73,10 @@ export default async function CourseSpacePage({ params }: { params: Promise<{ id
             : "Your lecturer has not published this space yet."
         }
         breadcrumbs={
-          <nav className="text-muted-foreground text-xs" aria-label="Breadcrumb">
-            <Link href="/courses" className="hover:text-foreground underline">
-              My courses
-            </Link>
-            <span aria-hidden> / </span>
-            <span>{id.slice(0, 8)}</span>
-          </nav>
+          <RecordTrail
+            items={[{ label: "My courses", href: "/courses" }]}
+            current={id.slice(0, 8)}
+          />
         }
       />
 

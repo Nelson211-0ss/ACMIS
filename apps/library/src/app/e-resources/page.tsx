@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -36,10 +37,12 @@ export default async function EResourcesPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, rows] = await Promise.all([
-    client.public.institution().catch(() => null),
+  const [institutionCall, rows] = await Promise.all([
+    attempt(client.public.institution()),
     client.library.eResources().catch(() => []),
   ])
+
+  const institution = institutionCall.data
   const currency = institution?.currency ?? "UGX"
 
   const daysLeft = (row: Row) =>

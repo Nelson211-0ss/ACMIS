@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 import Link from "next/link"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -35,10 +36,13 @@ export default async function ElectionsPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.elections.list({ limit: 25 }).catch(() => null),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.elections.list({ limit: 25 }), "the elections service"),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
 
   const elections = page?.items ?? []
   const open = elections.filter((election) => election.status === "voting")

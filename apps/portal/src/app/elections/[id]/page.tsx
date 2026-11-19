@@ -1,11 +1,11 @@
 import * as Icons from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { ApiError } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
+import { RecordTrail } from "@acmis/ui/components/record-trail"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { dateTime, humaniseStatus, number, percent } from "@acmis/ui/lib/format"
 
@@ -58,9 +58,10 @@ export default async function ElectionPage({ params }: { params: Promise<{ id: s
         icon={<Icons.Vote />}
         title={election.title}
         breadcrumbs={
-          <Link href="/elections" className="text-muted-foreground text-xs hover:underline">
-            ← All elections
-          </Link>
+          <RecordTrail
+            items={[{ label: "All elections", href: "/elections" }]}
+            current={election.title}
+          />
         }
         description={election.description ?? undefined}
         actions={

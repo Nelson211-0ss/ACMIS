@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { QualityIndicatorRow } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -30,16 +31,22 @@ export default async function IndicatorsPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.quality.indicators({
-      below_target_only: below === "1",
-      code,
-      cursor,
-      limit: 50,
-      with_total: true,
-    }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.quality.indicators({
+        below_target_only: below === "1",
+        code,
+        cursor,
+        limit: 50,
+        with_total: true,
+      }),
+      "the quality service",
+    ),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
 
   const columns: Array<Column<QualityIndicatorRow>> = [
     { key: "name", header: "Indicator", render: (row) => row.name },
@@ -127,9 +134,10 @@ export default async function IndicatorsPage({
       </nav>
 
       <DataTable
+        unavailable={pageCall.problem}
         caption="Quality indicators"
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         mobileCard={(row) => (
           <div className="space-y-1">
@@ -151,18 +159,21 @@ export default async function IndicatorsPage({
         }
       />
 
-      <Pagination
-        meta={page.meta}
-        onNext={
-          page.meta.next_cursor
-            ? `/indicators?${new URLSearchParams({
-                ...(below === "1" ? { below: "1" } : {}),
-                ...(code ? { code } : {}),
-                cursor: page.meta.next_cursor,
-              })}`
-            : undefined
-        }
-      />
+      {/* No page, no pager: the table above already says why. */}
+      {page ? (
+        <Pagination
+          meta={page.meta}
+          onNext={
+            page.meta.next_cursor
+              ? `/indicators?${new URLSearchParams({
+                  ...(below === "1" ? { below: "1" } : {}),
+                  ...(code ? { code } : {}),
+                  cursor: page.meta.next_cursor,
+                })}`
+              : undefined
+          }
+        />
+      ) : null}
 
       <p className="text-muted-foreground text-xs">
         An indicator whose derivation nobody recorded is argued about instead of acted on, so each

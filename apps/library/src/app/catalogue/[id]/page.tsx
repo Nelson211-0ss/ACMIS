@@ -1,12 +1,12 @@
 import * as Icons from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import type { CatalogueCopyRow } from "@acmis/api-client"
-import { ApiError } from "@acmis/api-client"
+import { attempt, ApiError } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, type Column } from "@acmis/ui/components/data-table"
 import { PageHeader } from "@acmis/ui/components/page-header"
+import { RecordTrail } from "@acmis/ui/components/record-trail"
 import { StatRow, StatTile } from "@acmis/ui/components/stat-tile"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, humaniseStatus, number } from "@acmis/ui/lib/format"
@@ -28,15 +28,34 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, record, availability, copies] = await Promise.all([
+  /*
+   * A record page is not a dashboard, and the difference decides the error
+   * handling.
+   *
+   * On an overview, four calls fan out to four services and any one of them
+   * can fail while the other three still say something true — so each surface
+   * carries its own `unavailable` and the page survives. Here the record *is*
+   * the page: with it missing there is no header to draw, no title to show
+   * and nothing for the copies table to be a table *of*. There is no partial
+   * state worth rendering, so the record and its availability are awaited
+   * plainly and a failure goes to `error.tsx`, which now exists and keeps the
+   * chrome. A 404 becomes `notFound()`, which has its own page.
+   *
+   * The copies are the exception and do go through `attempt`: they are a list
+   * beside the record rather than the record, and an empty copies table that
+   * actually means "the call failed" would read as a book nobody can borrow.
+   */
+  const [institution, record, availability, copiesCall] = await Promise.all([
     client.public.institution().catch(() => null),
     client.library.record(id).catch((error) => {
       if (error instanceof ApiError && error.status === 404) notFound()
       throw error
     }),
     client.library.availability(id),
-    client.library.copies(id).catch(() => [] as CatalogueCopyRow[]),
+    attempt(client.library.copies(id), "the library service"),
   ])
+
+  const copies = copiesCall.data
 
   const columns: Array<Column<CatalogueCopyRow>> = [
     {
@@ -88,13 +107,10 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
         title={record.title}
         description={record.statement_of_responsibility ?? undefined}
         breadcrumbs={
-          <nav aria-label="Breadcrumb" className="text-muted-foreground text-xs">
-            <Link href="/catalogue" className="hover:text-foreground underline">
-              Catalogue
-            </Link>
-            <span aria-hidden> / </span>
-            <span>{record.title}</span>
-          </nav>
+          <RecordTrail
+            items={[{ label: "Catalogue", href: "/catalogue" }]}
+            current={record.title}
+          />
         }
       />
 
@@ -140,7 +156,7 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
       <DataTable
         caption="Copies of this work"
         columns={columns}
-        rows={copies}
+        rows={copies ?? []}
         rowKey={(row) => row.id}
         mobileCard={(row) => (
           <div className="space-y-1">

@@ -1,5 +1,7 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
+import { DataUnavailable } from "@acmis/ui/components/empty-state"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { Meter } from "@acmis/ui/components/chart-frame"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -22,13 +24,18 @@ export default async function PortalHome() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester, record, statement, attempts] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
-    client.students.myRecord().catch(() => null),
-    client.finance.myStatement().catch(() => null),
+  const [institutionCall, semesterCall, recordCall, statementCall, attempts] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
+    attempt(client.students.myRecord(), "the student records service"),
+    attempt(client.finance.myStatement(), "the ledger"),
     client.learning.myAttempts().catch(() => []),
   ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
+  const record = recordCall.data
+  const statement = statementCall.data
 
   const student = record?.data
   const primary = student?.programmes.find((p) => p.is_primary)
@@ -108,7 +115,13 @@ export default async function PortalHome() {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {primary ? (
+        {/* A student looking at a blank space where their programme should be
+            has no way to tell whether the record is missing or the service
+            is. Saying which is the difference between a shrug and a trip to
+            the registry. */}
+        {recordCall.problem ? (
+          <DataUnavailable unavailable={recordCall.problem} what="your programme" />
+        ) : primary ? (
           <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
             <h2 className="text-base font-semibold">Your programme</h2>
             <div className="flex items-baseline gap-2">
@@ -136,7 +149,9 @@ export default async function PortalHome() {
           </section>
         ) : null}
 
-        {statement ? (
+        {statementCall.problem ? (
+          <DataUnavailable unavailable={statementCall.problem} what="your fees" />
+        ) : statement ? (
           <section className="bg-card shadow-card space-y-3 rounded-lg p-4">
             <h2 className="text-base font-semibold">Your fees</h2>
             <div className="flex items-baseline gap-2">

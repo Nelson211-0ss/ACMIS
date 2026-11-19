@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatRow, StatTile } from "@acmis/ui/components/stat-tile"
 import { StatusBadge } from "@acmis/ui/components/status-badge"
@@ -32,14 +33,18 @@ export default async function LibraryPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, membership, results, eResources] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.library.myMembership().catch(() => null),
+  const [institutionCall, membershipCall, results, eResourcesCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.library.myMembership(), "the library service"),
     q
       ? client.library.search({ q, material_kind: kind, limit: 20 }).catch(() => null)
       : Promise.resolve(null),
-    client.library.eResources().catch(() => []),
+    attempt(client.library.eResources(), "the library service"),
   ])
+
+  const institution = institutionCall.data
+  const membership = membershipCall.data
+  const eResources = eResourcesCall.data ?? []
 
   const currency = institution?.currency ?? "UGX"
   const member = membership?.member
@@ -55,6 +60,10 @@ export default async function LibraryPage({
         title="Library"
         description="Your loans, your queue, what you owe, and the catalogue. Everything on this page is your own borrowing record — the circulation register as a whole is not readable by borrowers, by design."
       />
+
+      {membershipCall.problem ? (
+        <DataUnavailable unavailable={membershipCall.problem} what="your library account" />
+      ) : null}
 
       {!member ? (
         <EmptyState

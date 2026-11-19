@@ -1,5 +1,4 @@
 import * as Icons from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { ApiError } from "@acmis/api-client"
@@ -7,6 +6,7 @@ import { acmis, requireUser } from "@acmis/auth/server"
 import { Meter } from "@acmis/ui/components/chart-frame"
 import { NotPermitted } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
+import { RecordTrail } from "@acmis/ui/components/record-trail"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, humaniseStatus, money, number, surnameFirst } from "@acmis/ui/lib/format"
 
@@ -81,13 +81,10 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
           </>
         }
         breadcrumbs={
-          <nav className="text-muted-foreground text-xs" aria-label="Breadcrumb">
-            <Link href="/students" className="hover:text-foreground underline">
-              Students
-            </Link>
-            <span aria-hidden> / </span>
-            <span>{student.student_number}</span>
-          </nav>
+          <RecordTrail
+            items={[{ label: "Students", href: "/students" }]}
+            current={student.student_number}
+          />
         }
         actions={
           <StatusBadge tone={toneForStatus(student.status)}>

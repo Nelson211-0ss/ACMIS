@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { ObservationRow } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -31,10 +32,16 @@ export default async function ObservationsPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.quality.observations({ mine_only: true, cursor, limit: 50, with_total: true }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.quality.observations({ mine_only: true, cursor, limit: 50, with_total: true }),
+      "the quality service",
+    ),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
 
   const columns: Array<Column<ObservationRow>> = [
     { key: "observed", header: "Observed", render: (row) => date(row.observed_on) },
@@ -97,9 +104,10 @@ export default async function ObservationsPage({
       />
 
       <DataTable
+        unavailable={pageCall.problem}
         caption="Teaching observations"
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         mobileCard={(row) => (
           <div className="space-y-1">
@@ -121,10 +129,10 @@ export default async function ObservationsPage({
         }
       />
 
-      {page.items.some((row) => row.areas_to_develop) ? (
+      {(page?.items ?? []).some((row) => row.areas_to_develop) ? (
         <section className="space-y-3">
           <h2 className="text-sm font-semibold">What was agreed</h2>
-          {page.items
+          {(page?.items ?? [])
             .filter((row) => row.strengths || row.areas_to_develop)
             .slice(0, 3)
             .map((row) => (
@@ -155,14 +163,17 @@ export default async function ObservationsPage({
         </section>
       ) : null}
 
-      <Pagination
-        meta={page.meta}
-        onNext={
-          page.meta.next_cursor
-            ? `/observations?cursor=${encodeURIComponent(page.meta.next_cursor)}`
-            : undefined
-        }
-      />
+      {/* No page, no pager: the table above already says why. */}
+      {page ? (
+        <Pagination
+          meta={page.meta}
+          onNext={
+            page.meta.next_cursor
+              ? `/observations?cursor=${encodeURIComponent(page.meta.next_cursor)}`
+              : undefined
+          }
+        />
+      ) : null}
     </QualityShell>
   )
 }

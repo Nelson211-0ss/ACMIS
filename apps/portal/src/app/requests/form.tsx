@@ -30,10 +30,7 @@ export function SpecialExamForm({
   semesterId: string
   courses: Array<{ id: string; label: string }>
 }) {
-  const [state, formAction] = useActionState<ActionResult | null, FormData>(
-    lodgeSpecialExam,
-    null,
-  )
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(lodgeSpecialExam, null)
 
   return (
     <form action={formAction} className="space-y-4">
@@ -67,8 +64,8 @@ export function SpecialExamForm({
             <option value="supplementary">Supplementary — I sat and failed</option>
           </select>
           <span className="text-muted-foreground mt-1 block text-xs">
-            A special examination is marked out of full marks. A supplementary
-            is capped at the pass mark, whatever you score.
+            A special examination is marked out of full marks. A supplementary is capped at the pass
+            mark, whatever you score.
           </span>
         </label>
 

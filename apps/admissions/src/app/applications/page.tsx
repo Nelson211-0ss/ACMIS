@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 import Link from "next/link"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -34,16 +35,22 @@ export default async function ApplicationsPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.admissions.applications({
-      status,
-      search,
-      cursor,
-      limit: 50,
-      with_total: true,
-    }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.admissions.applications({
+        status,
+        search,
+        cursor,
+        limit: 50,
+        with_total: true,
+      }),
+      "the admissions service",
+    ),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
 
   const columns: Array<Column<Application>> = [
     {
@@ -166,8 +173,9 @@ export default async function ApplicationsPage({
       </form>
 
       <DataTable
+        unavailable={pageCall.problem}
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         caption="Applications, most competitive first"
         onRowHref={(row) => `/applications/${row.id}`}
@@ -184,7 +192,7 @@ export default async function ApplicationsPage({
         }
       />
 
-      {page.items.length > 0 ? (
+      {page && page.items.length > 0 ? (
         <Pagination
           meta={page.meta}
           onNext={

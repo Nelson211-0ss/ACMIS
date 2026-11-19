@@ -13,20 +13,13 @@ import { type ActionResult, reportLost } from "./actions"
  * replacement is issued — and burying that in a button label loses it.
  */
 export function ReportLostForm({ cardId }: { cardId: string }) {
-  const [state, formAction] = useActionState<ActionResult | null, FormData>(
-    reportLost,
-    null,
-  )
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(reportLost, null)
 
   return (
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="card_id" value={cardId} />
       <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          name="stolen"
-          className="border-input size-4 rounded border"
-        />
+        <input type="checkbox" name="stolen" className="border-input size-4 rounded border" />
         It was stolen, not mislaid
       </label>
       <Submit />

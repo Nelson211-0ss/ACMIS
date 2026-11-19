@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatRow, StatTile } from "@acmis/ui/components/stat-tile"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
@@ -24,15 +25,31 @@ export default async function FeesPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, record, statement, penalties, plans, reminders, rules] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.students.myRecord().catch(() => null),
-    client.finance.myStatement().catch(() => null),
-    client.finance.penalties({ limit: 20 }).catch(() => null),
-    client.finance.paymentPlans({ limit: 10 }).catch(() => null),
-    client.finance.reminders({ limit: 10 }).catch(() => null),
-    client.finance.latePaymentRules().catch(() => []),
+  const [
+    institutionCall,
+    recordCall,
+    statementCall,
+    penaltiesCall,
+    plansCall,
+    remindersCall,
+    rulesCall,
+  ] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.students.myRecord(), "your record"),
+    attempt(client.finance.myStatement(), "the ledger"),
+    attempt(client.finance.penalties({ limit: 20 }), "the ledger"),
+    attempt(client.finance.paymentPlans({ limit: 10 }), "the ledger"),
+    attempt(client.finance.reminders({ limit: 10 }), "the ledger"),
+    attempt(client.finance.latePaymentRules(), "the ledger"),
   ])
+
+  const institution = institutionCall.data
+  const record = recordCall.data
+  const statement = statementCall.data
+  const penalties = penaltiesCall.data
+  const plans = plansCall.data
+  const reminders = remindersCall.data
+  const rules = rulesCall.data ?? []
 
   const currency = institution?.currency ?? "UGX"
   const student = record?.data
@@ -49,6 +66,10 @@ export default async function FeesPage() {
         title="Fees"
         description="Recomputed from the ledger every time this page loads rather than read from a cache, because it is the number you are asked to act on."
       />
+
+      {statementCall.problem ? (
+        <DataUnavailable unavailable={statementCall.problem} what="your fee position" />
+      ) : null}
 
       <StatRow>
         <StatTile

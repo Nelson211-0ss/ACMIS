@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { LibraryMemberRow } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -22,16 +23,22 @@ export default async function MembersPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.library.members({
-      q,
-      with_debt: debt === "1",
-      cursor,
-      limit: 50,
-      with_total: true,
-    }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.library.members({
+        q,
+        with_debt: debt === "1",
+        cursor,
+        limit: 50,
+        with_total: true,
+      }),
+      "the library service",
+    ),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
   const currency = institution?.currency ?? "UGX"
 
   const columns: Array<Column<LibraryMemberRow>> = [
@@ -113,9 +120,10 @@ export default async function MembersPage({
       </form>
 
       <DataTable
+        unavailable={pageCall.problem}
         caption="Library members"
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         mobileCard={(row) => (
           <div className="space-y-1">
@@ -137,18 +145,21 @@ export default async function MembersPage({
         }
       />
 
-      <Pagination
-        meta={page.meta}
-        onNext={
-          page.meta.next_cursor
-            ? `/members?${new URLSearchParams({
-                ...(q ? { q } : {}),
-                ...(debt === "1" ? { debt: "1" } : {}),
-                cursor: page.meta.next_cursor,
-              })}`
-            : undefined
-        }
-      />
+      {/* No page, no pager: the table above already says why. */}
+      {page ? (
+        <Pagination
+          meta={page.meta}
+          onNext={
+            page.meta.next_cursor
+              ? `/members?${new URLSearchParams({
+                  ...(q ? { q } : {}),
+                  ...(debt === "1" ? { debt: "1" } : {}),
+                  cursor: page.meta.next_cursor,
+                })}`
+              : undefined
+          }
+        />
+      ) : null}
     </LibraryShell>
   )
 }

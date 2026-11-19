@@ -1,7 +1,9 @@
+import { AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import type { ReactNode } from "react"
 
 import { cn } from "@acmis/ui/lib/utils"
+import type { Unavailable } from "@acmis/ui/lib/unavailable"
 
 /**
  * A single figure with its label.
@@ -76,6 +78,14 @@ export interface StatTileProps {
    * link under the tile is a worse target than the tile itself.
    */
   href?: string
+  /**
+   * The figure did not arrive.
+   *
+   * Set this and every other prop describing the number — `value`, `delta`,
+   * `footnote` — is ignored, because there is no number. Pass
+   * `outcome.problem` straight from `attempt()`.
+   */
+  unavailable?: Unavailable | null
   className?: string
 }
 
@@ -91,8 +101,18 @@ export function StatTile({
   emphasis = false,
   tone = "neutral",
   href,
+  unavailable,
   className,
 }: StatTileProps) {
+  // Drawn, not computed. Every prop below describes a number that does not
+  // exist, so none of them is consulted — including `href`, because a tile
+  // that cannot say how many there are should not promise to show them.
+  if (unavailable) {
+    return (
+      <UnavailableTile label={label} icon={icon} unavailable={unavailable} className={className} />
+    )
+  }
+
   const hasDelta = delta !== null && delta !== undefined && delta !== 0
   const rising = (delta ?? 0) > 0
   // `deltaIsGood` defaults to "rising is good"; the caller says otherwise for
@@ -186,6 +206,81 @@ export function StatTile({
   return (
     <div className={shell} style={container}>
       {body}
+    </div>
+  )
+}
+
+/**
+ * A tile whose figure did not arrive.
+ *
+ * ## Why it is a different shape, not a different colour
+ *
+ * The failure this treatment exists to prevent is a reader taking a missing
+ * figure for a good one, and the reader most at risk is the one who cannot
+ * separate an amber glyph from grey text. So the signal that carries the
+ * meaning is the glyph in the value slot: an em-dash where digits belong reads
+ * as *absent* at a glance, to everybody, before any colour is processed.
+ *
+ * The dashed hairline is the second signal and the deliberate reuse: it is
+ * exactly the outline `EmptyState` already draws, which in this system means
+ * "a box with nothing in it yet". A tile that is merely tinted amber still
+ * looks like a tile with a number in it.
+ *
+ * Amber rather than red, because `destructive` here means a record leaves the
+ * system and a ledger that genuinely does not balance. A figure that has not
+ * arrived is an action still owed, which is what `warning` already means.
+ */
+function UnavailableTile({
+  label,
+  icon,
+  unavailable,
+  className,
+}: {
+  label: string
+  icon?: ReactNode
+  unavailable: Unavailable
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "border-border/80 relative flex h-full min-h-[5.5rem] flex-col overflow-hidden rounded-lg border border-dashed p-3 sm:p-3.5",
+        className,
+      )}
+      style={{ containerType: "inline-size" }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-muted-foreground text-balance text-[11px] font-medium uppercase leading-tight tracking-wide">
+          {label}
+        </p>
+        {icon ? (
+          <span className="text-muted-foreground/40 shrink-0 [&>svg]:size-4">{icon}</span>
+        ) : null}
+      </div>
+
+      <div className="mt-1.5">
+        <span
+          className="text-muted-foreground/70 tabular font-semibold leading-none"
+          style={{ fontSize: "clamp(1.125rem, 11cqi, 1.875rem)" }}
+        >
+          {/* An em-dash, and a word for anyone who cannot see it. */}
+          <span aria-hidden>—</span>
+          <span className="sr-only">Not available</span>
+        </span>
+      </div>
+
+      <div className="mt-auto flex items-start gap-1.5 pt-2">
+        <AlertTriangle
+          className="text-warning-foreground dark:text-warning mt-px size-3.5 shrink-0"
+          aria-hidden
+        />
+        <p className="text-muted-foreground text-[11px] leading-snug">
+          <span className="text-warning-foreground dark:text-warning font-semibold">
+            Not available.
+          </span>{" "}
+          {unavailable.reason}
+        </p>
+      </div>
     </div>
   )
 }

@@ -22,11 +22,7 @@ import { ExamRunner } from "./runner"
 
 export const metadata = { title: "Examination" }
 
-export default async function SitPage({
-  params,
-}: {
-  params: Promise<{ attemptId: string }>
-}) {
+export default async function SitPage({ params }: { params: Promise<{ attemptId: string }> }) {
   const { attemptId } = await params
   await requireUser(APP)
   const client = await acmis(APP)

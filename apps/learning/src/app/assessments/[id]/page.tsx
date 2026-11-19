@@ -1,5 +1,4 @@
 import * as Icons from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { ApiError } from "@acmis/api-client"
@@ -9,6 +8,7 @@ import { ApprovalChain, type ChainStep } from "@acmis/ui/components/approval-cha
 import { Meter } from "@acmis/ui/components/chart-frame"
 import { NotPermitted, RuleRefused } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
+import { RecordTrail } from "@acmis/ui/components/record-trail"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { dateTime, duration, humaniseStatus, number } from "@acmis/ui/lib/format"
 
@@ -76,13 +76,10 @@ export default async function AssessmentPage({
           </>
         }
         breadcrumbs={
-          <nav className="text-muted-foreground text-xs" aria-label="Breadcrumb">
-            <Link href="/assessments" className="hover:text-foreground underline">
-              Tests &amp; quizzes
-            </Link>
-            <span aria-hidden> / </span>
-            <span>{assessment.title}</span>
-          </nav>
+          <RecordTrail
+            items={[{ label: "Tests & quizzes", href: "/assessments" }]}
+            current={assessment.title}
+          />
         }
         actions={
           <>

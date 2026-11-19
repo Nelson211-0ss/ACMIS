@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { QualityAuditRow } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -31,18 +32,24 @@ export default async function AuditsPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.quality.audits({
-      open_findings_only: openOnly,
-      cursor,
-      limit: 50,
-      with_total: true,
-    }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.quality.audits({
+        open_findings_only: openOnly,
+        cursor,
+        limit: 50,
+        with_total: true,
+      }),
+      "the quality service",
+    ),
   ])
 
+  const institution = institutionCall.data
+  const page = pageCall.data
+
   const today = new Date().toISOString().slice(0, 10)
-  const overdue = page.items.flatMap((audit) =>
+  const overdue = (page?.items ?? []).flatMap((audit) =>
     (audit.findings as Array<Record<string, unknown>>)
       .filter(
         (finding) =>
@@ -176,9 +183,10 @@ export default async function AuditsPage({
       </nav>
 
       <DataTable
+        unavailable={pageCall.problem}
         caption="Quality audits"
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         mobileCard={(row) => (
           <div className="space-y-1">
@@ -198,17 +206,20 @@ export default async function AuditsPage({
         }
       />
 
-      <Pagination
-        meta={page.meta}
-        onNext={
-          page.meta.next_cursor
-            ? `/audits?${new URLSearchParams({
-                ...(openOnly ? {} : { open: "0" }),
-                cursor: page.meta.next_cursor,
-              })}`
-            : undefined
-        }
-      />
+      {/* No page, no pager: the table above already says why. */}
+      {page ? (
+        <Pagination
+          meta={page.meta}
+          onNext={
+            page.meta.next_cursor
+              ? `/audits?${new URLSearchParams({
+                  ...(openOnly ? {} : { open: "0" }),
+                  cursor: page.meta.next_cursor,
+                })}`
+              : undefined
+          }
+        />
+      ) : null}
     </QualityShell>
   )
 }

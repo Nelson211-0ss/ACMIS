@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { NotPermitted } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, NotPermitted } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, humaniseStatus, number, surnameFirst } from "@acmis/ui/lib/format"
@@ -24,16 +25,46 @@ export default async function RecordPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, record, timeOff] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.students.myRecord().catch(() => null),
-    client.lifecycle.myTimeOff().catch(() => null),
+  const [institutionCall, recordCall, timeOffCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.students.myRecord(), "your record"),
+    attempt(client.lifecycle.myTimeOff(), "the records service"),
   ])
+
+  const institution = institutionCall.data
+  const record = recordCall.data
+  const timeOff = timeOffCall.data
+
+  /*
+   * This branch used to be a single `if (!record)` rendering `NotPermitted`.
+   * With the old `.catch(() => null)` that meant any failure at all — a
+   * timeout, a 500 — told a student that they did not have permission to view
+   * their own record. That is a frightening thing to read about yourself, and
+   * it was never once true: the one case it was written for is a 403.
+   *
+   * Now the two are separated. Only a genuine refusal says "permission"; a
+   * failure says the service did not answer, and offers a retry.
+   */
+  if (recordCall.problem?.kind === "forbidden") {
+    return (
+      <PortalShell user={user} institution={institution} currentPath="/record">
+        <NotPermitted what="your student record" contact="the academic registrar" />
+      </PortalShell>
+    )
+  }
 
   if (!record) {
     return (
       <PortalShell user={user} institution={institution} currentPath="/record">
-        <NotPermitted what="your student record" contact="the academic registrar" />
+        <DataUnavailable
+          unavailable={
+            recordCall.problem ?? {
+              reason: "Your record could not be loaded.",
+              retryable: true,
+            }
+          }
+          what="your record"
+        />
       </PortalShell>
     )
   }

@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, humaniseStatus, money, surnameFirst } from "@acmis/ui/lib/format"
@@ -25,12 +26,17 @@ export default async function IdCardPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, record, cards, campuses] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.students.myRecord().catch(() => null),
-    client.lifecycle.myIdCards().catch(() => []),
-    client.reference.campuses().catch(() => []),
+  const [institutionCall, recordCall, cardsCall, campusesCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.students.myRecord(), "your record"),
+    attempt(client.lifecycle.myIdCards(), "the records service"),
+    attempt(client.reference.campuses(), "the reference data"),
   ])
+
+  const institution = institutionCall.data
+  const record = recordCall.data
+  const cards = cardsCall.data ?? []
+  const campuses = campusesCall.data ?? []
 
   const currency = institution?.currency ?? "UGX"
   const student = record?.data
@@ -47,6 +53,10 @@ export default async function IdCardPage() {
         title="Campus ID"
         description="Your identity card, as the registry issued it. Carry it to every examination — an examination card alone is not proof of who you are."
       />
+
+      {cardsCall.problem ? (
+        <DataUnavailable unavailable={cardsCall.problem} what="your ID card" />
+      ) : null}
 
       {active && student ? (
         <section className="space-y-4">

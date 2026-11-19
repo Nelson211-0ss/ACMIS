@@ -1,6 +1,8 @@
 import type { ReactNode } from "react"
 
+import { DataUnavailable } from "@acmis/ui/components/empty-state"
 import { cn } from "@acmis/ui/lib/utils"
+import type { Unavailable } from "@acmis/ui/lib/unavailable"
 
 /**
  * The table every list view uses.
@@ -55,6 +57,7 @@ export function DataTable<T>({
   onRowHref,
   dense = false,
   mobileCard,
+  unavailable,
   className,
 }: {
   columns: Array<Column<T>>
@@ -75,8 +78,20 @@ export function DataTable<T>({
    * sideways on a phone.
    */
   mobileCard?: (row: T) => ReactNode
+  /**
+   * The rows did not arrive.
+   *
+   * Checked before `empty`, and that order is the whole point: `rows` is `[]`
+   * in both cases, so whichever branch runs first decides whether a failed
+   * request reads as "nothing to do today".
+   */
+  unavailable?: Unavailable | null
   className?: string
 }) {
+  if (unavailable) {
+    return <DataUnavailable unavailable={unavailable} what="this list" />
+  }
+
   if (rows.length === 0 && empty) {
     return <>{empty}</>
   }

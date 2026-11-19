@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -34,10 +35,13 @@ export default async function DeliveryPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
+  const [institutionCall, semesterCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
   ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
   const delivery = semester ? await client.quality.delivery(semester.id).catch(() => null) : null
 
   const rows = (delivery?.offerings ?? []) as Row[]

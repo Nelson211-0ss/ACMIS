@@ -1,11 +1,11 @@
 import * as Icons from "lucide-react"
-import Link from "next/link"
 
 import { ApiError } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame } from "@acmis/ui/components/chart-frame"
 import { EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
+import { RecordTrail } from "@acmis/ui/components/record-trail"
 import { StatRow, StatTile } from "@acmis/ui/components/stat-tile"
 import { number } from "@acmis/ui/lib/format"
 
@@ -65,13 +65,10 @@ export default async function EvaluationResultsPage({
         title="Evaluation results"
         description="The aggregate, and never the individual returns. Comments are released on a stricter rule than the scores, because a comment can identify its author by content alone."
         breadcrumbs={
-          <nav aria-label="Breadcrumb" className="text-muted-foreground text-xs">
-            <Link href="/evaluations" className="hover:text-foreground underline">
-              Course evaluations
-            </Link>
-            <span aria-hidden> / </span>
-            <span>Results</span>
-          </nav>
+          <RecordTrail
+            items={[{ label: "Course evaluations", href: "/evaluations" }]}
+            current="Results"
+          />
         }
       />
 

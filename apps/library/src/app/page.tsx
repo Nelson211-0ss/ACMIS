@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame } from "@acmis/ui/components/chart-frame"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -22,15 +23,36 @@ export default async function LibraryOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, overdue, unpaidFines, expiring, acquisitions, membersInDebt] =
-    await Promise.all([
-      client.public.institution().catch(() => null),
-      client.library.loans({ overdue_only: true, limit: 20, with_total: true }).catch(() => null),
-      client.library.fines({ unpaid_only: true, limit: 50, with_total: true }).catch(() => null),
-      client.library.eResources({ expiring_days: 90 }).catch(() => []),
-      client.library.acquisitions({ limit: 50, with_total: true }).catch(() => null),
-      client.library.members({ with_debt: true, limit: 1, with_total: true }).catch(() => null),
-    ])
+  const [
+    institutionCall,
+    overdueCall,
+    unpaidFinesCall,
+    expiring,
+    acquisitionsCall,
+    membersInDebtCall,
+  ] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.library.loans({ overdue_only: true, limit: 20, with_total: true }),
+      "the library service",
+    ),
+    attempt(
+      client.library.fines({ unpaid_only: true, limit: 50, with_total: true }),
+      "the library service",
+    ),
+    client.library.eResources({ expiring_days: 90 }).catch(() => []),
+    attempt(client.library.acquisitions({ limit: 50, with_total: true }), "the library service"),
+    attempt(
+      client.library.members({ with_debt: true, limit: 1, with_total: true }),
+      "the library service",
+    ),
+  ])
+
+  const institution = institutionCall.data
+  const overdue = overdueCall.data
+  const unpaidFines = unpaidFinesCall.data
+  const acquisitions = acquisitionsCall.data
+  const membersInDebt = membersInDebtCall.data
 
   const owed = (unpaidFines?.items ?? []).reduce((sum, f) => sum + f.amount_minor, 0)
   const notYetOnTheShelf = (acquisitions?.items ?? []).filter(
@@ -86,6 +108,7 @@ export default async function LibraryOverview() {
       <StatRow>
         <StatTile
           label="Overdue"
+          unavailable={overdueCall.problem}
           value={number(overdue?.meta.total ?? overdue?.items.length ?? 0)}
           footnote="Items past their due date"
           icon={<Icons.Clock />}
@@ -93,18 +116,21 @@ export default async function LibraryOverview() {
         />
         <StatTile
           label="Fines outstanding"
+          unavailable={unpaidFinesCall.problem}
           value={money(owed, currency)}
           footnote={`${number(unpaidFines?.meta.total ?? 0)} charges unpaid`}
           icon={<Icons.Receipt />}
         />
         <StatTile
           label="Readers owing"
+          unavailable={membersInDebtCall.problem}
           value={number(membersInDebt?.meta.total ?? 0)}
           footnote="Blocked from borrowing again"
           icon={<Icons.UserX />}
         />
         <StatTile
           label="Ordered, not shelved"
+          unavailable={acquisitionsCall.problem}
           value={number(notYetOnTheShelf.length)}
           footnote="Requested titles still to arrive"
           icon={<Icons.PackageSearch />}
@@ -114,6 +140,7 @@ export default async function LibraryOverview() {
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartFrame
           title="What the fines are for"
+          unavailable={unpaidFinesCall.problem}
           subtitle="Overdues are a nudge; losses are the collection shrinking."
           footnote={byReason.size === 0 ? "No unpaid charges." : undefined}
         >

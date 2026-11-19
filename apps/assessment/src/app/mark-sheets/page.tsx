@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { MarkSheet } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -22,10 +23,13 @@ export default async function MarkSheetsPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
+  const [institutionCall, semesterCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
   ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
   const page = await client.assessment.markSheets({
     status,
     mine_only: mine === "1",
@@ -144,7 +148,7 @@ export default async function MarkSheetsPage({
 
       <DataTable
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         caption="Mark sheets, soonest deadline first"
         onRowHref={(row) => `/mark-sheets/${row.id}`}
@@ -176,7 +180,7 @@ export default async function MarkSheetsPage({
         }
       />
 
-      {page.items.length > 0 ? (
+      {page && page.items.length > 0 ? (
         <Pagination
           meta={page.meta}
           onNext={

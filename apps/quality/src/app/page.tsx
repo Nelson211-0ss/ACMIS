@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame, Meter } from "@acmis/ui/components/chart-frame"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -23,17 +24,31 @@ export default async function QualityOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, currentSemester, belowTarget, openAudits, indicators] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
-    client.quality.indicators({ below_target_only: true, limit: 20 }).catch(() => null),
-    client.quality.audits({ open_findings_only: true, limit: 20 }).catch(() => null),
-    client.quality.indicators({ limit: 50 }).catch(() => null),
-  ])
+  const [institutionCall, currentSemesterCall, belowTargetCall, openAuditsCall, indicatorsCall] =
+    await Promise.all([
+      attempt(client.public.institution()),
+      attempt(client.reference.currentSemester(), "the reference data"),
+      attempt(
+        client.quality.indicators({ below_target_only: true, limit: 20 }),
+        "the quality service",
+      ),
+      attempt(
+        client.quality.audits({ open_findings_only: true, limit: 20 }),
+        "the quality service",
+      ),
+      attempt(client.quality.indicators({ limit: 50 }), "the quality service"),
+    ])
 
-  const delivery = currentSemester
-    ? await client.quality.delivery(currentSemester.id).catch(() => null)
+  const institution = institutionCall.data
+  const currentSemester = currentSemesterCall.data
+  const belowTarget = belowTargetCall.data
+  const openAudits = openAuditsCall.data
+  const indicators = indicatorsCall.data
+
+  const deliveryCall = currentSemester
+    ? await attempt(client.quality.delivery(currentSemester.id), "the quality service")
     : null
+  const delivery = deliveryCall?.data ?? null
 
   const deliveryRate =
     delivery && delivery.sessions_held + delivery.unannounced_absences > 0
@@ -83,12 +98,14 @@ export default async function QualityOverview() {
       <StatRow>
         <StatTile
           label="Teaching delivered"
+          unavailable={deliveryCall?.problem}
           value={deliveryRate !== null ? `${deliveryRate.toFixed(1)}%` : "—"}
           footnote={delivery ? `${number(delivery.sessions_held)} sessions held` : "No semester"}
           icon={<Icons.CalendarCheck />}
         />
         <StatTile
           label="Indicators below target"
+          unavailable={belowTargetCall.problem}
           value={number(belowTarget?.items.length ?? 0)}
           footnote="Measured against the stated target"
           icon={<Icons.TrendingDown />}
@@ -96,12 +113,14 @@ export default async function QualityOverview() {
         />
         <StatTile
           label="Open findings"
+          unavailable={openAuditsCall.problem}
           value={number(openFindings)}
           footnote={`Across ${number(openAudits?.items.length ?? 0)} audit(s)`}
           icon={<Icons.ClipboardList />}
         />
         <StatTile
           label="Sessions planned"
+          unavailable={deliveryCall?.problem}
           value={number(delivery?.sessions_planned ?? 0)}
           footnote="This semester"
           icon={<Icons.CalendarRange />}
@@ -111,6 +130,7 @@ export default async function QualityOverview() {
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartFrame
           title="Indicators against target"
+          unavailable={indicatorsCall.problem}
           subtitle="The target is stored beside each value, so a historical breach stays a breach after the target moves."
         >
           <div className="space-y-3">
@@ -133,6 +153,7 @@ export default async function QualityOverview() {
 
         <ChartFrame
           title="Worst delivery this semester"
+          unavailable={deliveryCall?.problem}
           subtitle="Ordered by the proportion of elapsed classes actually held."
         >
           <BarRows
