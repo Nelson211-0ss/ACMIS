@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -23,11 +24,15 @@ export default async function CoursesPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester, record] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
-    client.students.myRecord().catch(() => null),
+  const [institutionCall, semesterCall, recordCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
+    attempt(client.students.myRecord(), "your record"),
   ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
+  const record = recordCall.data
 
   const student = record?.data
   const primary = student?.programmes.find((p) => p.is_primary)

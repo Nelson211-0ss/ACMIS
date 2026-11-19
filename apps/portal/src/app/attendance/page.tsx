@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -28,10 +29,13 @@ export default async function AttendancePage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, rows] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.quality.myAttendance().catch(() => []),
+  const [institutionCall, rowsCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.quality.myAttendance(), "the attendance service"),
   ])
+
+  const institution = institutionCall.data
+  const rows = rowsCall.data ?? []
 
   const measured = rows.filter((row) => row.percentage !== null)
   const short = measured.filter((row) => (row.percentage ?? 100) < REQUIRED)

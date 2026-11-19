@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { CatalogueRecordRow } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -28,10 +29,16 @@ export default async function CataloguePage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.library.search({ q, material_kind, cursor, limit: 25, with_total: true }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.library.search({ q, material_kind, cursor, limit: 25, with_total: true }),
+      "the library service",
+    ),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
 
   const columns: Array<Column<CatalogueRecordRow>> = [
     {
@@ -125,9 +132,10 @@ export default async function CataloguePage({
       </form>
 
       <DataTable
+        unavailable={pageCall.problem}
         caption="Catalogue records matching the search"
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         onRowHref={(row) => `/catalogue/${row.id}`}
         mobileCard={(row) => (
@@ -155,18 +163,21 @@ export default async function CataloguePage({
         }
       />
 
-      <Pagination
-        meta={page.meta}
-        onNext={
-          page.meta.next_cursor
-            ? `/catalogue?${new URLSearchParams({
-                ...(q ? { q } : {}),
-                ...(material_kind ? { material_kind } : {}),
-                cursor: page.meta.next_cursor,
-              })}`
-            : undefined
-        }
-      />
+      {/* No page, no pager: the table above already says why. */}
+      {page ? (
+        <Pagination
+          meta={page.meta}
+          onNext={
+            page.meta.next_cursor
+              ? `/catalogue?${new URLSearchParams({
+                  ...(q ? { q } : {}),
+                  ...(material_kind ? { material_kind } : {}),
+                  cursor: page.meta.next_cursor,
+                })}`
+              : undefined
+          }
+        />
+      ) : null}
     </LibraryShell>
   )
 }

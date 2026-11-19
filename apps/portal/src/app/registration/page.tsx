@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, humaniseStatus, money, number } from "@acmis/ui/lib/format"
@@ -27,12 +28,17 @@ export default async function RegistrationPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester, record, registrations] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
-    client.students.myRecord().catch(() => null),
-    client.students.myRegistrations().catch(() => []),
+  const [institutionCall, semesterCall, recordCall, registrationsCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
+    attempt(client.students.myRecord(), "your record"),
+    attempt(client.students.myRegistrations(), "your record"),
   ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
+  const record = recordCall.data
+  const registrations = registrationsCall.data ?? []
 
   const student = record?.data
   const currency = institution?.currency ?? "UGX"
@@ -60,6 +66,10 @@ export default async function RegistrationPage() {
             : "No semester is open for registration at the moment."
         }
       />
+
+      {registrationsCall.problem ? (
+        <DataUnavailable unavailable={registrationsCall.problem} what="your registration" />
+      ) : null}
 
       {holds.length > 0 ? (
         <section className="border-destructive/40 bg-destructive/10 rounded-lg border p-4">

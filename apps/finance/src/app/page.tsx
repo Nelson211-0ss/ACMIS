@@ -1,7 +1,9 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame } from "@acmis/ui/components/chart-frame"
+import { DataUnavailable } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatRow, StatTile } from "@acmis/ui/components/stat-tile"
 import { money, number } from "@acmis/ui/lib/format"
@@ -24,12 +26,29 @@ export default async function FinanceOverview() {
   const client = await acmis(APP)
 
   const period = new Date().toISOString().slice(0, 7)
-  const [institution, unmatched, overdue, trial] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.finance.unmatchedPayments({ limit: 100 }).catch(() => null),
-    client.finance.invoices({ overdue_only: true, limit: 100, with_total: true }).catch(() => null),
-    client.finance.trialBalance(period).catch(() => null),
+  const [institutionCall, unmatchedCall, overdueCall, trialCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.finance.unmatchedPayments({ limit: 100 }), "the ledger"),
+    attempt(
+      client.finance.invoices({ overdue_only: true, limit: 100, with_total: true }),
+      "the invoice service",
+    ),
+    attempt(client.finance.trialBalance(period), "the ledger"),
   ])
+
+  /*
+   * `.data` is still `T | null`, so every reader below is unchanged. What is
+   * new is `.problem`, which the tiles use to say *why* a figure is missing
+   * rather than printing the zero that a failed call used to produce.
+   *
+   * The institution is the exception and keeps a plain fallback: its name and
+   * crest are chrome, the shell already degrades to the tenant name, and a
+   * dashed box where a crest goes would be alarming about nothing.
+   */
+  const institution = institutionCall.data
+  const unmatched = unmatchedCall.data
+  const overdue = overdueCall.data
+  const trial = trialCall.data
 
   const currency = institution?.currency ?? "UGX"
   const unmatchedTotal = (unmatched?.items ?? []).reduce((sum, p) => sum + p.amount_minor, 0)
@@ -51,6 +70,7 @@ export default async function FinanceOverview() {
           icon={<Icons.HelpCircle className="size-4" />}
           footnote={`${number(unmatched?.items.length ?? 0)} deposits that arrived without a usable reference`}
           deltaIsGood={false}
+          unavailable={unmatchedCall.problem}
         />
         <StatTile
           label="Overdue"
@@ -58,6 +78,7 @@ export default async function FinanceOverview() {
           icon={<Icons.AlarmClock className="size-4" />}
           footnote={`${number(overdue?.meta.total ?? 0)} invoices past their due date`}
           deltaIsGood={false}
+          unavailable={overdueCall.problem}
         />
         <StatTile
           label="Ledger"
@@ -74,6 +95,10 @@ export default async function FinanceOverview() {
               ? `${number(trial.accounts.length)} accounts this period`
               : "No entries this period"
           }
+          // Without this the tile read "Out of balance · No entries this
+          // period" whenever the call failed — a specific, alarming and
+          // entirely invented claim about the institution's books.
+          unavailable={trialCall.problem}
         />
         <StatTile
           label="Period"
@@ -96,7 +121,19 @@ export default async function FinanceOverview() {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {trial && trial.accounts.length > 0 ? (
+        {trialCall.problem ? (
+          // The frame stays so the reader can see *which* of the two panels
+          // is missing. Its children are not rendered when `unavailable` is
+          // set, but they still have to be valid JSX — hence `null` rather
+          // than the real chart, which would dereference a null `trial`.
+          <ChartFrame
+            title={`Trial balance · ${period}`}
+            subtitle="Signed totals by account. Debits positive, credits negative; the whole set sums to zero."
+            unavailable={trialCall.problem}
+          >
+            {null}
+          </ChartFrame>
+        ) : trial && trial.accounts.length > 0 ? (
           <ChartFrame
             title={`Trial balance · ${period}`}
             subtitle="Signed totals by account. Debits positive, credits negative; the whole set sums to zero."
@@ -156,7 +193,18 @@ export default async function FinanceOverview() {
             decision is audited with the deciding officer&rsquo;s name, because it is a judgement
             and sometimes a wrong one.
           </p>
-          {(unmatched?.items.length ?? 0) === 0 ? (
+          {/* Order matters: the failure is checked before the empty case.
+              Both have an empty `items`, and whichever branch runs first
+              decides whether a dead service reads as "every payment is
+              attributed" — which is the single most reassuring sentence this
+              screen can print, and was being printed on no evidence. */}
+          {unmatchedCall.problem ? (
+            <DataUnavailable
+              unavailable={unmatchedCall.problem}
+              what="this queue"
+              className="mt-4"
+            />
+          ) : (unmatched?.items.length ?? 0) === 0 ? (
             <p className="text-success mt-4 text-sm font-medium">
               Nothing outstanding — every payment is attributed.
             </p>

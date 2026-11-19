@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame, Meter } from "@acmis/ui/components/chart-frame"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -23,14 +24,19 @@ export default async function AssessmentOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
+  const [institutionCall, semesterCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
   ])
 
-  const sheets = await client.assessment
-    .markSheets({ semester_id: semester?.id, limit: 200 })
-    .catch(() => null)
+  const institution = institutionCall.data
+  const semester = semesterCall.data
+
+  const sheetsCall = await attempt(
+    client.assessment.markSheets({ semester_id: semester?.id, limit: 200 }),
+    "the assessment service",
+  )
+  const sheets = sheetsCall.data
 
   const items = sheets?.items ?? []
   const byStatus = new Map<string, number>()
@@ -81,12 +87,14 @@ export default async function AssessmentOverview() {
       <StatRow>
         <StatTile
           label="Mark sheets"
+          unavailable={sheetsCall.problem}
           value={number(items.length)}
           emphasis
           icon={<Icons.ClipboardCheck className="size-4" />}
         />
         <StatTile
           label="Past deadline"
+          unavailable={sheetsCall.problem}
           value={number(overdue.length)}
           icon={<Icons.AlarmClock className="size-4" />}
           deltaIsGood={false}
@@ -94,12 +102,14 @@ export default async function AssessmentOverview() {
         />
         <StatTile
           label="Released"
+          unavailable={sheetsCall.problem}
           value={number(published)}
           icon={<Icons.Send className="size-4" />}
           footnote="Visible to students"
         />
         <StatTile
           label="Candidates"
+          unavailable={sheetsCall.problem}
           value={number(candidates)}
           icon={<Icons.Users className="size-4" />}
           footnote={`${number(entered)} marks entered`}
@@ -109,6 +119,7 @@ export default async function AssessmentOverview() {
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartFrame
           title="Where results are in the chain"
+          unavailable={sheetsCall.problem}
           subtitle="Mark sheets at each approval stage, in the order they pass through."
           series={[{ key: "sheets", label: "Mark sheets", slot: 1 }]}
           footnote="A pile at one stage is where the season is actually stuck. Sheets do not skip stages: a sheet cannot reach Senate without a department board having seen it."

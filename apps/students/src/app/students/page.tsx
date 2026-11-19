@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { Student } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -27,17 +28,23 @@ export default async function StudentsListPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.students.list({
-      status,
-      search,
-      year_of_study: year_of_study ? Number(year_of_study) : undefined,
-      cursor,
-      limit: 50,
-      with_total: true,
-    }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.students.list({
+        status,
+        search,
+        year_of_study: year_of_study ? Number(year_of_study) : undefined,
+        cursor,
+        limit: 50,
+        with_total: true,
+      }),
+      "the student records service",
+    ),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
 
   const columns: Array<Column<Student>> = [
     {
@@ -165,8 +172,9 @@ export default async function StudentsListPage({
       </form>
 
       <DataTable
+        unavailable={pageCall.problem}
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         caption="Students within your reach, by surname"
         onRowHref={(row) => `/students/${row.id}`}
@@ -179,7 +187,7 @@ export default async function StudentsListPage({
         }
       />
 
-      {page.items.length > 0 ? (
+      {page && page.items.length > 0 ? (
         <Pagination
           meta={page.meta}
           onNext={

@@ -55,6 +55,7 @@ export function PortalShell({
       crestUrl={institution?.crest_url}
       sections={sections}
       currentPath={currentPath}
+      allowedModules={user.modules}
       // The tab bar's default — the first four nav items — is wrong for a
       // student. Nav order is written for the drawer, where related things sit
       // together; the four screens a student actually alternates between on a

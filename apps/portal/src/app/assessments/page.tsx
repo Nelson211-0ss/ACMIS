@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { dateTime, humaniseStatus, number } from "@acmis/ui/lib/format"
@@ -28,10 +29,13 @@ export default async function AssessmentsPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, attempts] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.learning.myAttempts().catch(() => []),
+  const [institutionCall, attemptsCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.learning.myAttempts(), "your coursework"),
   ])
+
+  const institution = institutionCall.data
+  const attempts = attemptsCall.data ?? []
 
   const live = attempts.filter((a) => a.status === "in_progress")
   const finished = attempts.filter((a) => a.status !== "in_progress")
@@ -43,6 +47,10 @@ export default async function AssessmentsPage({
         title="Tests &amp; assignments"
         description="Papers open to you, and everything you have sat. A score appears once your lecturer releases it — before that it is provisional and may still be moderated."
       />
+
+      {attemptsCall.problem ? (
+        <DataUnavailable unavailable={attemptsCall.problem} what="your assessments" />
+      ) : null}
 
       {submitted ? (
         <p

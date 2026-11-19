@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 
+import { CommandMenu, type CommandSection } from "@acmis/ui/components/command-menu"
 import { MobileNav } from "@acmis/ui/components/mobile-nav"
 import { ThemeToggle } from "@acmis/ui/components/theme-toggle"
 import { cn } from "@acmis/ui/lib/utils"
@@ -54,6 +55,7 @@ export function AppShell({
   sections,
   currentPath,
   user,
+  allowedModules,
   launcher,
   banner,
   primaryNav,
@@ -67,6 +69,14 @@ export function AppShell({
   sections: NavSection[]
   currentPath: string
   user: { display_name: string; kind: string; is_impersonated?: boolean }
+  /**
+   * From `whoami`. Passing it mounts the command palette, which needs to know
+   * which other modules this person may open.
+   *
+   * Optional only so that a shell can be rendered in isolation; every app
+   * should pass `user.modules`.
+   */
+  allowedModules?: string[]
   /** The module launcher, rendered in the header. */
   launcher?: ReactNode
   /** An institution-wide notice. Renders above everything, unmissable. */
@@ -78,6 +88,29 @@ export function AppShell({
   primaryNav?: NavItem[]
   children: ReactNode
 }) {
+  /*
+   * The palette's in-module results are the nav, flattened.
+   *
+   * Flattened rather than mapped section-for-section because two of these nav
+   * groups have no title — they would both become a group called "In Finance"
+   * and cmdk would render the heading twice. The group title survives as the
+   * row's hint instead, which is where it is more useful anyway: "Trial
+   * balance · Reconciliation" tells you what you are about to open.
+   */
+  const commandSections: CommandSection[] = [
+    {
+      heading: `In ${moduleName}`,
+      items: sections.flatMap((section) =>
+        section.items.map((item) => ({
+          label: item.label,
+          href: item.href,
+          hint: section.title,
+          icon: item.icon,
+        })),
+      ),
+    },
+  ]
+
   return (
     // `data-module` is what drives `--module` in globals.css. Set once, here.
     <div data-module={moduleKey} className="bg-background min-h-dvh">
@@ -192,6 +225,15 @@ export function AppShell({
               {moduleName}
             </span>
             <div className="flex-1" />
+            {allowedModules ? (
+              <CommandMenu
+                allowed={allowedModules}
+                kind={user.kind}
+                currentModule={moduleKey}
+                currentModuleName={moduleName}
+                sections={commandSections}
+              />
+            ) : null}
             {launcher}
             {/* The toggle was written, exported and imported here, and never
                 rendered — so the whole `.dark` palette in `globals.css` was

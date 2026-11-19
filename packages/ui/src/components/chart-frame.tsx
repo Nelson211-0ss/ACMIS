@@ -1,6 +1,8 @@
 import type { ReactNode } from "react"
 
+import { DataUnavailable } from "@acmis/ui/components/empty-state"
 import { cn } from "@acmis/ui/lib/utils"
+import type { Unavailable } from "@acmis/ui/lib/unavailable"
 
 // Deliberately **not** a client component. Nothing here needs the browser —
 // every chart is markup over numbers the server already has — and marking it
@@ -38,6 +40,7 @@ export function ChartFrame({
   children,
   table,
   footnote,
+  unavailable,
   className,
 }: {
   title: string
@@ -48,14 +51,23 @@ export function ChartFrame({
   /** The same data as rows. Rendered in a `<details>`, always available. */
   table?: ReactNode
   footnote?: ReactNode
+  /**
+   * The series did not arrive.
+   *
+   * The title and subtitle stay — they describe what the chart *is*, which is
+   * still true and tells the reader which of four panels on the page failed.
+   * Everything downstream of the data goes: the legend would name series
+   * nobody can see, and the table view would open on nothing.
+   */
+  unavailable?: Unavailable | null
   className?: string
 }) {
-  const showLegend = (series?.length ?? 0) >= 2
+  const showLegend = !unavailable && (series?.length ?? 0) >= 2
 
   return (
     <figure className={cn("bg-card rounded-lg border p-4", className)}>
       <figcaption className="mb-3 space-y-1">
-        <h3 className="text-base leading-tight font-semibold">{title}</h3>
+        <h3 className="text-base font-semibold leading-tight">{title}</h3>
         {subtitle ? (
           <p className="text-muted-foreground text-xs leading-relaxed">{subtitle}</p>
         ) : null}
@@ -78,14 +90,18 @@ export function ChartFrame({
         </ul>
       ) : null}
 
-      {/* Wide content scrolls inside the figure, never the page. */}
-      <div className="min-w-0 overflow-x-auto">{children}</div>
+      {unavailable ? (
+        <DataUnavailable unavailable={unavailable} what="this chart" />
+      ) : (
+        /* Wide content scrolls inside the figure, never the page. */
+        <div className="min-w-0 overflow-x-auto">{children}</div>
+      )}
 
-      {footnote ? (
+      {footnote && !unavailable ? (
         <p className="text-muted-foreground mt-3 text-xs leading-relaxed">{footnote}</p>
       ) : null}
 
-      {table ? (
+      {table && !unavailable ? (
         <details className="mt-3">
           <summary className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-medium">
             View as a table
@@ -255,7 +271,8 @@ export function Meter({
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-muted-foreground text-xs">{label}</span>
           <span className="tabular text-xs font-medium">
-            {formatValue(value)} <span className="text-muted-foreground">of {formatValue(max)}</span>
+            {formatValue(value)}{" "}
+            <span className="text-muted-foreground">of {formatValue(max)}</span>
           </span>
         </div>
       ) : null}

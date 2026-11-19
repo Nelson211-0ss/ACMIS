@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -24,11 +25,14 @@ export default async function DevelopersOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, clients, events] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.developers.clients({ mine_only: true, limit: 20 }).catch(() => null),
+  const [institutionCall, clientsCall, events] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.developers.clients({ mine_only: true, limit: 20 }), "the developer service"),
     client.developers.eventTypes().catch(() => []),
   ])
+
+  const institution = institutionCall.data
+  const clients = clientsCall.data
 
   const items = clients?.items ?? []
   const live = items.filter((c) => c.environment === "live" && c.status === "active")
@@ -60,18 +64,21 @@ export default async function DevelopersOverview() {
       <StatRow>
         <StatTile
           label="Your clients"
+          unavailable={clientsCall.problem}
           value={number(items.length)}
           emphasis
           icon={<Icons.Boxes className="size-4" />}
         />
         <StatTile
           label="Live"
+          unavailable={clientsCall.problem}
           value={number(live.length)}
           icon={<Icons.Radio className="size-4" />}
           footnote="Reading real student records"
         />
         <StatTile
           label="Awaiting approval"
+          unavailable={clientsCall.problem}
           value={number(pending.length)}
           icon={<Icons.Clock className="size-4" />}
           footnote="Scopes not yet granted"

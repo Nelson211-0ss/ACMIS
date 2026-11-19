@@ -1,8 +1,9 @@
 import * as Icons from "lucide-react"
 
 import type { CalendarEventRow } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, duration, humaniseStatus } from "@acmis/ui/lib/format"
@@ -26,12 +27,17 @@ export default async function CalendarPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester, timetable, events] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
-    client.students.myTimetable().catch(() => null),
-    client.calendar.events().catch(() => []),
+  const [institutionCall, semesterCall, timetableCall, eventsCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
+    attempt(client.students.myTimetable(), "your record"),
+    attempt(client.calendar.events(), "the calendar"),
   ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
+  const timetable = timetableCall.data
+  const events = eventsCall.data ?? []
 
   // Unpublished events are drafts the registrar is still moving around; a
   // student planning against one has been misled.
@@ -61,6 +67,10 @@ export default async function CalendarPage() {
             : "No semester is currently running."
         }
       />
+
+      {eventsCall.problem ? (
+        <DataUnavailable unavailable={eventsCall.problem} what="the calendar" />
+      ) : null}
 
       {semester ? (
         <section className="bg-card shadow-card grid grid-cols-2 gap-4 rounded-lg p-4 sm:grid-cols-4">

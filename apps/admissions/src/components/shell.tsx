@@ -64,17 +64,14 @@ export function AdmissionsShell({
       crestUrl={institution?.crest_url}
       sections={sections.filter((s) => s.items.length > 0)}
       currentPath={currentPath}
+      allowedModules={user.modules}
       user={{
         display_name: user.display_name,
         kind: user.kind,
         is_impersonated: user.is_impersonated,
       }}
       launcher={
-        <ModuleLauncher
-          allowed={user.modules}
-          currentModule={MODULE_KEY}
-          kind={user.kind}
-        />
+        <ModuleLauncher allowed={user.modules} currentModule={MODULE_KEY} kind={user.kind} />
       }
     >
       {children}

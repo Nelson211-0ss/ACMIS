@@ -1,5 +1,4 @@
 import * as Icons from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { ApiError } from "@acmis/api-client"
@@ -8,6 +7,7 @@ import { ApprovalChain, markSheetChain } from "@acmis/ui/components/approval-cha
 import { StackedBar } from "@acmis/ui/components/chart-frame"
 import { NotPermitted, RuleRefused } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
+import { RecordTrail } from "@acmis/ui/components/record-trail"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, humaniseStatus, number } from "@acmis/ui/lib/format"
 
@@ -84,13 +84,10 @@ export default async function MarkSheetPage({
           </>
         }
         breadcrumbs={
-          <nav className="text-muted-foreground text-xs" aria-label="Breadcrumb">
-            <Link href="/mark-sheets" className="hover:text-foreground underline">
-              Mark sheets
-            </Link>
-            <span aria-hidden> / </span>
-            <span>{sheet.course_offering_id.slice(0, 8)}</span>
-          </nav>
+          <RecordTrail
+            items={[{ label: "Mark sheets", href: "/mark-sheets" }]}
+            current={sheet.course_offering_id.slice(0, 8)}
+          />
         }
         actions={
           <>

@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { CourseEvaluationRow } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -30,15 +31,25 @@ export default async function EvaluationsPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, threshold, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.quality.reportingThreshold().catch(() => ({
-      minimum_responses: 5,
-      reason: "",
-    })),
-    client.quality.evaluations({ cursor, limit: 50, with_total: true }),
+  const [institutionCall, thresholdCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.quality.reportingThreshold().catch(() => ({
+        minimum_responses: 5,
+        reason: "",
+      })),
+      "the quality service",
+    ),
+    attempt(
+      client.quality.evaluations({ cursor, limit: 50, with_total: true }),
+      "the quality service",
+    ),
   ])
-  const rows = page.items
+
+  const institution = institutionCall.data
+  const threshold = thresholdCall.data
+  const page = pageCall.data
+  const rows = page?.items ?? []
 
   const columns: Array<Column<CourseEvaluationRow>> = [
     {
@@ -80,7 +91,7 @@ export default async function EvaluationsPage({
           <StatusBadge tone="success">yes</StatusBadge>
         ) : (
           <StatusBadge tone="neutral" dot={false}>
-            below {threshold.minimum_responses}
+            below {threshold?.minimum_responses ?? "the minimum"}
           </StatusBadge>
         ),
     },
@@ -107,8 +118,8 @@ export default async function EvaluationsPage({
           Why some evaluations show nothing
         </h2>
         <p className="text-muted-foreground text-xs">
-          {threshold.reason ||
-            `Fewer than ${threshold.minimum_responses} responses cannot be broken down without identifying the respondents.`}
+          {threshold?.reason ||
+            `Fewer than ${threshold?.minimum_responses ?? "a minimum number of"} responses cannot be broken down without identifying the respondents.`}
         </p>
         <p className="text-muted-foreground text-xs">
           The invitation list records <em>that</em> a student answered and never what they said. The
@@ -131,14 +142,17 @@ export default async function EvaluationsPage({
         }
       />
 
-      <Pagination
-        meta={page.meta}
-        onNext={
-          page.meta.next_cursor
-            ? `/evaluations?cursor=${encodeURIComponent(page.meta.next_cursor)}`
-            : undefined
-        }
-      />
+      {/* No page, no pager: the table above already says why. */}
+      {page ? (
+        <Pagination
+          meta={page.meta}
+          onNext={
+            page.meta.next_cursor
+              ? `/evaluations?cursor=${encodeURIComponent(page.meta.next_cursor)}`
+              : undefined
+          }
+        />
+      ) : null}
     </QualityShell>
   )
 }

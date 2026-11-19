@@ -1,7 +1,9 @@
 import * as Icons from "lucide-react"
 import Link from "next/link"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
+import { DataUnavailable } from "@acmis/ui/components/empty-state"
 import { ThemeToggle } from "@acmis/ui/components/theme-toggle"
 import { MODULES, moduleUrl, type ModuleDefinition } from "@acmis/ui/lib/modules"
 import { relativeTime } from "@acmis/ui/lib/format"
@@ -24,11 +26,15 @@ export default async function LauncherPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, notifications, semester] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.notifications({ limit: 6, unread_only: true }).catch(() => null),
-    client.reference.currentSemester().catch(() => null),
+  const [institutionCall, notificationsCall, semesterCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.notifications({ limit: 6, unread_only: true }), "your notifications"),
+    attempt(client.reference.currentSemester(), "the reference data"),
   ])
+
+  const institution = institutionCall.data
+  const notifications = notificationsCall.data
+  const semester = semesterCall.data
 
   const visible = MODULES.filter(
     (m) =>
@@ -132,7 +138,22 @@ export default async function LauncherPage() {
           </ul>
         </section>
 
-        {notifications && notifications.items.length > 0 ? (
+        {/* This section used to disappear entirely when the call failed —
+            indistinguishable from having nothing to attend to, on the one
+            screen every member of staff opens first. */}
+        {notificationsCall.problem ? (
+          <section>
+            <h2 className="flex items-center gap-2 text-xl">
+              <Icons.BellRing className="text-module size-4.5 shrink-0" aria-hidden />
+              Needs your attention
+            </h2>
+            <DataUnavailable
+              unavailable={notificationsCall.problem}
+              what="this list"
+              className="mt-4"
+            />
+          </section>
+        ) : notifications && notifications.items.length > 0 ? (
           <section>
             <h2 className="flex items-center gap-2 text-xl">
               <Icons.BellRing className="text-module size-4.5 shrink-0" aria-hidden />

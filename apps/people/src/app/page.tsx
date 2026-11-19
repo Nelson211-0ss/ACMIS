@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame, Meter } from "@acmis/ui/components/chart-frame"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -23,11 +24,15 @@ export default async function PeopleOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester, staff] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
-    client.people.list({ limit: 200 }).catch(() => null),
+  const [institutionCall, semesterCall, staffCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
+    attempt(client.people.list({ limit: 200 }), "the staff service"),
   ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
+  const staff = staffCall.data
 
   const items = staff?.items ?? []
   const academic = items.filter((s) => s.category === "academic")
@@ -100,18 +105,21 @@ export default async function PeopleOverview() {
       <StatRow>
         <StatTile
           label="Staff"
+          unavailable={staffCall.problem}
           value={number(items.length)}
           emphasis
           icon={<Icons.Users className="size-4" />}
         />
         <StatTile
           label="Academic staff"
+          unavailable={staffCall.problem}
           value={number(academic.length)}
           icon={<Icons.GraduationCap className="size-4" />}
           footnote="Counted by accreditation returns"
         />
         <StatTile
           label="With a doctorate"
+          unavailable={staffCall.problem}
           value={
             academic.length > 0
               ? percent((doctorates.length / academic.length) * 100, institution?.locale, 0)
@@ -122,6 +130,7 @@ export default async function PeopleOverview() {
         />
         <StatTile
           label="Over workload norm"
+          unavailable={staffCall.problem}
           value={number(overNorm.length)}
           icon={<Icons.Gauge className="size-4" />}
           footnote="Teaching above the norm for their rank"
@@ -132,6 +141,7 @@ export default async function PeopleOverview() {
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartFrame
           title="Staff by category"
+          unavailable={staffCall.problem}
           subtitle="Academic, academic support, administrative and part-time are counted separately because accreditation returns count only academic staff."
           series={[{ key: "staff", label: "Staff", slot: 1 }]}
           table={

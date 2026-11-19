@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { AcquisitionRow } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -30,13 +31,19 @@ export default async function AcquisitionsPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.library.acquisitions({ status, cursor, limit: 50, with_total: true }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.library.acquisitions({ status, cursor, limit: 50, with_total: true }),
+      "the library service",
+    ),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
   const currency = institution?.currency ?? "UGX"
 
-  const waiting = page.items.filter(
+  const waiting = (page?.items ?? []).filter(
     (row) => !["catalogued", "declined", "cancelled"].includes(row.status),
   )
 
@@ -108,9 +115,10 @@ export default async function AcquisitionsPage({
       ) : null}
 
       <DataTable
+        unavailable={pageCall.problem}
         caption="Acquisition requests"
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         mobileCard={(row) => (
           <div className="space-y-1">
@@ -130,17 +138,20 @@ export default async function AcquisitionsPage({
         }
       />
 
-      <Pagination
-        meta={page.meta}
-        onNext={
-          page.meta.next_cursor
-            ? `/acquisitions?${new URLSearchParams({
-                ...(status ? { status } : {}),
-                cursor: page.meta.next_cursor,
-              })}`
-            : undefined
-        }
-      />
+      {/* No page, no pager: the table above already says why. */}
+      {page ? (
+        <Pagination
+          meta={page.meta}
+          onNext={
+            page.meta.next_cursor
+              ? `/acquisitions?${new URLSearchParams({
+                  ...(status ? { status } : {}),
+                  cursor: page.meta.next_cursor,
+                })}`
+              : undefined
+          }
+        />
+      ) : null}
     </LibraryShell>
   )
 }

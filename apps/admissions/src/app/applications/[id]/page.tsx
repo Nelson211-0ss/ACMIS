@@ -1,10 +1,10 @@
 import * as Icons from "lucide-react"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { ApiError } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { PageHeader } from "@acmis/ui/components/page-header"
+import { RecordTrail } from "@acmis/ui/components/record-trail"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { NotPermitted } from "@acmis/ui/components/empty-state"
 import { date, humaniseStatus } from "@acmis/ui/lib/format"
@@ -74,13 +74,10 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
           </>
         }
         breadcrumbs={
-          <nav className="text-muted-foreground text-xs" aria-label="Breadcrumb">
-            <Link href="/applications" className="hover:text-foreground underline">
-              Applications
-            </Link>
-            <span aria-hidden> / </span>
-            <span>{application.number}</span>
-          </nav>
+          <RecordTrail
+            items={[{ label: "Applications", href: "/applications" }]}
+            current={application.number}
+          />
         }
         actions={
           <>

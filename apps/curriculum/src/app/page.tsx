@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame } from "@acmis/ui/components/chart-frame"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -24,12 +25,19 @@ export default async function CurriculumOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, programmes, courses, units] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.curriculum.programmes({ limit: 200, active_only: false }).catch(() => null),
-    client.curriculum.courses({ limit: 1, with_total: true }).catch(() => null),
+  const [institutionCall, programmesCall, coursesCall, units] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.curriculum.programmes({ limit: 200, active_only: false }),
+      "the curriculum service",
+    ),
+    attempt(client.curriculum.courses({ limit: 1, with_total: true }), "the curriculum service"),
     client.reference.units().catch(() => []),
   ])
+
+  const institution = institutionCall.data
+  const programmes = programmesCall.data
+  const courses = coursesCall.data
 
   const items = programmes?.items ?? []
   const byStatus = new Map<string, number>()
@@ -93,6 +101,7 @@ export default async function CurriculumOverview() {
       <StatRow>
         <StatTile
           label="Programmes"
+          unavailable={programmesCall.problem}
           value={number(items.length)}
           emphasis
           icon={<Icons.BookOpen className="size-4" />}
@@ -100,11 +109,13 @@ export default async function CurriculumOverview() {
         />
         <StatTile
           label="Courses"
+          unavailable={coursesCall.problem}
           value={number(courses?.meta.total ?? 0)}
           icon={<Icons.FileText className="size-4" />}
         />
         <StatTile
           label="Awaiting approval"
+          unavailable={programmesCall.problem}
           value={number((byStatus.get("submitted") ?? 0) + (byStatus.get("recommended") ?? 0))}
           icon={<Icons.Stamp className="size-4" />}
           footnote="With a faculty board or Senate"
@@ -120,6 +131,7 @@ export default async function CurriculumOverview() {
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartFrame
           title="Programmes by award level"
+          unavailable={programmesCall.problem}
           subtitle={`All ${number(items.length)} programmes, whatever their approval status.`}
           series={[{ key: "programmes", label: "Programmes", slot: 1 }]}
           table={

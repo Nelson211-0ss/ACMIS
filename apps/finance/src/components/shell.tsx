@@ -70,6 +70,7 @@ export function FinanceShell({
       crestUrl={institution?.crest_url}
       sections={sections.filter((s) => s.items.length > 0)}
       currentPath={currentPath}
+      allowedModules={user.modules}
       user={{
         display_name: user.display_name,
         kind: user.kind,

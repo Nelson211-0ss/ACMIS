@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react"
 
 import type { Invoice } from "@acmis/api-client"
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { DataTable, Pagination, type Column } from "@acmis/ui/components/data-table"
 import { EmptyState } from "@acmis/ui/components/empty-state"
@@ -31,16 +32,22 @@ export default async function InvoicesPage({
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, page] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.finance.invoices({
-      status,
-      overdue_only: overdueOnly,
-      cursor,
-      limit: 50,
-      with_total: true,
-    }),
+  const [institutionCall, pageCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(
+      client.finance.invoices({
+        status,
+        overdue_only: overdueOnly,
+        cursor,
+        limit: 50,
+        with_total: true,
+      }),
+      "the ledger",
+    ),
   ])
+
+  const institution = institutionCall.data
+  const page = pageCall.data
   const currency = institution?.currency ?? "UGX"
 
   const columns: Array<Column<Invoice>> = [
@@ -94,7 +101,7 @@ export default async function InvoicesPage({
     },
   ]
 
-  const outstanding = page.items.reduce((sum, row) => sum + row.balance_minor, 0)
+  const outstanding = (page?.items ?? []).reduce((sum, row) => sum + row.balance_minor, 0)
 
   return (
     <FinanceShell user={user} institution={institution} currentPath="/invoices">
@@ -140,9 +147,10 @@ export default async function InvoicesPage({
       </p>
 
       <DataTable
+        unavailable={pageCall.problem}
         caption="Invoices"
         columns={columns}
-        rows={page.items}
+        rows={page?.items ?? []}
         rowKey={(row) => row.id}
         mobileCard={(row) => (
           <div className="space-y-1">
@@ -164,18 +172,21 @@ export default async function InvoicesPage({
         }
       />
 
-      <Pagination
-        meta={page.meta}
-        onNext={
-          page.meta.next_cursor
-            ? `/invoices?${new URLSearchParams({
-                ...(status ? { status } : {}),
-                ...(overdueOnly ? { overdue: "1" } : {}),
-                cursor: page.meta.next_cursor,
-              })}`
-            : undefined
-        }
-      />
+      {/* No page, no pager: the table above already says why. */}
+      {page ? (
+        <Pagination
+          meta={page.meta}
+          onNext={
+            page.meta.next_cursor
+              ? `/invoices?${new URLSearchParams({
+                  ...(status ? { status } : {}),
+                  ...(overdueOnly ? { overdue: "1" } : {}),
+                  cursor: page.meta.next_cursor,
+                })}`
+              : undefined
+          }
+        />
+      ) : null}
     </FinanceShell>
   )
 }

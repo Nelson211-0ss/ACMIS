@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame } from "@acmis/ui/components/chart-frame"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -26,12 +27,17 @@ export default async function GovernanceOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, denials, bundle, recent] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.governance.denialSummary(24).catch(() => null),
-    client.authz.bundle(false).catch(() => null),
-    client.governance.audit({ limit: 8, outcome: "denied" }).catch(() => null),
+  const [institutionCall, denialsCall, bundleCall, recentCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.governance.denialSummary(24), "the audit service"),
+    attempt(client.authz.bundle(false), "the policy service"),
+    attempt(client.governance.audit({ limit: 8, outcome: "denied" }), "the audit service"),
   ])
+
+  const institution = institutionCall.data
+  const denials = denialsCall.data
+  const bundle = bundleCall.data
+  const recent = recentCall.data
 
   const totalDenials = (denials?.by_actor ?? []).reduce((sum, a) => sum + a.denials, 0)
   const enumerating = (denials?.by_actor ?? []).filter((a) => a.looks_like_enumeration)
@@ -48,6 +54,7 @@ export default async function GovernanceOverview() {
       <StatRow>
         <StatTile
           label="Denials, 24h"
+          unavailable={denialsCall.problem}
           value={number(totalDenials)}
           emphasis
           icon={<Icons.ShieldAlert className="size-4" />}
@@ -56,6 +63,7 @@ export default async function GovernanceOverview() {
         />
         <StatTile
           label="Possible enumeration"
+          unavailable={denialsCall.problem}
           value={number(enumerating.length)}
           icon={<Icons.Search className="size-4" />}
           footnote="Actors denied across more than 20 distinct records"
@@ -63,12 +71,14 @@ export default async function GovernanceOverview() {
         />
         <StatTile
           label="Policies loaded"
+          unavailable={bundleCall.problem}
           value={number(bundle?.policy_count ?? 0)}
           icon={<Icons.Gavel className="size-4" />}
           footnote={`${number(bundle?.rule_count ?? 0)} rules · bundle ${bundle?.version ?? "—"}`}
         />
         <StatTile
           label="Bundle health"
+          unavailable={bundleCall.problem}
           value={
             bundle?.lint && bundle.lint.length > 0
               ? `${bundle.lint.length} issue${bundle.lint.length === 1 ? "" : "s"}`
@@ -151,6 +161,7 @@ export default async function GovernanceOverview() {
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartFrame
           title="What is being refused"
+          unavailable={denialsCall.problem}
           subtitle="Denials in the last 24 hours, by the rule that refused them."
           series={[{ key: "denials", label: "Denials", slot: 3 }]}
           footnote="Denied-by-default means nothing was applicable, not that a rule said no — a different problem with a different fix. A pile of them usually means a missing role rather than an attack."

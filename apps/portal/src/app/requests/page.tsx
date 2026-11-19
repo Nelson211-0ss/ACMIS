@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, dateTime, humaniseStatus, money, number } from "@acmis/ui/lib/format"
@@ -25,14 +26,28 @@ export default async function RequestsPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester, registrations, specials, transfers, timeOff] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
-    client.students.myRegistrations().catch(() => []),
-    client.lifecycle.specialExams({ mine_only: true, limit: 25 }).catch(() => null),
-    client.lifecycle.myTransfers().catch(() => []),
-    client.lifecycle.myTimeOff().catch(() => null),
+  const [
+    institutionCall,
+    semesterCall,
+    registrationsCall,
+    specialsCall,
+    transfersCall,
+    timeOffCall,
+  ] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.reference.currentSemester(), "the reference data"),
+    attempt(client.students.myRegistrations(), "your record"),
+    attempt(client.lifecycle.specialExams({ mine_only: true, limit: 25 }), "the records service"),
+    attempt(client.lifecycle.myTransfers(), "the records service"),
+    attempt(client.lifecycle.myTimeOff(), "the records service"),
   ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
+  const registrations = registrationsCall.data ?? []
+  const specials = specialsCall.data
+  const transfers = transfersCall.data ?? []
+  const timeOff = timeOffCall.data
 
   const currency = institution?.currency ?? "UGX"
   const current = semester
@@ -51,6 +66,10 @@ export default async function RequestsPage() {
         title="Requests"
         description="Special and supplementary examinations, time away from study, and transfers. Each shows where it has got to and whose desk it is on."
       />
+
+      {registrationsCall.problem ? (
+        <DataUnavailable unavailable={registrationsCall.problem} what="your requests" />
+      ) : null}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold">Special and supplementary examinations</h2>

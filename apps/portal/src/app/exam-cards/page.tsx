@@ -1,7 +1,8 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
 import { date, dateTime, humaniseStatus, number, percent } from "@acmis/ui/lib/format"
@@ -31,12 +32,17 @@ export default async function ExamCardsPage() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, cards, registrations, semester] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.lifecycle.myExamCards().catch(() => []),
-    client.students.myRegistrations().catch(() => []),
-    client.reference.currentSemester().catch(() => null),
+  const [institutionCall, cardsCall, registrationsCall, semesterCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.lifecycle.myExamCards(), "the records service"),
+    attempt(client.students.myRegistrations(), "your record"),
+    attempt(client.reference.currentSemester(), "the reference data"),
   ])
+
+  const institution = institutionCall.data
+  const cards = cardsCall.data ?? []
+  const registrations = registrationsCall.data ?? []
+  const semester = semesterCall.data
 
   const current = semester
     ? registrations.find((row) => row.semester_id === semester.id)
@@ -52,6 +58,10 @@ export default async function ExamCardsPage() {
         title="Exam cards"
         description="An examination card is permission to sit a specific set of papers. Bring it, with your campus ID, to every paper — an invigilator who cannot verify you is required to turn you away."
       />
+
+      {cardsCall.problem ? (
+        <DataUnavailable unavailable={cardsCall.problem} what="your exam cards" />
+      ) : null}
 
       {!hasCurrentCard && current ? (
         <section className="bg-muted/40 rounded-lg border p-4">

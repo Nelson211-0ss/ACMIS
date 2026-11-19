@@ -1,8 +1,9 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame, StackedBar } from "@acmis/ui/components/chart-frame"
-import { EmptyState } from "@acmis/ui/components/empty-state"
+import { DataUnavailable, EmptyState } from "@acmis/ui/components/empty-state"
 import { PageHeader } from "@acmis/ui/components/page-header"
 import { StatRow, StatTile } from "@acmis/ui/components/stat-tile"
 import { StatusBadge, toneForStatus } from "@acmis/ui/components/status-badge"
@@ -17,15 +18,19 @@ export default async function AdmissionsOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, schemes] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.admissions.schemes({ limit: 5, status: "open" }).catch(() => null),
+  const [institutionCall, schemesCall] = await Promise.all([
+    attempt(client.public.institution()),
+    attempt(client.admissions.schemes({ limit: 5, status: "open" }), "the schemes service"),
   ])
 
+  const institution = institutionCall.data
+  const schemes = schemesCall.data
+
   const openScheme = schemes?.items[0] ?? null
-  const stats = openScheme
-    ? await client.admissions.schemeStatistics(openScheme.id).catch(() => null)
+  const statsCall = openScheme
+    ? await attempt(client.admissions.schemeStatistics(openScheme.id), "the admissions statistics")
     : null
+  const stats = statsCall?.data ?? null
 
   const byStatus = stats?.by_status ?? {}
   const total = stats?.total ?? 0
@@ -44,13 +49,22 @@ export default async function AdmissionsOverview() {
         icon={<Icons.UserPlus />}
         title="Admissions"
         description={
-          openScheme
-            ? `${openScheme.name} closes ${date(openScheme.closes_at, institution?.locale)}. Applications become visible to selectors once the application fee settles.`
-            : "No admission scheme is currently open. Publish one to start accepting applications."
+          schemesCall.problem
+            ? "This page cannot say which cycle is open — the schemes could not be loaded."
+            : openScheme
+              ? `${openScheme.name} closes ${date(openScheme.closes_at, institution?.locale)}. Applications become visible to selectors once the application fee settles.`
+              : "No admission scheme is currently open. Publish one to start accepting applications."
         }
       />
 
-      {openScheme ? (
+      {/* The failure is tested before the empty case. A failed `schemes` call
+          left `openScheme` null, which fell into the branch below announcing
+          "No open admission scheme" — a definite statement about the
+          institution's cycle, made on the strength of a request that never
+          came back. */}
+      {schemesCall.problem ? (
+        <DataUnavailable unavailable={schemesCall.problem} what="this dashboard" />
+      ) : openScheme ? (
         <>
           <StatRow>
             <StatTile
@@ -59,18 +73,21 @@ export default async function AdmissionsOverview() {
               emphasis
               icon={<Icons.FileText className="size-4" />}
               footnote={`Under ${openScheme.code}`}
+              unavailable={statsCall?.problem}
             />
             <StatTile
               label="Awaiting review"
               value={number(underReview)}
               icon={<Icons.Clock className="size-4" />}
               footnote="Fee settled, ready for a selector"
+              unavailable={statsCall?.problem}
             />
             <StatTile
               label="Awaiting fee"
               value={number(awaitingFee)}
               icon={<Icons.Wallet className="size-4" />}
               footnote="Submitted but not yet payable"
+              unavailable={statsCall?.problem}
             />
             <StatTile
               label="Admitted"
@@ -79,6 +96,7 @@ export default async function AdmissionsOverview() {
               footnote={
                 total > 0 ? `${percent((admitted / total) * 100)} of applications` : undefined
               }
+              unavailable={statsCall?.problem}
             />
           </StatRow>
 
@@ -87,6 +105,7 @@ export default async function AdmissionsOverview() {
               title="Where applications stand"
               subtitle={`All ${number(total)} applications under ${openScheme.code}, by status.`}
               series={[{ key: "count", label: "Applications", slot: 1 }]}
+              unavailable={statsCall?.problem}
               table={
                 <table className="tabular w-full text-sm">
                   <thead>
@@ -131,6 +150,7 @@ export default async function AdmissionsOverview() {
               title="Competition by programme"
               subtitle="Applications received per approved seat. Above 1.0 means the programme is oversubscribed."
               series={[{ key: "ratio", label: "Applications per seat", slot: 2 }]}
+              unavailable={statsCall?.problem}
               footnote="Seats are the figure the academic board approved, not the number offered — institutions over-offer for expected declines."
               table={
                 <table className="tabular w-full text-sm">
@@ -194,6 +214,9 @@ export default async function AdmissionsOverview() {
             <p className="text-muted-foreground mt-1 text-sm">
               Offers issued, accepted and enrolled against approved seats, per programme.
             </p>
+            {statsCall?.problem ? (
+              <DataUnavailable unavailable={statsCall.problem} what="this panel" className="mt-4" />
+            ) : null}
             <div className="mt-4 space-y-4">
               {(stats?.intakes ?? []).slice(0, 6).map((intake) => (
                 <div key={intake.programme_intake_id}>

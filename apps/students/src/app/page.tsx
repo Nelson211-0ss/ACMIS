@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react"
 
+import { attempt } from "@acmis/api-client"
 import { acmis, requireUser } from "@acmis/auth/server"
 import { BarRows, ChartFrame, Meter } from "@acmis/ui/components/chart-frame"
 import { PageHeader } from "@acmis/ui/components/page-header"
@@ -24,20 +25,43 @@ export default async function StudentsOverview() {
   const user = await requireUser(APP)
   const client = await acmis(APP)
 
-  const [institution, semester, active, probation, onLeave, completed] = await Promise.all([
-    client.public.institution().catch(() => null),
-    client.reference.currentSemester().catch(() => null),
-    client.students.list({ status: "active", limit: 1, with_total: true }),
-    client.students.list({ status: "probation", limit: 1, with_total: true }),
-    client.students.list({ status: "on_leave", limit: 1, with_total: true }),
-    client.students.list({ status: "completed", limit: 1, with_total: true }),
-  ])
+  const [institutionCall, semesterCall, activeCall, probationCall, onLeaveCall, completedCall] =
+    await Promise.all([
+      attempt(client.public.institution()),
+      attempt(client.reference.currentSemester(), "the reference data"),
+      attempt(
+        client.students.list({ status: "active", limit: 1, with_total: true }),
+        "the student records service",
+      ),
+      attempt(
+        client.students.list({ status: "probation", limit: 1, with_total: true }),
+        "the student records service",
+      ),
+      attempt(
+        client.students.list({ status: "on_leave", limit: 1, with_total: true }),
+        "the student records service",
+      ),
+      attempt(
+        client.students.list({ status: "completed", limit: 1, with_total: true }),
+        "the student records service",
+      ),
+    ])
+
+  const institution = institutionCall.data
+  const semester = semesterCall.data
+  const active = activeCall.data
+  const probation = probationCall.data
+  const onLeave = onLeaveCall.data
+  const completed = completedCall.data
 
   const counts = {
-    active: active.meta.total ?? 0,
-    probation: probation.meta.total ?? 0,
-    onLeave: onLeave.meta.total ?? 0,
-    completed: completed.meta.total ?? 0,
+    // The zeroes here are never rendered: each tile carries the matching
+    // `unavailable`, which replaces the figure outright. They exist so the
+    // arithmetic below has a number, not so a reader sees one.
+    active: active?.meta.total ?? 0,
+    probation: probation?.meta.total ?? 0,
+    onLeave: onLeave?.meta.total ?? 0,
+    completed: completed?.meta.total ?? 0,
   }
   const enrolled = counts.active + counts.probation
 
@@ -45,9 +69,12 @@ export default async function StudentsOverview() {
   // asking the API for an aggregate endpoint it does not have. Explicitly a
   // sample, and labelled as one — a chart that looks like a census and is not
   // is worse than no chart.
-  const sample = await client.students.list({ status: "active", limit: 200 })
+  const sampleCall = await attempt(
+    client.students.list({ status: "active", limit: 200 }),
+    "the student records service",
+  )
   const byYear = new Map<number, number>()
-  for (const student of sample.items) {
+  for (const student of sampleCall.data?.items ?? []) {
     const primary = student.programmes.find((p) => p.is_primary)
     if (!primary) continue
     byYear.set(primary.current_year_of_study, (byYear.get(primary.current_year_of_study) ?? 0) + 1)
@@ -72,6 +99,7 @@ export default async function StudentsOverview() {
       <StatRow>
         <StatTile
           label="Enrolled"
+          unavailable={activeCall.problem ?? probationCall.problem}
           value={number(enrolled)}
           emphasis
           icon={<Icons.Users className="size-4" />}
@@ -79,6 +107,7 @@ export default async function StudentsOverview() {
         />
         <StatTile
           label="On probation"
+          unavailable={probationCall.problem}
           value={number(counts.probation)}
           icon={<Icons.AlertTriangle className="size-4" />}
           footnote={
@@ -87,12 +116,14 @@ export default async function StudentsOverview() {
         />
         <StatTile
           label="On approved leave"
+          unavailable={onLeaveCall.problem}
           value={number(counts.onLeave)}
           icon={<Icons.PauseCircle className="size-4" />}
           footnote="Progression clock stopped"
         />
         <StatTile
           label="Awaiting conferment"
+          unavailable={completedCall.problem}
           value={number(counts.completed)}
           icon={<Icons.GraduationCap className="size-4" />}
           footnote="Coursework done, award not yet conferred"
@@ -102,7 +133,8 @@ export default async function StudentsOverview() {
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartFrame
           title="Year of study"
-          subtitle={`From a sample of ${number(sample.items.length)} active students — not a census.`}
+          unavailable={sampleCall.problem}
+          subtitle={`From a sample of ${number(sampleCall.data?.items.length ?? 0)} active students — not a census.`}
           series={[{ key: "students", label: "Students", slot: 1 }]}
           footnote="A shape that narrows sharply between years one and two usually means attrition rather than a small intake; the progression report separates them."
           table={
