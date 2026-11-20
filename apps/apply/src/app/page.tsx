@@ -10,6 +10,7 @@ import { date, relativeTime } from "@acmis/ui/lib/format"
 
 import { ApplyShell } from "@/components/shell"
 import { APP } from "@/lib/config"
+import { openNow } from "@/lib/schemes"
 import { meaningOf } from "@/lib/status"
 
 export const metadata = { title: "My applications" }
@@ -43,7 +44,10 @@ export default async function MyApplicationsPage({
 
   const institution = institutionCall.data
   const applications = applicationsCall.data?.items ?? []
+  // The full list names the scheme on an existing application, which stays
+  // true after a cycle closes; `applicable` is what may still be started.
   const schemes = schemesCall.data ?? []
+  const applicable = openNow(schemes)
   const schemeById = new Map(schemes.map((s) => [s.id, s]))
 
   const needsYou = applications.filter((a) => meaningOf(a.status).yours)
@@ -55,14 +59,20 @@ export default async function MyApplicationsPage({
         eyebrow={user.username ? `Application number ${user.username}` : undefined}
         title="My applications"
         description="Everything you have started, and where each one stands. Quote your application number whenever you contact the admissions office."
+        // Offered only when there is something to apply to. With every cycle
+        // closed this button led to a page that said so, which is a dead end
+        // dressed as the primary action — and the empty state below was
+        // already saying the opposite in the same breath.
         actions={
-          <Link
-            href="/apply"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex min-h-10 items-center gap-1.5 rounded-md px-3.5 text-sm font-medium transition-colors"
-          >
-            <Icons.FilePlus className="size-4" aria-hidden />
-            Start an application
-          </Link>
+          applicable.length > 0 ? (
+            <Link
+              href="/apply"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex min-h-10 items-center gap-1.5 rounded-md px-3.5 text-sm font-medium transition-colors"
+            >
+              <Icons.FilePlus className="size-4" aria-hidden />
+              Start an application
+            </Link>
+          ) : undefined
         }
       />
 
@@ -87,13 +97,13 @@ export default async function MyApplicationsPage({
         <EmptyState
           title="You have not started an application yet"
           reason={
-            schemes.length > 0
+            applicable.length > 0
               ? "Pick a cycle and a programme, and you can fill the rest in a piece at a time."
               : "No admission cycle is open at the moment. It is worth checking back before the next intake."
           }
           icon={<Icons.FilePlus className="size-8" />}
           action={
-            schemes.length > 0 ? (
+            applicable.length > 0 ? (
               <Link
                 href="/apply"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex min-h-10 items-center gap-1.5 rounded-md px-3.5 text-sm font-medium"

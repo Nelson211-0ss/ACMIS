@@ -8,6 +8,7 @@ import { PageHeader } from "@acmis/ui/components/page-header"
 import { date, money } from "@acmis/ui/lib/format"
 
 import { ApplyShell } from "@/components/shell"
+import { openNow } from "@/lib/schemes"
 import { APP } from "@/lib/config"
 
 export const metadata = { title: "Start an application" }
@@ -29,7 +30,8 @@ export default async function ChooseSchemePage() {
     attempt(client.public.admissionSchemes(), "the admissions service"),
   ])
   const institution = institutionCall.data
-  const schemes = schemesCall.data ?? []
+  // Status alone would offer a cycle whose deadline has passed; see `openNow`.
+  const schemes = openNow(schemesCall.data ?? [])
 
   return (
     <ApplyShell user={user} institution={institution} currentPath="/apply">

@@ -6,6 +6,7 @@ import { acmisPublic, readSession } from "@acmis/auth/server"
 import { date } from "@acmis/ui/lib/format"
 
 import { SignUpForm } from "./form"
+import { openNow } from "@/lib/schemes"
 import { APP } from "@/lib/config"
 
 export const metadata = { title: "Create an account" }
@@ -19,9 +20,9 @@ export default async function SignUpPage() {
     attempt(client.public.admissionSchemes(), "the admissions service"),
   ])
   const institution = institutionCall.data
-  const schemes = schemesCall.data ?? []
-  // The cycle closing soonest is the one a deadline should be quoted from.
-  const closing = [...schemes].sort((a, b) => a.closes_at.localeCompare(b.closes_at))[0]
+  // `openNow` sorts by deadline, so the first is the one to quote.
+  const schemes = openNow(schemesCall.data ?? [])
+  const closing = schemes[0]
 
   return (
     <div className="bg-muted/40 relative min-h-dvh overflow-hidden px-4 py-10" data-module="apply">

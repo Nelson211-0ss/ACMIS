@@ -376,10 +376,19 @@ def register_applicant(
             details={"fields": {"password": problems}},
         )
 
+    # Status *and* deadline, which is the same pair `start_application`
+    # enforces. Gating on status alone was not enough: a scheme whose late
+    # deadline has passed stays `open` until somebody in the admissions office
+    # closes it, so an applicant could raise an account and then be refused by
+    # the very next call. An account that cannot apply to anything is the
+    # support call this check exists to prevent, so the two rules have to
+    # agree.
+    now = datetime.now(tz=UTC)
     open_scheme = db.execute(
         select(AdmissionScheme.id).where(
             AdmissionScheme.status == SchemeStatus.OPEN,
             AdmissionScheme.deleted_at.is_(None),
+            func.coalesce(AdmissionScheme.late_closes_at, AdmissionScheme.closes_at) >= now,
         )
     ).first()
     if open_scheme is None:
