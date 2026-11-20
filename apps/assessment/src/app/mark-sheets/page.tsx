@@ -59,7 +59,7 @@ export default async function MarkSheetsPage({
       header: "Marked",
       numeric: true,
       render: (row) => (
-        <span className={row.missing_count > 0 ? "text-warning-foreground" : ""}>
+        <span className={row.missing_count > 0 ? "text-warning-text" : ""}>
           {number(row.entered_count)} / {number(row.student_count)}
         </span>
       ),

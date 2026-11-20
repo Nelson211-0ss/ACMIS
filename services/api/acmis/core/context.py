@@ -61,6 +61,10 @@ class Principal:
     id: uuid.UUID
     kind: PrincipalKind
     display_name: str
+    #: What this actor types to sign in — a staff number, a student number, an
+    #: applicant reference. Carried so an app can show it back to them; people
+    #: forget their own, and it is the first thing support asks for.
+    username: str | None = None
     email: str | None = None
     tenant_id: uuid.UUID | None = None
     #: Role codes, e.g. {"registrar", "faculty_dean"}.

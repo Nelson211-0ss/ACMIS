@@ -29,7 +29,7 @@ const STATE_STYLES: Record<ChainStep["state"], { dot: string; text: string; labe
   done: { dot: "bg-success", text: "text-foreground", label: "Completed" },
   current: { dot: "bg-module ring-module/30 ring-4", text: "text-foreground font-medium", label: "In progress" },
   pending: { dot: "bg-muted-foreground/30", text: "text-muted-foreground", label: "Not started" },
-  returned: { dot: "bg-warning", text: "text-warning-foreground", label: "Returned" },
+  returned: { dot: "bg-warning", text: "text-warning-text", label: "Returned" },
   blocked: { dot: "bg-destructive", text: "text-destructive", label: "Blocked" },
 }
 
@@ -76,7 +76,7 @@ export function ApprovalChain({
                   className={cn(
                     "mt-1 text-xs leading-relaxed",
                     step.state === "returned" || step.state === "blocked"
-                      ? "text-warning-foreground"
+                      ? "text-warning-text"
                       : "text-muted-foreground",
                   )}
                 >

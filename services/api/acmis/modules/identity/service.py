@@ -140,6 +140,7 @@ def load_principal(
         id=account.id,
         kind=cast("PrincipalKind", kind),
         display_name=account.display_name,
+        username=account.username,
         email=account.email,
         tenant_id=tenant_id,
         roles=frozenset(roles),

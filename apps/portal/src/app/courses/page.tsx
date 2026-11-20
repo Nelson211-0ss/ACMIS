@@ -95,7 +95,7 @@ export default async function CoursesPage() {
                   {course.category.replace(/_/g, " ")}
                 </p>
                 {course.is_retake ? (
-                  <p className="text-warning-foreground mt-1 text-xs">
+                  <p className="text-warning-text mt-1 text-xs">
                     Retake · attempt {course.attempt_number}
                   </p>
                 ) : null}

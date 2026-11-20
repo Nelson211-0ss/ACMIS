@@ -131,7 +131,7 @@ export default async function RequestsPage() {
                 ) : null}
 
                 {!request.evidence_verified_at && request.evidence_attachment_ids.length === 0 ? (
-                  <p className="text-warning-foreground mt-3 text-xs">
+                  <p className="text-warning-text mt-3 text-xs">
                     This cannot be granted until the evidence reaches the faculty office. Lodging
                     the application does not put the evidence in.
                   </p>
@@ -184,7 +184,7 @@ export default async function RequestsPage() {
                 timeOff.standing === "exceeded"
                   ? "text-destructive mt-3 text-sm"
                   : timeOff.standing === "final_chance"
-                    ? "text-warning-foreground mt-3 text-sm"
+                    ? "text-warning-text mt-3 text-sm"
                     : "text-muted-foreground mt-3 text-sm"
               }
             >

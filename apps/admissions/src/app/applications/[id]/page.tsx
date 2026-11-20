@@ -179,7 +179,7 @@ export default async function ApplicationPage({ params }: { params: Promise<{ id
                     </span>
                   </p>
                   {reasons.length > 0 ? (
-                    <ul className="text-warning-foreground mt-1 list-inside list-disc text-xs">
+                    <ul className="text-warning-text mt-1 list-inside list-disc text-xs">
                       {reasons.map((reason) => (
                         <li key={reason}>{reason}</li>
                       ))}

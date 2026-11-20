@@ -56,8 +56,13 @@ export function LearningShell({
     {
       title: "Students",
       items: [
+        // A raised hand, not a heart-rate line. `Activity` is the glyph every
+        // dashboard reaches for when nobody has decided what the page is
+        // about, and it said nothing here: engagement is whether students
+        // turned up to the material and took part, which is a person doing
+        // something rather than a signal being monitored.
         ...(has("learning:read_engagement")
-          ? [{ href: "/engagement", label: "Engagement", icon: <Icons.Activity /> }]
+          ? [{ href: "/engagement", label: "Engagement", icon: <Icons.Hand /> }]
           : []),
       ],
     },

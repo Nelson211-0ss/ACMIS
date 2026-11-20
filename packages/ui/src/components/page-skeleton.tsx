@@ -348,7 +348,7 @@ export function PanelsSkeleton({
   moduleKey,
 }: {
   count?: number
-  columns?: 2 | 3
+  columns?: 1 | 2 | 3
   moduleKey?: string
 }) {
   return (
@@ -356,8 +356,13 @@ export function PanelsSkeleton({
       <PageHeaderSkeleton />
       <div
         className={cn(
-          "grid gap-4 sm:grid-cols-2",
-          columns === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2",
+          "grid gap-4",
+          // One column means one column at every width: a page that stacks
+          // wide cards must not be stood in for by a two-up grid that then
+          // collapses when the content arrives.
+          columns === 1 && "grid-cols-1",
+          columns === 2 && "sm:grid-cols-2",
+          columns === 3 && "sm:grid-cols-2 lg:grid-cols-3",
         )}
       >
         {Array.from({ length: count }, (_, i) => (

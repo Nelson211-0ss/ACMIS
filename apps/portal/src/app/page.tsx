@@ -94,7 +94,7 @@ export default async function PortalHome() {
 
       {holds.length > 0 ? (
         <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-          <h2 className="text-warning-foreground flex items-center gap-2 text-sm font-semibold">
+          <h2 className="text-warning-text flex items-center gap-2 text-sm font-semibold">
             <Icons.Lock className="size-4" aria-hidden />
             {holds.length} hold{holds.length === 1 ? "" : "s"} on your record
           </h2>

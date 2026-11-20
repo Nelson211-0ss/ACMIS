@@ -90,7 +90,7 @@ export default async function RegistrationPage() {
 
       {registrationBlocks.length > 0 ? (
         <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-          <h2 className="text-warning-foreground text-sm font-semibold">
+          <h2 className="text-warning-text text-sm font-semibold">
             Registration is blocked by an unpaid invoice
           </h2>
           <ul className="mt-2 space-y-2 text-sm">
@@ -175,7 +175,7 @@ export default async function RegistrationPage() {
                       <span className="font-mono text-xs">{course.code || "—"}</span>
                       <span className="ml-2">{course.title}</span>
                       {course.is_retake ? (
-                        <span className="text-warning-foreground ml-2 text-xs">
+                        <span className="text-warning-text ml-2 text-xs">
                           retake, attempt {course.attempt_number}
                         </span>
                       ) : null}

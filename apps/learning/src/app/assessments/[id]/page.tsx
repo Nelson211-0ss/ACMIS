@@ -388,7 +388,7 @@ function Figure({
       <p
         className={
           tone === "warning"
-            ? "text-warning-foreground tabular mt-0.5 text-xl font-semibold"
+            ? "text-warning-text tabular mt-0.5 text-xl font-semibold"
             : "tabular mt-0.5 text-xl font-semibold"
         }
       >

@@ -44,6 +44,8 @@ class WhoAmIOut(Schema):
     id: uuid.UUID
     kind: str
     display_name: str
+    #: What they sign in with. Their own, so not sensitive to themselves.
+    username: str | None
     email: str | None
     tenant_slug: str
     tenant_name: str
@@ -147,6 +149,7 @@ def whoami(ctx: AuthContext) -> WhoAmIOut:
         id=principal.id,
         kind=principal.kind,
         display_name=principal.display_name,
+        username=principal.username,
         email=principal.email,
         tenant_slug=ctx.tenant.slug,
         tenant_name=ctx.tenant.name,

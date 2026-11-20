@@ -19,14 +19,16 @@ walked. Rate limiting still applies.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import UTC, date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Request
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Path, Request, status
+from pydantic import EmailStr, Field
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from acmis.core.deps import tenant_db, tenant_of
+from acmis.core.errors import Conflict, ValidationFailed
 from acmis.core.schemas import Schema
 from acmis.modules.assessment import service as assessment
 
@@ -196,3 +198,282 @@ def institution(request: Request) -> InstitutionOut:
         )
     finally:
         control.close()
+
+
+class PublicIntakeOut(Schema):
+    """One programme an applicant may choose under a scheme."""
+
+    programme_intake_id: uuid.UUID
+    programme_code: str
+    programme_name: str
+    award_title: str
+    award_abbreviation: str
+    duration_semesters: int
+    #: What the faculty asks for. Published because an applicant choosing
+    #: blind wastes their choice and the office's review.
+    entry_requirements: str | None
+    minimum_aggregate: float | None
+    #: Last cycle's cut-off, where there was one. The single most useful number
+    #: for deciding whether a choice is realistic, and the one applicants
+    #: otherwise ask the office for by telephone, one at a time.
+    previous_cutoff: float | None
+    tuition_per_semester_minor: int
+    approved_intake: int
+
+
+@router.get("/admission-schemes/{scheme_id}/intakes", response_model=list[PublicIntakeOut])
+def public_scheme_intakes(
+    scheme_id: Annotated[uuid.UUID, Path()],
+    request: Request,
+    db: Session = Depends(tenant_db),
+) -> list[PublicIntakeOut]:
+    """The programmes on offer under one open scheme.
+
+    Public, and limited to open schemes, because this is the list an applicant
+    picks from before they have an account — and because `programme_intake_id`
+    is required to start an application at all, so without it the apply
+    journey cannot begin.
+
+    Seat counts are published; applications received and offers issued are
+    not. The approved intake is a fact about the institution's plan and helps
+    an applicant judge a choice. A live count of who else has applied would
+    turn the last week of a cycle into a stampede, and is the office's
+    business besides.
+    """
+    from acmis.modules.admissions.models import AdmissionScheme, ProgrammeIntake, SchemeStatus
+    from acmis.modules.curriculum.models import Programme
+
+    tenant_of(request)
+
+    rows = db.execute(
+        select(ProgrammeIntake, Programme)
+        .join(Programme, Programme.id == ProgrammeIntake.programme_id)
+        .join(AdmissionScheme, AdmissionScheme.id == ProgrammeIntake.scheme_id)
+        .where(
+            ProgrammeIntake.scheme_id == scheme_id,
+            AdmissionScheme.status == SchemeStatus.OPEN,
+            AdmissionScheme.deleted_at.is_(None),
+            ProgrammeIntake.deleted_at.is_(None),
+            Programme.deleted_at.is_(None),
+        )
+        .order_by(Programme.name)
+    ).all()
+
+    return [
+        PublicIntakeOut(
+            programme_intake_id=intake.id,
+            programme_code=programme.code,
+            programme_name=programme.name,
+            award_title=programme.award_title,
+            award_abbreviation=programme.award_abbreviation,
+            duration_semesters=programme.duration_semesters,
+            entry_requirements=programme.entry_requirements,
+            minimum_aggregate=float(intake.minimum_aggregate)
+            if intake.minimum_aggregate is not None
+            else None,
+            previous_cutoff=float(intake.previous_cutoff)
+            if intake.previous_cutoff is not None
+            else None,
+            tuition_per_semester_minor=intake.tuition_per_semester_minor,
+            approved_intake=intake.approved_intake,
+        )
+        for intake, programme in rows
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Applicant self-registration
+# ---------------------------------------------------------------------------
+
+
+class ApplicantRegisterIn(Schema):
+    """What a prospective student types to open an application account.
+
+    Deliberately short. This is the form standing between a school leaver with
+    one bar of signal and the ability to apply at all, so it asks only for what
+    is needed to raise an account and to tell two applicants apart. Everything
+    else — the rest of the bio-data, the results, the programme choices — is
+    collected inside the application, where it can be saved a step at a time
+    and come back to.
+
+    `national_id` is optional on purpose: many applicants hold none when they
+    apply, and requiring one here would exclude them from the system entirely
+    rather than from one field.
+    """
+
+    surname: str = Field(min_length=2, max_length=100)
+    given_names: str = Field(min_length=2, max_length=200)
+    other_names: str | None = Field(default=None, max_length=200)
+    date_of_birth: date
+    sex: str = Field(pattern="^(female|male)$")
+    nationality: str = Field(default="South Sudanese", min_length=2, max_length=60)
+    country_code: str = Field(default="SS", min_length=2, max_length=2)
+    #: State, county or district, as that country words it.
+    district_of_origin: str | None = Field(default=None, max_length=80)
+    email: EmailStr
+    phone: str = Field(min_length=6, max_length=40)
+    national_id: str | None = Field(default=None, max_length=60)
+    guardian_name: str | None = Field(default=None, max_length=200)
+    guardian_phone: str | None = Field(default=None, max_length=40)
+    password: str = Field(min_length=1, max_length=200)
+
+
+class ApplicantRegisteredOut(Schema):
+    #: Doubles as the username. Shown once, and emailed, because an applicant
+    #: who loses it cannot sign in and will telephone the registry.
+    reference: str
+    email: str
+    display_name: str
+
+
+@router.post(
+    "/applicants",
+    response_model=ApplicantRegisteredOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def register_applicant(
+    payload: ApplicantRegisterIn,
+    request: Request,
+    db: Session = Depends(tenant_db),
+) -> ApplicantRegisteredOut:
+    """Open an application account.
+
+    Unauthenticated by necessity: the whole point is that the person has no
+    account yet. Three things guard it — the global rate limiter, the tenant
+    having at least one open scheme, and the uniqueness check below.
+
+    ## Why registration is gated on an open scheme
+
+    An account that cannot apply to anything is a support call. More to the
+    point, it is also a free write to a tenant database from the public
+    internet; tying it to a cycle the institution has deliberately opened
+    keeps that window shut for most of the year.
+
+    ## On telling the caller the email is taken
+
+    It does, and that is a considered choice rather than an oversight. The
+    alternative — accepting the registration silently and emailing the
+    existing account — is what a consumer product does to avoid confirming an
+    address to a stranger. Here the cost of that discretion is an applicant
+    who believes they have an account, waits for an email that explains they
+    already had one, and misses a deadline that will not move. The address is
+    also far less sensitive than the equivalent on a bank: knowing that
+    somebody applied to this university is not a secret worth a missed intake.
+    """
+    from acmis.core.security import hash_password, password_problems
+    from acmis.modules.admissions.models import AdmissionScheme, Applicant, SchemeStatus
+    from acmis.modules.identity.models import AccountKind, AccountStatus, UserAccount
+
+    tenant_of(request)
+
+    problems = password_problems(
+        payload.password,
+        context=[payload.email, payload.surname, payload.given_names],
+    )
+    if problems:
+        raise ValidationFailed(
+            "That password is not strong enough.",
+            details={"fields": {"password": problems}},
+        )
+
+    # Status *and* deadline, which is the same pair `start_application`
+    # enforces. Gating on status alone was not enough: a scheme whose late
+    # deadline has passed stays `open` until somebody in the admissions office
+    # closes it, so an applicant could raise an account and then be refused by
+    # the very next call. An account that cannot apply to anything is the
+    # support call this check exists to prevent, so the two rules have to
+    # agree.
+    now = datetime.now(tz=UTC)
+    open_scheme = db.execute(
+        select(AdmissionScheme.id).where(
+            AdmissionScheme.status == SchemeStatus.OPEN,
+            AdmissionScheme.deleted_at.is_(None),
+            func.coalesce(AdmissionScheme.late_closes_at, AdmissionScheme.closes_at) >= now,
+        )
+    ).first()
+    if open_scheme is None:
+        raise Conflict(
+            "Applications are not open at the moment. Accounts can be created "
+            "once an admission cycle opens."
+        )
+
+    email = payload.email.strip().lower()
+    taken = db.execute(
+        select(UserAccount.id).where(
+            func.lower(UserAccount.email) == email,
+            UserAccount.deleted_at.is_(None),
+        )
+    ).first()
+    if taken is not None:
+        raise Conflict(
+            "An account already exists for that email address. Sign in "
+            "instead, or use 'forgotten password' to get back into it."
+        )
+
+    applicant = Applicant(
+        reference=_next_applicant_reference(db),
+        surname=payload.surname.strip(),
+        given_names=payload.given_names.strip(),
+        other_names=(payload.other_names or "").strip() or None,
+        date_of_birth=payload.date_of_birth,
+        sex=payload.sex,
+        nationality=payload.nationality.strip(),
+        country_code=payload.country_code.upper(),
+        district_of_origin=(payload.district_of_origin or "").strip() or None,
+        email=email,
+        phone=payload.phone.strip(),
+        national_id=(payload.national_id or "").strip() or None,
+        guardian_name=(payload.guardian_name or "").strip() or None,
+        guardian_phone=(payload.guardian_phone or "").strip() or None,
+    )
+    db.add(applicant)
+    db.flush()
+
+    display_name = f"{payload.given_names.strip()} {payload.surname.strip()}"
+    account = UserAccount(
+        # The reference is the username, exactly as it is for staff numbers and
+        # student numbers. One rule for signing in across the whole system.
+        username=applicant.reference,
+        email=email,
+        kind=AccountKind.APPLICANT,
+        # Active rather than pending: there is no verification mail in this
+        # deployment yet, and an account nobody can sign into is worse than an
+        # unverified address on a record the registry will check anyway when
+        # the documents arrive. `email_verified_at` stays null, so a later
+        # verification flow can find these and ask.
+        status=AccountStatus.ACTIVE,
+        display_name=display_name,
+        password_hash=hash_password(payload.password),
+        password_changed_at=datetime.now(tz=UTC),
+        applicant_id=applicant.id,
+    )
+    db.add(account)
+    db.flush()
+
+    applicant.account_id = account.id
+    db.commit()
+
+    return ApplicantRegisteredOut(
+        reference=applicant.reference,
+        email=email,
+        display_name=display_name,
+    )
+
+
+def _next_applicant_reference(db: Session) -> str:
+    """`APL/<year>/<n>`, counting within the year.
+
+    Derived from the highest existing reference for the year rather than from a
+    row count, because applicants are never hard-deleted but a count would
+    still drift the moment one was, and two applicants sharing a reference is
+    a collision on the thing people quote down a telephone.
+    """
+    from acmis.modules.admissions.models import Applicant
+
+    year = datetime.now(tz=UTC).year
+    prefix = f"APL/{year}/"
+    highest = db.execute(
+        select(func.max(Applicant.reference)).where(Applicant.reference.like(f"{prefix}%"))
+    ).scalar_one_or_none()
+    nth = int(highest.rsplit("/", 1)[1]) + 1 if highest else 1
+    return f"{prefix}{nth:04d}"

@@ -209,7 +209,7 @@ export default async function MarkSheetPage({
           ) : null}
 
           {sheet.moderation_adjustment ? (
-            <p className="border-warning/40 bg-warning/10 text-warning-foreground rounded-md border px-3 py-2 text-sm">
+            <p className="border-warning/40 bg-warning/10 text-warning-text rounded-md border px-3 py-2 text-sm">
               A cohort-wide adjustment of {sheet.moderation_adjustment > 0 ? "+" : ""}
               {sheet.moderation_adjustment} was applied at moderation. Every mark was regraded, and
               the original values are kept.
@@ -217,7 +217,7 @@ export default async function MarkSheetPage({
           ) : null}
 
           {sheet.return_comments ? (
-            <p className="border-warning/40 bg-warning/10 text-warning-foreground rounded-md border px-3 py-2 text-sm">
+            <p className="border-warning/40 bg-warning/10 text-warning-text rounded-md border px-3 py-2 text-sm">
               Returned to the examiner: {sheet.return_comments}
             </p>
           ) : null}
@@ -274,7 +274,7 @@ export default async function MarkSheetPage({
                     <td className="px-3 py-2 font-mono text-xs">
                       {result.student_id.slice(0, 8)}
                       {result.is_retake ? (
-                        <span className="text-warning-foreground ml-1.5 text-[11px]">
+                        <span className="text-warning-text ml-1.5 text-[11px]">
                           retake {result.attempt_number}
                         </span>
                       ) : null}

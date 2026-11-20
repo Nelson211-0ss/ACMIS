@@ -92,7 +92,7 @@ export function RuleRefused({
 }) {
   return (
     <div className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-      <p className="text-warning-foreground text-sm font-medium">{message}</p>
+      <p className="text-warning-text text-sm font-medium">{message}</p>
       {rule ? <p className="text-muted-foreground mt-1 font-mono text-xs">Rule: {rule}</p> : null}
       {waivableBy.length > 0 ? (
         <p className="text-muted-foreground mt-2 text-xs">
@@ -147,7 +147,7 @@ export function DataUnavailable({
         className,
       )}
     >
-      <AlertTriangle className="text-warning-foreground dark:text-warning size-5" aria-hidden />
+      <AlertTriangle className="text-warning-text size-5" aria-hidden />
       <p className="text-sm font-semibold">
         {what.charAt(0).toUpperCase() + what.slice(1)} could not be loaded
       </p>

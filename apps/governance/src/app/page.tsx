@@ -254,7 +254,7 @@ export default async function GovernanceOverview() {
 
       {bundle?.lint && bundle.lint.length > 0 ? (
         <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-          <h2 className="text-warning-foreground text-sm font-semibold">Policy bundle warnings</h2>
+          <h2 className="text-warning-text text-sm font-semibold">Policy bundle warnings</h2>
           <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
             {bundle.lint.map((issue) => (
               <li key={issue}>{issue}</li>
