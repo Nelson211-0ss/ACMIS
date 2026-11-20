@@ -65,10 +65,7 @@ export default async function SignUpPage() {
           </p>
         ) : schemesCall.problem ? (
           <p className="bg-card shadow-card text-muted-foreground mb-5 flex items-start gap-2 rounded-xl px-4 py-3 text-sm">
-            <Icons.AlertTriangle
-              className="text-warning-foreground dark:text-warning mt-0.5 size-4 shrink-0"
-              aria-hidden
-            />
+            <Icons.AlertTriangle className="text-warning-text mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
               We could not load the open cycles just now. You can still create an account — the
               deadlines will be on your dashboard.

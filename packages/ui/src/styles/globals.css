@@ -62,7 +62,15 @@
   --success: oklch(0.596 0.126 156);
   --success-foreground: oklch(0.985 0.004 264);
   --warning: oklch(0.768 0.148 76);
+  /* Ink for text ON the solid amber fill. Dark in both themes, because the
+     fill is light in both. Never use it for amber text on a card. */
   --warning-foreground: oklch(0.268 0.045 76);
+  /* Amber TEXT, on an ordinary surface — a card, the page, a 10% amber tint.
+     A separate token because the two cases want opposite lightness and sharing
+     one was a real defect: `--warning-foreground` is dark, so amber text on a
+     dark card measured about 1.05:1 and could not be read at all. Here it is
+     dark on a light ground and light on a dark one, which is the whole job. */
+  --warning-text: oklch(0.268 0.045 76);
   --info: oklch(0.588 0.128 244);
   --info-foreground: oklch(0.985 0.004 264);
 
@@ -169,6 +177,7 @@
   --success-foreground: oklch(0.171 0.016 266);
   --warning: oklch(0.828 0.138 78);
   --warning-foreground: oklch(0.216 0.038 76);
+  --warning-text: oklch(0.828 0.138 78);
   --info: oklch(0.688 0.122 244);
   --info-foreground: oklch(0.171 0.016 266);
 
@@ -353,6 +362,7 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-text: var(--warning-text);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-gold: var(--gold);

@@ -1,13 +1,13 @@
-import type { AdmissionScheme } from "@acmis/api-client"
+import type { PublicAdmissionScheme } from "@acmis/api-client"
 
 /**
  * Whether a cycle can actually be applied to right now.
  *
- * `status === "open"` is not the same question. A scheme stays `open` until
- * somebody in the admissions office closes it, so one whose late deadline
- * passed last week is still `open` while `start_application` refuses it with
- * "Applications closed on …". Offering it anyway sends an applicant through a
- * programme chooser to a dead end, which is the worst place to be told.
+ * Being listed is not the same question. A scheme stays open until somebody in
+ * the admissions office closes it, so one whose late deadline passed last week
+ * is still listed while `start_application` refuses it with "Applications
+ * closed on …". Offering it anyway sends an applicant through a programme
+ * chooser to a dead end, which is the worst place to be told.
  *
  * Deliberately applied in the journey rather than to `/public/admission-schemes`
  * itself. That endpoint reports what the institution has marked open, and two
@@ -15,14 +15,22 @@ import type { AdmissionScheme } from "@acmis/api-client"
  * name to the scheme an existing application was made under, which does not
  * stop being true when the cycle closes.
  */
-export function isOpenNow(scheme: AdmissionScheme, now: Date = new Date()): boolean {
-  if (scheme.status !== "open") return false
+export function isOpenNow(scheme: PublicAdmissionScheme, now: Date = new Date()): boolean {
+  // No status check: `/public/admission-schemes` already returns only schemes
+  // the institution has marked open, and its payload carries no `status` field
+  // to test. An earlier version of this read `scheme.status !== "open"` against
+  // the full `AdmissionScheme` type, which the endpoint does not return — the
+  // field was `undefined` on every row, every cycle was filtered out, and the
+  // apply journey offered nothing at all while looking perfectly healthy.
   const deadline = scheme.late_closes_at ?? scheme.closes_at
   return new Date(deadline).getTime() >= now.getTime()
 }
 
 /** Those that can be applied to, soonest deadline first. */
-export function openNow(schemes: AdmissionScheme[], now: Date = new Date()): AdmissionScheme[] {
+export function openNow(
+  schemes: PublicAdmissionScheme[],
+  now: Date = new Date(),
+): PublicAdmissionScheme[] {
   return schemes
     .filter((scheme) => isOpenNow(scheme, now))
     .sort((a, b) =>

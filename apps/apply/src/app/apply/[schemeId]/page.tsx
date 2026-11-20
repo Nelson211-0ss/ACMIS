@@ -56,12 +56,25 @@ export default async function ChooseProgrammesPage({
   if (!scheme && schemesCall.ok) notFound()
 
   const intakes = intakesCall.data ?? []
-  const maxChoices = Math.min(scheme?.max_programme_choices ?? 3, 3)
+  /*
+   * Two limits, and the smaller wins.
+   *
+   * The scheme's `max_programme_choices` is the institution's rule and is what
+   * the card on the previous screen quotes — this page hard-coded three and so
+   * offered three selects under a card promising six, which is the kind of
+   * disagreement that makes a reader distrust both numbers.
+   *
+   * The number of programmes actually on offer is the other limit, and it is
+   * the one that bites here: the demo cycle allows six choices and publishes
+   * three programmes. Six dropdowns over three options is an invitation to
+   * discover that you cannot fill them in.
+   */
+  const maxChoices = Math.max(1, Math.min(scheme?.max_programme_choices ?? 3, intakes.length))
 
   async function startApplication(formData: FormData) {
     "use server"
 
-    const chosen = Array.from({ length: 3 }, (_, i) =>
+    const chosen = Array.from({ length: maxChoices }, (_, i) =>
       String(formData.get(`choice_${i + 1}`) ?? ""),
     ).filter(Boolean)
 
@@ -125,11 +138,17 @@ export default async function ChooseProgrammesPage({
           <div className="space-y-4">
             {Array.from({ length: maxChoices }, (_, index) => {
               const n = index + 1
-              const label = ["First choice", "Second choice", "Third choice"][index]
+              // Named as far as the words stay natural, then numbered. A
+              // scheme may allow more choices than there are English ordinals
+              // anybody reads comfortably, and "Choice 7" is better than
+              // "undefined choice".
+              const label =
+                ["First", "Second", "Third", "Fourth", "Fifth", "Sixth"][index] ?? `Choice ${n}`
+              const heading = index < 6 ? `${label} choice` : label
               return (
                 <div key={n} className="bg-card shadow-card space-y-1.5 rounded-lg p-4">
                   <label htmlFor={`choice_${n}`} className="text-sm font-medium">
-                    {label}{" "}
+                    {heading}{" "}
                     {n > 1 ? (
                       <span className="text-muted-foreground font-normal">(optional)</span>
                     ) : null}

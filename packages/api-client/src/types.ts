@@ -138,6 +138,32 @@ export type ApplicationStatus =
   | "enrolled"
   | "withdrawn"
 
+/**
+ * What `/public/admission-schemes` returns, which is NOT an `AdmissionScheme`.
+ *
+ * The public endpoint serves a deliberately narrower projection — no `status`,
+ * no `requires_interview`, no internal dates — because it is read by people
+ * with no account. Typing it as the full record was a quiet lie that cost a
+ * real bug: a filter checked `scheme.status !== "open"`, the field was
+ * `undefined` on every row, and the apply journey silently offered nothing at
+ * all. The endpoint already returns only open schemes, so there is no status
+ * to check; this type is what stops the next person looking for one.
+ */
+export interface PublicAdmissionScheme {
+  id: Uuid
+  code: string
+  name: string
+  description: string | null
+  entry_scheme: string
+  study_level: string
+  opens_at: Instant
+  closes_at: Instant
+  late_closes_at: Instant | null
+  application_fee_minor: number
+  currency: string
+  max_programme_choices: number
+}
+
 export interface AdmissionScheme {
   id: Uuid
   code: string

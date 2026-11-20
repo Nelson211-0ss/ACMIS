@@ -118,7 +118,7 @@ export default async function MyApplicationsPage({
           {needsYou.length > 0 ? (
             <p className="border-warning/40 bg-warning/10 flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm">
               <Icons.AlertTriangle
-                className="text-warning-foreground dark:text-warning mt-0.5 size-4 shrink-0"
+                className="text-warning-text mt-0.5 size-4 shrink-0"
                 aria-hidden
               />
               <span>

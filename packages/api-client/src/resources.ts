@@ -1,5 +1,6 @@
 import type { AcmisClient, RequestOptions } from "./core/client"
 import type {
+  PublicAdmissionScheme,
   AcquisitionRow,
   BallotReceipt,
   CandidateRow,
@@ -752,7 +753,7 @@ export const api = (client: AcmisClient) => ({
   public: {
     institution: () => client.get<Institution>("/api/v1/public/institution"),
     programmes: () => client.get<Array<Record<string, unknown>>>("/api/v1/public/programmes"),
-    admissionSchemes: () => client.get<AdmissionScheme[]>("/api/v1/public/admission-schemes"),
+    admissionSchemes: () => client.get<PublicAdmissionScheme[]>("/api/v1/public/admission-schemes"),
     /** The programmes on offer under one open scheme, for the apply journey. */
     schemeIntakes: (schemeId: Uuid) =>
       client.get<

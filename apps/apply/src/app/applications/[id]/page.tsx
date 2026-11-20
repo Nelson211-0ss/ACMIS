@@ -124,10 +124,7 @@ export default async function ApplicationPage({
       >
         <h2 className="flex items-center gap-2 text-base">
           {meaning.yours ? (
-            <Icons.AlertTriangle
-              className="text-warning-foreground dark:text-warning size-4 shrink-0"
-              aria-hidden
-            />
+            <Icons.AlertTriangle className="text-warning-text size-4 shrink-0" aria-hidden />
           ) : (
             <Icons.Info className="text-module size-4 shrink-0" aria-hidden />
           )}
