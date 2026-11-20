@@ -26,9 +26,9 @@ const TONES: Record<StatusTone, string> = {
   neutral: "bg-muted text-muted-foreground ring-border",
   info: "bg-info/10 text-info ring-info/25",
   success: "bg-success/10 text-success ring-success/25",
-  warning: "bg-warning/15 text-warning-foreground ring-warning/35",
+  warning: "bg-warning/15 text-warning-text ring-warning/35",
   danger: "bg-destructive/10 text-destructive ring-destructive/25",
-  gold: "bg-gold/15 text-gold-foreground ring-gold/35",
+  gold: "bg-gold/15 text-gold-text ring-gold/35",
 }
 
 const DOTS: Record<StatusTone, string> = {

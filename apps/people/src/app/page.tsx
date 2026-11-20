@@ -71,7 +71,7 @@ export default async function PeopleOverview() {
 
       {expiring.length > 0 ? (
         <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-          <h2 className="text-warning-foreground flex items-center gap-2 text-sm font-semibold">
+          <h2 className="text-warning-text flex items-center gap-2 text-sm font-semibold">
             <Icons.CalendarClock className="size-4" aria-hidden />
             {expiring.length} contract{expiring.length === 1 ? "" : "s"} ending within three months
           </h2>
@@ -93,7 +93,7 @@ export default async function PeopleOverview() {
                     {person.rank ? ` · ${person.rank}` : ""}
                   </span>
                 </span>
-                <span className="text-warning-foreground text-xs font-medium">
+                <span className="text-warning-text text-xs font-medium">
                   ends {date(person.contract_ends_on, institution?.locale)}
                 </span>
               </li>

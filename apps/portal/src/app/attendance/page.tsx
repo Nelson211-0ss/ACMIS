@@ -89,7 +89,7 @@ export default async function AttendancePage() {
 
           {short.length > 0 ? (
             <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-              <h2 className="text-warning-foreground flex items-center gap-2 text-sm font-semibold">
+              <h2 className="text-warning-text flex items-center gap-2 text-sm font-semibold">
                 <Icons.TriangleAlert className="size-4" aria-hidden />
                 {short.length === 1
                   ? "One course is below the threshold"
@@ -107,7 +107,7 @@ export default async function AttendancePage() {
                   <li key={row.course_offering_id}>
                     <span className="font-mono text-xs">{row.course_code || "—"}</span>
                     <span className="ml-2">{row.course_title}</span>
-                    <span className="text-warning-foreground ml-2 font-medium">
+                    <span className="text-warning-text ml-2 font-medium">
                       {row.percentage}%
                     </span>
                   </li>

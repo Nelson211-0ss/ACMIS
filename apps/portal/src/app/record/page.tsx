@@ -223,7 +223,7 @@ export default async function RecordPage() {
                 timeOff.standing === "exceeded"
                   ? "text-destructive mt-3 text-sm"
                   : timeOff.standing === "final_chance"
-                    ? "text-warning-foreground mt-3 text-sm"
+                    ? "text-warning-text mt-3 text-sm"
                     : "text-muted-foreground mt-3 text-sm"
               }
             >

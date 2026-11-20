@@ -93,7 +93,7 @@ export default async function ElectionPage({ params }: { params: Promise<{ id: s
           </section>
         ) : entitlement?.eligible === false ? (
           <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-            <h2 className="text-warning-foreground text-sm font-semibold">
+            <h2 className="text-warning-text text-sm font-semibold">
               You cannot vote in this election
             </h2>
             <p className="text-muted-foreground mt-1 text-sm">
@@ -171,7 +171,7 @@ export default async function ElectionPage({ params }: { params: Promise<{ id: s
                     declared {dateTime(result.declared_at)}
                   </p>
                   {result.tie_break_note ? (
-                    <p className="text-warning-foreground mt-2 text-xs">
+                    <p className="text-warning-text mt-2 text-xs">
                       Tie broken: {result.tie_break_note}
                     </p>
                   ) : null}

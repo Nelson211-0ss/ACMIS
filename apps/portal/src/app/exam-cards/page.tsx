@@ -193,7 +193,7 @@ export default async function ExamCardsPage() {
                 </dl>
 
                 {card.override_reason ? (
-                  <p className="text-warning-foreground bg-warning/10 border-t px-4 py-3 text-xs">
+                  <p className="text-warning-text bg-warning/10 border-t px-4 py-3 text-xs">
                     Issued on an override: {card.override_reason}
                   </p>
                 ) : null}

@@ -108,7 +108,7 @@ export default async function ApplicationsPage({
       secondary: true,
       render: (row) =>
         row.flags.length > 0 ? (
-          <span className="text-warning-foreground text-xs">{row.flags.join(", ")}</span>
+          <span className="text-warning-text text-xs">{row.flags.join(", ")}</span>
         ) : (
           <span className="text-muted-foreground">—</span>
         ),

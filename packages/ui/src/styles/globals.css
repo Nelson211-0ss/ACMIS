@@ -54,7 +54,11 @@
 
   /* Degree Gold — conferment, honours, seals. Not a UI accent. */
   --gold: oklch(0.792 0.128 82);
+  /* Ink for text ON the solid gold fill. */
   --gold-foreground: oklch(0.268 0.045 76);
+  /* Gold TEXT on an ordinary surface or a gold tint — same split, and the
+     same reason, as `--warning-text`. */
+  --gold-text: oklch(0.268 0.045 76);
 
   /* --- semantics --------------------------------------------------------- */
   --destructive: oklch(0.577 0.204 27);
@@ -170,6 +174,7 @@
 
   --gold: oklch(0.828 0.132 84);
   --gold-foreground: oklch(0.216 0.038 76);
+  --gold-text: oklch(0.828 0.132 84);
 
   --destructive: oklch(0.681 0.184 25);
   --destructive-foreground: oklch(0.171 0.016 266);
@@ -367,6 +372,7 @@
   --color-info-foreground: var(--info-foreground);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
+  --color-gold-text: var(--gold-text);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

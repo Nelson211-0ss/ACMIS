@@ -177,7 +177,7 @@ export default async function AssessmentOverview() {
           />
           {overdue.length > 0 ? (
             <div className="border-t pt-3">
-              <p className="text-warning-foreground text-sm font-medium">
+              <p className="text-warning-text text-sm font-medium">
                 {overdue.length} sheet{overdue.length === 1 ? "" : "s"} past the deadline
               </p>
               <ul className="mt-2 space-y-1">

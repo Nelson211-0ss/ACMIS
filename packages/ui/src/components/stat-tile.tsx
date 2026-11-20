@@ -122,7 +122,7 @@ export function StatTile({
   const toneText = {
     neutral: "text-foreground",
     success: "text-success",
-    warning: "text-warning-foreground",
+    warning: "text-warning-text",
     destructive: "text-destructive",
   }[tone]
 

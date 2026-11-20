@@ -85,7 +85,7 @@ export default async function LauncherPage() {
 
       <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6">
         {user.is_impersonated ? (
-          <p className="border-warning/40 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm">
+          <p className="border-warning/40 bg-warning/10 text-warning-text rounded-lg border px-4 py-3 text-sm">
             You are in a read-only support session. Every action is recorded in this
             institution&rsquo;s audit trail.
           </p>

@@ -95,7 +95,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
 
       {activeHolds.length > 0 ? (
         <section className="border-warning/40 bg-warning/10 rounded-lg border p-4">
-          <h2 className="text-warning-foreground flex items-center gap-2 text-sm font-semibold">
+          <h2 className="text-warning-text flex items-center gap-2 text-sm font-semibold">
             <Icons.Lock className="size-4" aria-hidden />
             {activeHolds.length} hold{activeHolds.length === 1 ? "" : "s"} on this record
           </h2>
@@ -192,7 +192,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
                 formatValue={(v) => number(v)}
               />
               {primary.outstanding_retakes > 0 ? (
-                <p className="text-warning-foreground text-xs">
+                <p className="text-warning-text text-xs">
                   {primary.outstanding_retakes} outstanding retake
                   {primary.outstanding_retakes === 1 ? "" : "s"}. An award cannot be classified
                   until these are cleared.

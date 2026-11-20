@@ -446,7 +446,7 @@ function SubmitDialog({
           {unanswered > 0 ? (
             <>
               {" "}
-              <strong className="text-warning-foreground">
+              <strong className="text-warning-text">
                 {unanswered} question{unanswered === 1 ? "" : "s"} unanswered
               </strong>{" "}
               — an unanswered question scores zero.
@@ -454,7 +454,7 @@ function SubmitDialog({
           ) : null}
         </p>
         {unsaved > 0 ? (
-          <p className="border-warning/40 bg-warning/10 text-warning-foreground mt-3 rounded-md border px-3 py-2 text-sm">
+          <p className="border-warning/40 bg-warning/10 text-warning-text mt-3 rounded-md border px-3 py-2 text-sm">
             {unsaved} answer{unsaved === 1 ? "" : "s"} not yet saved. Submitting will try to save{" "}
             {unsaved === 1 ? "it" : "them"} first.
           </p>
@@ -532,7 +532,7 @@ function QuestionCard({
           aria-label={flagged ? "Remove flag" : "Flag for review"}
           className={cn(
             "grid size-11 shrink-0 place-items-center rounded-md border",
-            flagged ? "border-warning bg-warning/15 text-warning-foreground" : "hover:bg-muted",
+            flagged ? "border-warning bg-warning/15 text-warning-text" : "hover:bg-muted",
           )}
         >
           <Icons.Flag className="size-4" aria-hidden />

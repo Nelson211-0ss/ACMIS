@@ -128,7 +128,7 @@ export default async function IdCardPage() {
           </div>
 
           {active.collected_at ? null : (
-            <p className="text-warning-foreground border-warning/40 bg-warning/10 max-w-md rounded-lg border px-4 py-3 text-sm">
+            <p className="text-warning-text border-warning/40 bg-warning/10 max-w-md rounded-lg border px-4 py-3 text-sm">
               This card has been issued but not collected. Pick it up from the registry counter;
               bring something else with your photograph on it.
             </p>

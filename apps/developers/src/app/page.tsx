@@ -138,7 +138,7 @@ export default async function DevelopersOverview() {
                       Scopes: {apiClient.granted_scopes.join(", ")}
                     </p>
                   ) : (
-                    <p className="text-warning-foreground mt-1.5 text-xs">
+                    <p className="text-warning-text mt-1.5 text-xs">
                       No scopes granted — this client cannot read anything yet.
                     </p>
                   )}

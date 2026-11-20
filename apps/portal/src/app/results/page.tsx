@@ -59,7 +59,7 @@ export default async function ResultsPage() {
       ) : null}
 
       {primary && primary.outstanding_retakes > 0 ? (
-        <p className="border-warning/40 bg-warning/10 text-warning-foreground rounded-lg border px-4 py-3 text-sm">
+        <p className="border-warning/40 bg-warning/10 text-warning-text rounded-lg border px-4 py-3 text-sm">
           You have {primary.outstanding_retakes} outstanding retake
           {primary.outstanding_retakes === 1 ? "" : "s"}. Your award cannot be classified until they
           are cleared.
@@ -109,7 +109,7 @@ export default async function ResultsPage() {
                     <span className="font-mono text-xs">{result.course_code}</span>
                     <span className="ml-2">{result.course_title}</span>
                     {result.is_retake ? (
-                      <span className="text-warning-foreground ml-2 text-xs">
+                      <span className="text-warning-text ml-2 text-xs">
                         retake {result.attempt_number}
                       </span>
                     ) : null}
