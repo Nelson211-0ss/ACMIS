@@ -74,6 +74,8 @@ export interface WhoAmI {
   id: Uuid
   kind: PrincipalKind
   display_name: string
+  /** What this actor signs in with: staff number, student number, applicant reference. */
+  username: string | null
   email: string | null
   tenant_slug: string
   tenant_name: string
@@ -305,13 +307,7 @@ export interface MyRegistration extends Omit<Registration, "courses"> {
 // --- curriculum -------------------------------------------------------------
 
 export type ApprovalStatus =
-  | "draft"
-  | "submitted"
-  | "returned"
-  | "recommended"
-  | "approved"
-  | "rejected"
-  | "retired"
+  "draft" | "submitted" | "returned" | "recommended" | "approved" | "rejected" | "retired"
 
 export interface Programme {
   id: Uuid
@@ -471,21 +467,10 @@ export type QuestionKind =
   | "calculated"
 
 export type AssessmentBehaviour =
-  | "deferred_feedback"
-  | "immediate_feedback"
-  | "interactive_with_tries"
-  | "adaptive"
-  | "manual"
+  "deferred_feedback" | "immediate_feedback" | "interactive_with_tries" | "adaptive" | "manual"
 
 export type AssessmentStatus =
-  | "draft"
-  | "review"
-  | "scheduled"
-  | "open"
-  | "closed"
-  | "marking"
-  | "marked"
-  | "released"
+  "draft" | "review" | "scheduled" | "open" | "closed" | "marking" | "marked" | "released"
 
 export interface CourseSpace {
   id: Uuid

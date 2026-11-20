@@ -108,16 +108,14 @@ export const api = (client: AcmisClient) => ({
       client.post<TokenResponse>("/api/v1/auth/login", { username, password }),
     refresh: () => client.post<TokenResponse>("/api/v1/auth/refresh"),
     logout: () => client.post<void>("/api/v1/auth/logout"),
-    whoami: (options?: RequestOptions) =>
-      client.get<WhoAmI>("/api/v1/auth/whoami", options),
+    whoami: (options?: RequestOptions) => client.get<WhoAmI>("/api/v1/auth/whoami", options),
     changePassword: (body: { current_password?: string; new_password: string }) =>
       client.post<void>("/api/v1/auth/change-password", body),
     forgotPassword: (email: string) =>
       client.post<{ message: string }>("/api/v1/auth/forgot-password", { email }),
     resetPassword: (token: string, new_password: string) =>
       client.post<void>("/api/v1/auth/reset-password", { token, new_password }),
-    verifyMfa: (code: string) =>
-      client.post<TokenResponse>("/api/v1/auth/mfa/verify", { code }),
+    verifyMfa: (code: string) => client.post<TokenResponse>("/api/v1/auth/mfa/verify", { code }),
   },
 
   /**
@@ -177,8 +175,7 @@ export const api = (client: AcmisClient) => ({
           semesters: Semester[]
         }>
       >("/api/v1/reference/academic-years"),
-    currentSemester: () =>
-      client.get<Semester | null>("/api/v1/reference/semesters/current"),
+    currentSemester: () => client.get<Semester | null>("/api/v1/reference/semesters/current"),
     campuses: () =>
       client.get<Array<{ id: Uuid; code: string; name: string; is_main: boolean }>>(
         "/api/v1/reference/campuses",
@@ -236,6 +233,9 @@ export const api = (client: AcmisClient) => ({
       client.get<RecordEnvelope<Application & Record<string, unknown>>>(
         `/api/v1/admissions/applications/${id}`,
       ),
+    /** The caller's own applications, newest first. Applicants only. */
+    myApplications: (query: PageQuery = {}) =>
+      client.get<Page<Application>>("/api/v1/admissions/me/applications", { query }),
     startApplication: (body: { scheme_id: Uuid; programme_intake_ids: Uuid[] }) =>
       client.post<Application>("/api/v1/admissions/applications", body),
     updateApplication: (id: Uuid, body: Record<string, unknown>) =>
@@ -249,10 +249,9 @@ export const api = (client: AcmisClient) => ({
     generateSelectionList: (body: Record<string, unknown>) =>
       client.post<Record<string, unknown>>("/api/v1/admissions/selection-lists", body),
     approveSelectionList: (id: Uuid, reason: string) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/admissions/selection-lists/${id}/approve`,
-        { reason },
-      ),
+      client.post<Record<string, unknown>>(`/api/v1/admissions/selection-lists/${id}/approve`, {
+        reason,
+      }),
     issueOffers: (id: Uuid) =>
       client.post<{ issued: number; refused: Array<Record<string, string>> }>(
         `/api/v1/admissions/selection-lists/${id}/issue-offers`,
@@ -281,12 +280,10 @@ export const api = (client: AcmisClient) => ({
         search?: string
       } = {},
     ) => client.get<Page<Student>>("/api/v1/students", { query }),
-    get: (id: Uuid) =>
-      client.get<RecordEnvelope<Student>>(`/api/v1/students/${id}`),
+    get: (id: Uuid) => client.get<RecordEnvelope<Student>>(`/api/v1/students/${id}`),
     myRecord: () => client.get<RecordEnvelope<Student>>("/api/v1/students/me/record"),
     /** Every semester this student has registered for, newest first. */
-    myRegistrations: () =>
-      client.get<MyRegistration[]>("/api/v1/students/me/registrations"),
+    myRegistrations: () => client.get<MyRegistration[]>("/api/v1/students/me/registrations"),
     /** This semester's classes and examinations, from the registration. */
     myTimetable: () => client.get<MyTimetable>("/api/v1/students/me/timetable"),
     update: (id: Uuid, body: Partial<Student>) =>
@@ -298,33 +295,22 @@ export const api = (client: AcmisClient) => ({
         body: { reason },
       } as RequestOptions),
     requestStatusChange: (id: Uuid, body: Record<string, unknown>) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/students/${id}/status-changes`,
-        body,
-      ),
-    approveStatusChange: (
-      changeId: Uuid,
-      body: { reason: string; minute_reference?: string },
-    ) =>
+      client.post<Record<string, unknown>>(`/api/v1/students/${id}/status-changes`, body),
+    approveStatusChange: (changeId: Uuid, body: { reason: string; minute_reference?: string }) =>
       client.post<Record<string, unknown>>(
         `/api/v1/students/status-changes/${changeId}/approve`,
         body,
       ),
     openRegistration: (studentId: Uuid, semesterId: Uuid) =>
-      client.post<Registration>(
-        `/api/v1/students/${studentId}/registrations`,
-        undefined,
-        { query: { semester_id: semesterId } },
-      ),
+      client.post<Registration>(`/api/v1/students/${studentId}/registrations`, undefined, {
+        query: { semester_id: semesterId },
+      }),
     setRegistrationCourses: (registrationId: Uuid, courseOfferingIds: Uuid[]) =>
-      client.put<Registration>(
-        `/api/v1/students/registrations/${registrationId}/courses`,
-        { course_offering_ids: courseOfferingIds },
-      ),
+      client.put<Registration>(`/api/v1/students/registrations/${registrationId}/courses`, {
+        course_offering_ids: courseOfferingIds,
+      }),
     submitRegistration: (registrationId: Uuid) =>
-      client.post<Registration>(
-        `/api/v1/students/registrations/${registrationId}/submit`,
-      ),
+      client.post<Registration>(`/api/v1/students/registrations/${registrationId}/submit`),
     clearance: (studentId: Uuid, purpose = "graduation") =>
       client.get<
         Array<{
@@ -340,8 +326,7 @@ export const api = (client: AcmisClient) => ({
   curriculum: {
     programmes: (
       query: PageQuery & { status?: string; unit_id?: Uuid; active_only?: boolean } = {},
-    ) =>
-      client.get<Page<Programme>>("/api/v1/curriculum/programmes", { query }),
+    ) => client.get<Page<Programme>>("/api/v1/curriculum/programmes", { query }),
     createProgramme: (body: Record<string, unknown>) =>
       client.post<Programme>("/api/v1/curriculum/programmes", body),
     createVersion: (body: Record<string, unknown>) =>
@@ -350,11 +335,7 @@ export const api = (client: AcmisClient) => ({
       id: Uuid,
       action: "submit" | "recommend" | "approve" | "reject" | "return",
       body: { reason: string; minute_reference?: string },
-    ) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/curriculum/versions/${id}/${action}`,
-        body,
-      ),
+    ) => client.post<Record<string, unknown>>(`/api/v1/curriculum/versions/${id}/${action}`, body),
     courses: (query: PageQuery & { unit_id?: Uuid; level?: number; search?: string } = {}) =>
       client.get<Page<Course>>("/api/v1/curriculum/courses", { query }),
     createCourse: (body: Record<string, unknown>) =>
@@ -367,10 +348,7 @@ export const api = (client: AcmisClient) => ({
     createOffering: (body: Record<string, unknown>) =>
       client.post<Record<string, unknown>>("/api/v1/curriculum/offerings", body),
     allocateTeaching: (offeringId: Uuid, body: Record<string, unknown>) =>
-      client.post<{ id: string }>(
-        `/api/v1/curriculum/offerings/${offeringId}/allocations`,
-        body,
-      ),
+      client.post<{ id: string }>(`/api/v1/curriculum/offerings/${offeringId}/allocations`, body),
     createTimetableSlot: (body: Record<string, unknown>) =>
       client.post<{ id: string }>("/api/v1/curriculum/timetable", body),
   },
@@ -414,22 +392,16 @@ export const api = (client: AcmisClient) => ({
     createBank: (body: Record<string, unknown>) =>
       client.post<Record<string, unknown>>("/api/v1/learning/banks", body),
     addQuestion: (bankId: Uuid, body: Record<string, unknown>) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/learning/banks/${bankId}/questions`,
-        body,
-      ),
+      client.post<Record<string, unknown>>(`/api/v1/learning/banks/${bankId}/questions`, body),
     questions: (
       bankId: Uuid,
       query: PageQuery & { topic?: string; kind?: string; include_answers?: boolean } = {},
     ) =>
-      client.get<Page<Record<string, unknown>>>(
-        `/api/v1/learning/banks/${bankId}/questions`,
-        { query },
-      ),
+      client.get<Page<Record<string, unknown>>>(`/api/v1/learning/banks/${bankId}/questions`, {
+        query,
+      }),
     assessment: (id: Uuid) =>
-      client.get<RecordEnvelope<OnlineAssessment>>(
-        `/api/v1/learning/assessments/${id}`,
-      ),
+      client.get<RecordEnvelope<OnlineAssessment>>(`/api/v1/learning/assessments/${id}`),
     spaceAssessments: (spaceId: Uuid) =>
       client.get<OnlineAssessment[]>(`/api/v1/learning/spaces/${spaceId}/assessments`),
     myAttempts: () =>
@@ -451,26 +423,20 @@ export const api = (client: AcmisClient) => ({
         }>
       >("/api/v1/learning/me/attempts"),
     createAssessment: (spaceId: Uuid, body: Record<string, unknown>) =>
-      client.post<OnlineAssessment>(
-        `/api/v1/learning/spaces/${spaceId}/assessments`,
-        body,
-      ),
+      client.post<OnlineAssessment>(`/api/v1/learning/spaces/${spaceId}/assessments`, body),
     addItem: (assessmentId: Uuid, body: Record<string, unknown>) =>
       client.post<{ id: string; total_marks: number }>(
         `/api/v1/learning/assessments/${assessmentId}/items`,
         body,
       ),
     submitForReview: (id: Uuid) =>
-      client.post<OnlineAssessment>(
-        `/api/v1/learning/assessments/${id}/submit-for-review`,
-      ),
+      client.post<OnlineAssessment>(`/api/v1/learning/assessments/${id}/submit-for-review`),
     review: (id: Uuid, approve: boolean, comments?: string) =>
       client.post<OnlineAssessment>(`/api/v1/learning/assessments/${id}/review`, {
         approve,
         comments,
       }),
-    open: (id: Uuid) =>
-      client.post<OnlineAssessment>(`/api/v1/learning/assessments/${id}/open`),
+    open: (id: Uuid) => client.post<OnlineAssessment>(`/api/v1/learning/assessments/${id}/open`),
     startAttempt: (assessmentId: Uuid, password?: string) =>
       client.post<Attempt>(`/api/v1/learning/assessments/${assessmentId}/attempts`, {
         password,
@@ -567,13 +533,7 @@ export const api = (client: AcmisClient) => ({
     ) => client.post<BulkResult>(`/api/v1/assessment/mark-sheets/${id}/marks`, { entries }),
     transition: (
       id: Uuid,
-      action:
-        | "submit"
-        | "moderate"
-        | "approve"
-        | "faculty_approve"
-        | "senate_approve"
-        | "return",
+      action: "submit" | "moderate" | "approve" | "faculty_approve" | "senate_approve" | "return",
       body: { note?: string; minute_reference?: string; adjustment?: number } = {},
     ) => client.post<MarkSheet>(`/api/v1/assessment/mark-sheets/${id}/${action}`, body),
     release: (body: {
@@ -594,9 +554,7 @@ export const api = (client: AcmisClient) => ({
         query: { semester_id: semesterId },
       }),
     transcript: (studentId: Uuid) =>
-      client.get<Record<string, unknown>>(
-        `/api/v1/assessment/students/${studentId}/transcript`,
-      ),
+      client.get<Record<string, unknown>>(`/api/v1/assessment/students/${studentId}/transcript`),
     issueTranscript: (studentId: Uuid, body: Record<string, unknown>) =>
       client.post<Record<string, unknown>>(
         `/api/v1/assessment/students/${studentId}/transcript/issue`,
@@ -635,10 +593,9 @@ export const api = (client: AcmisClient) => ({
     raiseWaiver: (body: Record<string, unknown>) =>
       client.post<Record<string, unknown>>("/api/v1/finance/waivers", body),
     releaseWaiver: (waiverId: Uuid, reason: string) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/finance/waivers/${waiverId}/release`,
-        { reason },
-      ),
+      client.post<Record<string, unknown>>(`/api/v1/finance/waivers/${waiverId}/release`, {
+        reason,
+      }),
     feeStructures: (query: PageQuery & { academic_year_id?: Uuid } = {}) =>
       client.get<Page<Record<string, unknown>>>("/api/v1/finance/fee-structures", { query }),
     trialBalance: (periodCode: string) =>
@@ -676,8 +633,7 @@ export const api = (client: AcmisClient) => ({
     reminders: (query: PageQuery & { student_id?: Uuid } = {}) =>
       client.get<Page<DunningNoticeRow>>("/api/v1/finance/reminders", { query }),
     /** What is blocked, under which rule, and what would lift it. */
-    blocks: (studentId: Uuid) =>
-      client.get<BlockState>(`/api/v1/finance/blocks/${studentId}`),
+    blocks: (studentId: Uuid) => client.get<BlockState>(`/api/v1/finance/blocks/${studentId}`),
     runLatePayment: (dryRun = true) =>
       client.post<Record<string, unknown>>("/api/v1/finance/jobs/late-payment", {
         dry_run: dryRun,
@@ -688,8 +644,7 @@ export const api = (client: AcmisClient) => ({
     list: (query: PageQuery & { unit_id?: Uuid; category?: string; search?: string } = {}) =>
       client.get<Page<Staff>>("/api/v1/people", { query }),
     get: (id: Uuid) => client.get<RecordEnvelope<Staff>>(`/api/v1/people/${id}`),
-    update: (id: Uuid, body: Partial<Staff>) =>
-      client.patch<Staff>(`/api/v1/people/${id}`, body),
+    update: (id: Uuid, body: Partial<Staff>) => client.patch<Staff>(`/api/v1/people/${id}`, body),
     requestLeave: (body: Record<string, unknown>) =>
       client.post<LeaveRequest>("/api/v1/people/leave", body),
     decideLeave: (
@@ -701,11 +656,9 @@ export const api = (client: AcmisClient) => ({
         query: { semester_id: semesterId, unit_id: unitId },
       }),
     recomputeWorkload: (semesterId: Uuid) =>
-      client.post<{ staff_updated: number }>(
-        "/api/v1/people/workload/recompute",
-        undefined,
-        { query: { semester_id: semesterId } },
-      ),
+      client.post<{ staff_updated: number }>("/api/v1/people/workload/recompute", undefined, {
+        query: { semester_id: semesterId },
+      }),
   },
 
   governance: {
@@ -751,10 +704,7 @@ export const api = (client: AcmisClient) => ({
         query: { kind },
       }),
     runReport: (id: Uuid, body: Record<string, unknown>) =>
-      client.post<{ run_id: string; status: string }>(
-        `/api/v1/governance/reports/${id}/run`,
-        body,
-      ),
+      client.post<{ run_id: string; status: string }>(`/api/v1/governance/reports/${id}/run`, body),
     statutoryReturns: () =>
       client.get<Array<Record<string, unknown>>>("/api/v1/governance/statutory-returns"),
   },
@@ -772,9 +722,7 @@ export const api = (client: AcmisClient) => ({
         body,
       ),
     rotateKey: (keyId: Uuid) =>
-      client.post<ApiKeyRecord & { secret: string }>(
-        `/api/v1/developers/keys/${keyId}/rotate`,
-      ),
+      client.post<ApiKeyRecord & { secret: string }>(`/api/v1/developers/keys/${keyId}/rotate`),
     revokeKey: (keyId: Uuid, reason: string) =>
       client.post<ApiKeyRecord>(`/api/v1/developers/keys/${keyId}/revoke`, { reason }),
     createWebhook: (clientId: Uuid, body: { name: string; url: string; event_types: string[] }) =>
@@ -788,28 +736,67 @@ export const api = (client: AcmisClient) => ({
         { query },
       ),
     logs: (clientId: Uuid, query: PageQuery & { errors_only?: boolean } = {}) =>
-      client.get<Page<Record<string, unknown>>>(
-        `/api/v1/developers/clients/${clientId}/logs`,
-        { query },
-      ),
+      client.get<Page<Record<string, unknown>>>(`/api/v1/developers/clients/${clientId}/logs`, {
+        query,
+      }),
     usage: (clientId: Uuid, days = 7) =>
       client.get<{ window_days: number; paths: Array<Record<string, unknown>> }>(
         `/api/v1/developers/clients/${clientId}/usage`,
         { query: { days } },
       ),
     eventTypes: () =>
-      client.get<Array<{ type: string; description: string }>>(
-        "/api/v1/developers/event-types",
-      ),
+      client.get<Array<{ type: string; description: string }>>("/api/v1/developers/event-types"),
   },
 
   /** The genuinely public endpoints. No token required. */
   public: {
     institution: () => client.get<Institution>("/api/v1/public/institution"),
-    programmes: () =>
-      client.get<Array<Record<string, unknown>>>("/api/v1/public/programmes"),
-    admissionSchemes: () =>
-      client.get<AdmissionScheme[]>("/api/v1/public/admission-schemes"),
+    programmes: () => client.get<Array<Record<string, unknown>>>("/api/v1/public/programmes"),
+    admissionSchemes: () => client.get<AdmissionScheme[]>("/api/v1/public/admission-schemes"),
+    /** The programmes on offer under one open scheme, for the apply journey. */
+    schemeIntakes: (schemeId: Uuid) =>
+      client.get<
+        Array<{
+          programme_intake_id: Uuid
+          programme_code: string
+          programme_name: string
+          award_title: string
+          award_abbreviation: string
+          duration_semesters: number
+          entry_requirements: string | null
+          minimum_aggregate: number | null
+          previous_cutoff: number | null
+          tuition_per_semester_minor: number
+          approved_intake: number
+        }>
+      >(`/api/v1/public/admission-schemes/${schemeId}/intakes`),
+    /**
+     * Open an application account.
+     *
+     * The one write in this resource, and the only unauthenticated write in
+     * the client: the caller has no account yet, which is the point. The
+     * reference that comes back is also the username.
+     */
+    registerApplicant: (body: {
+      surname: string
+      given_names: string
+      other_names?: string
+      date_of_birth: string
+      sex: "female" | "male"
+      nationality?: string
+      country_code?: string
+      district_of_origin?: string
+      email: string
+      phone: string
+      national_id?: string
+      guardian_name?: string
+      guardian_phone?: string
+      password: string
+    }) =>
+      client.post<{ reference: string; email: string; display_name: string }>(
+        "/api/v1/public/applicants",
+        body,
+      ),
     verify: (serial: string) =>
       client.get<{
         found: boolean
@@ -823,7 +810,6 @@ export const api = (client: AcmisClient) => ({
         institution: string | null
       }>(`/api/v1/public/verify/${encodeURIComponent(serial)}`),
   },
-
 
   /**
    * The library.
@@ -846,16 +832,11 @@ export const api = (client: AcmisClient) => ({
     record: (recordId: Uuid) =>
       client.get<CatalogueRecordRow>(`/api/v1/library/records/${recordId}`),
     availability: (recordId: Uuid) =>
-      client.get<CatalogueAvailability>(
-        `/api/v1/library/records/${recordId}/availability`,
-      ),
+      client.get<CatalogueAvailability>(`/api/v1/library/records/${recordId}/availability`),
     copies: (recordId: Uuid) =>
       client.get<CatalogueCopyRow[]>(`/api/v1/library/records/${recordId}/copies`),
     addCopy: (recordId: Uuid, body: Record<string, unknown>) =>
-      client.post<CatalogueCopyRow>(
-        `/api/v1/library/records/${recordId}/copies`,
-        body,
-      ),
+      client.post<CatalogueCopyRow>(`/api/v1/library/records/${recordId}/copies`, body),
     members: (query: PageQuery & { q?: string; with_debt?: boolean } = {}) =>
       client.get<Page<LibraryMemberRow>>("/api/v1/library/members", { query }),
     createMember: (body: Record<string, unknown>) =>
@@ -882,13 +863,9 @@ export const api = (client: AcmisClient) => ({
     loans: (query: PageQuery & { member_id?: Uuid; overdue_only?: boolean } = {}) =>
       client.get<Page<LoanRow>>("/api/v1/library/loans", { query }),
     reserve: (recordId: Uuid) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/library/records/${recordId}/reservations`,
-      ),
+      client.post<Record<string, unknown>>(`/api/v1/library/records/${recordId}/reservations`),
     cancelReservation: (reservationId: Uuid) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/library/reservations/${reservationId}/cancel`,
-      ),
+      client.post<Record<string, unknown>>(`/api/v1/library/reservations/${reservationId}/cancel`),
     fines: (query: PageQuery & { member_id?: Uuid; unpaid_only?: boolean } = {}) =>
       client.get<Page<LibraryFineRow>>("/api/v1/library/fines", { query }),
     waiveFine: (fineId: Uuid, reason: string) =>
@@ -902,44 +879,32 @@ export const api = (client: AcmisClient) => ({
     branches: () => client.get<Array<Record<string, unknown>>>("/api/v1/library/branches"),
     clearance: (studentId: Uuid) =>
       client.get<LibraryClearance>(`/api/v1/library/clearance/${studentId}`),
-    runOverdue: () =>
-      client.post<Record<string, number>>("/api/v1/library/jobs/accrue-overdue"),
+    runOverdue: () => client.post<Record<string, number>>("/api/v1/library/jobs/accrue-overdue"),
   },
 
   /** Quality assurance: delivery, attendance, evaluations, observations, audits. */
   quality: {
     generateSessions: (offeringId: Uuid, body: Record<string, unknown>) =>
-      client.post<{ created: number }>(
-        `/api/v1/quality/offerings/${offeringId}/sessions`,
-        body,
-      ),
+      client.post<{ created: number }>(`/api/v1/quality/offerings/${offeringId}/sessions`, body),
     sessions: (offeringId: Uuid, query: PageQuery & { status?: string } = {}) =>
-      client.get<Page<ClassSessionRow>>(
-        `/api/v1/quality/offerings/${offeringId}/sessions`,
-        { query },
-      ),
+      client.get<Page<ClassSessionRow>>(`/api/v1/quality/offerings/${offeringId}/sessions`, {
+        query,
+      }),
     markRegister: (sessionId: Uuid, body: Record<string, unknown>) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/quality/sessions/${sessionId}/register`,
-        body,
-      ),
+      client.post<Record<string, unknown>>(`/api/v1/quality/sessions/${sessionId}/register`, body),
     closeRegister: (sessionId: Uuid) =>
       client.post<ClassSessionRow>(`/api/v1/quality/sessions/${sessionId}/close`),
     cancelSession: (sessionId: Uuid, body: { reason: string; announced?: boolean }) =>
-      client.post<ClassSessionRow>(
-        `/api/v1/quality/sessions/${sessionId}/cancel`,
-        body,
-      ),
+      client.post<ClassSessionRow>(`/api/v1/quality/sessions/${sessionId}/cancel`, body),
     checkIn: (sessionId: Uuid) =>
       client.post<void>(`/api/v1/quality/sessions/${sessionId}/check-in`),
     offeringAttendance: (offeringId: Uuid) =>
       client.get<AttendanceRow[]>(`/api/v1/quality/offerings/${offeringId}/attendance`),
     myAttendance: () => client.get<MyAttendanceRow[]>("/api/v1/quality/me/attendance"),
     disputeAttendance: (attendanceId: Uuid, reason: string) =>
-      client.post<Record<string, unknown>>(
-        `/api/v1/quality/attendance/${attendanceId}/dispute`,
-        { reason },
-      ),
+      client.post<Record<string, unknown>>(`/api/v1/quality/attendance/${attendanceId}/dispute`, {
+        reason,
+      }),
     resolveDispute: (attendanceId: Uuid, body: { status: string; reason: string }) =>
       client.post<Record<string, unknown>>(
         `/api/v1/quality/attendance/${attendanceId}/resolve`,
@@ -955,9 +920,7 @@ export const api = (client: AcmisClient) => ({
     createInstrument: (body: Record<string, unknown>) =>
       client.post<EvaluationInstrumentRow>("/api/v1/quality/instruments", body),
     publishInstrument: (id: Uuid) =>
-      client.post<EvaluationInstrumentRow>(
-        `/api/v1/quality/instruments/${id}/publish`,
-      ),
+      client.post<EvaluationInstrumentRow>(`/api/v1/quality/instruments/${id}/publish`),
     evaluations: (
       query: PageQuery & {
         semester_id?: Uuid
@@ -1010,10 +973,7 @@ export const api = (client: AcmisClient) => ({
     createAudit: (body: Record<string, unknown>) =>
       client.post<QualityAuditRow>("/api/v1/quality/audits", body),
     closeFinding: (auditId: Uuid, body: { finding_code: string; reason: string }) =>
-      client.post<QualityAuditRow>(
-        `/api/v1/quality/audits/${auditId}/close-finding`,
-        body,
-      ),
+      client.post<QualityAuditRow>(`/api/v1/quality/audits/${auditId}/close-finding`, body),
     indicators: (
       query: PageQuery & { code?: string; unit_id?: Uuid; below_target_only?: boolean } = {},
     ) => client.get<Page<QualityIndicatorRow>>("/api/v1/quality/indicators", { query }),
@@ -1036,8 +996,7 @@ export const api = (client: AcmisClient) => ({
     list: (query: PageQuery & { status?: string } = {}) =>
       client.get<Page<ElectionRow>>("/api/v1/elections", { query }),
     get: (id: Uuid) => client.get<ElectionRow>(`/api/v1/elections/${id}`),
-    create: (body: Record<string, unknown>) =>
-      client.post<ElectionRow>("/api/v1/elections", body),
+    create: (body: Record<string, unknown>) => client.post<ElectionRow>("/api/v1/elections", body),
     publish: (id: Uuid, minuteReference?: string) =>
       client.post<ElectionRow>(`/api/v1/elections/${id}/publish`, {
         minute_reference: minuteReference,
@@ -1049,21 +1008,15 @@ export const api = (client: AcmisClient) => ({
     vet: (candidateId: Uuid, body: { approve: boolean; reason?: string }) =>
       client.post<CandidateRow>(`/api/v1/elections/candidates/${candidateId}/vet`, body),
     withdraw: (candidateId: Uuid, reason?: string) =>
-      client.post<CandidateRow>(
-        `/api/v1/elections/candidates/${candidateId}/withdraw`,
-        { reason },
-      ),
-    buildRoll: (id: Uuid) =>
-      client.post<Record<string, number>>(`/api/v1/elections/${id}/roll`),
+      client.post<CandidateRow>(`/api/v1/elections/candidates/${candidateId}/withdraw`, { reason }),
+    buildRoll: (id: Uuid) => client.post<Record<string, number>>(`/api/v1/elections/${id}/roll`),
     drawBallotOrder: (id: Uuid, seed: number) =>
       client.post<Record<string, number>>(`/api/v1/elections/${id}/ballot-order`, { seed }),
-    startCampaign: (id: Uuid) =>
-      client.post<ElectionRow>(`/api/v1/elections/${id}/campaign`),
+    startCampaign: (id: Uuid) => client.post<ElectionRow>(`/api/v1/elections/${id}/campaign`),
     openPoll: (id: Uuid) => client.post<ElectionRow>(`/api/v1/elections/${id}/open`),
     closePoll: (id: Uuid) => client.post<ElectionRow>(`/api/v1/elections/${id}/close`),
     /** What this voter may do, and why not if they may not. */
-    myEntitlement: (id: Uuid) =>
-      client.get<VoterEntitlement>(`/api/v1/elections/${id}/me`),
+    myEntitlement: (id: Uuid) => client.get<VoterEntitlement>(`/api/v1/elections/${id}/me`),
     vote: (id: Uuid, choices: Record<string, Uuid[]>, via = "portal") =>
       client.post<BallotReceipt>(`/api/v1/elections/${id}/vote`, { choices, via }),
     /** Confirms a ballot is counted. Never returns the choice. */
@@ -1076,10 +1029,8 @@ export const api = (client: AcmisClient) => ({
       client.post<ElectionResultRow[]>(`/api/v1/elections/${id}/declare`, {
         tie_break_notes: tieBreakNotes,
       }),
-    results: (id: Uuid) =>
-      client.get<ElectionResultRow[]>(`/api/v1/elections/${id}/results`),
-    petitions: (id: Uuid) =>
-      client.get<ElectionPetitionRow[]>(`/api/v1/elections/${id}/petitions`),
+    results: (id: Uuid) => client.get<ElectionResultRow[]>(`/api/v1/elections/${id}/results`),
+    petitions: (id: Uuid) => client.get<ElectionPetitionRow[]>(`/api/v1/elections/${id}/petitions`),
     filePetition: (body: Record<string, unknown>) =>
       client.post<ElectionPetitionRow>("/api/v1/elections/petitions", body),
   },
@@ -1092,13 +1043,9 @@ export const api = (client: AcmisClient) => ({
       query: PageQuery & { status?: string; semester_id?: Uuid; mine_only?: boolean } = {},
     ) => client.get<Page<SpecialExamRow>>("/api/v1/lifecycle/special-exams", { query }),
     specialExam: (id: Uuid) =>
-      client.get<RecordEnvelope<SpecialExamRow>>(
-        `/api/v1/lifecycle/special-exams/${id}`,
-      ),
+      client.get<RecordEnvelope<SpecialExamRow>>(`/api/v1/lifecycle/special-exams/${id}`),
     verifyEvidence: (id: Uuid) =>
-      client.post<SpecialExamRow>(
-        `/api/v1/lifecycle/special-exams/${id}/verify-evidence`,
-      ),
+      client.post<SpecialExamRow>(`/api/v1/lifecycle/special-exams/${id}/verify-evidence`),
     recommendSpecialExam: (id: Uuid, note?: string) =>
       client.post<SpecialExamRow>(`/api/v1/lifecycle/special-exams/${id}/recommend`, {
         note,
@@ -1118,11 +1065,8 @@ export const api = (client: AcmisClient) => ({
       client.get<CardVerification>("/api/v1/lifecycle/id-cards/verify", {
         query: { code },
       }),
-    issueExamCard: (body: {
-      registration_id: Uuid
-      session?: string
-      override_reason?: string
-    }) => client.post<ExamCardRow>("/api/v1/lifecycle/exam-cards", body),
+    issueExamCard: (body: { registration_id: Uuid; session?: string; override_reason?: string }) =>
+      client.post<ExamCardRow>("/api/v1/lifecycle/exam-cards", body),
     myExamCards: () => client.get<MyExamCardRow[]>("/api/v1/lifecycle/me/exam-cards"),
     verifyExamCard: (code: string) =>
       client.get<CardVerification>("/api/v1/lifecycle/exam-cards/verify", {
@@ -1138,8 +1082,7 @@ export const api = (client: AcmisClient) => ({
     transfers: (query: PageQuery & { direction?: string; status?: string } = {}) =>
       client.get<Page<InstitutionTransferRow>>("/api/v1/lifecycle/transfers", { query }),
     /** A student's own transfers out. `transfers` is staff-only. */
-    myTransfers: () =>
-      client.get<InstitutionTransferRow[]>("/api/v1/lifecycle/me/transfers"),
+    myTransfers: () => client.get<InstitutionTransferRow[]>("/api/v1/lifecycle/me/transfers"),
     assessTransfer: (
       id: Uuid,
       body: {
@@ -1148,14 +1091,9 @@ export const api = (client: AcmisClient) => ({
       },
     ) => client.post<InstitutionTransferRow>(`/api/v1/lifecycle/transfers/${id}/assess`, body),
     approveTransfer: (id: Uuid, body: { minute_reference?: string; note?: string } = {}) =>
-      client.post<InstitutionTransferRow>(
-        `/api/v1/lifecycle/transfers/${id}/approve`,
-        body,
-      ),
+      client.post<InstitutionTransferRow>(`/api/v1/lifecycle/transfers/${id}/approve`, body),
     issueTransferPapers: (id: Uuid) =>
-      client.post<InstitutionTransferRow>(
-        `/api/v1/lifecycle/transfers/${id}/issue-papers`,
-      ),
+      client.post<InstitutionTransferRow>(`/api/v1/lifecycle/transfers/${id}/issue-papers`),
   },
 
   /** Control plane. Only reachable with a platform token. */
@@ -1175,9 +1113,7 @@ export const api = (client: AcmisClient) => ({
         reason,
       }),
     migrationStatus: () =>
-      client.get<Array<Record<string, unknown>>>(
-        "/api/v1/platform/tenants/migration-status",
-      ),
+      client.get<Array<Record<string, unknown>>>("/api/v1/platform/tenants/migration-status"),
     migrateAll: (body: { revision?: string; concurrency?: number; only?: string[] }) =>
       client.post<Record<string, unknown>>("/api/v1/platform/tenants/migrate", body),
     fleet: () => client.get<Array<Record<string, unknown>>>("/api/v1/platform/fleet"),

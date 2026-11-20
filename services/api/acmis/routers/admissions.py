@@ -641,3 +641,49 @@ def _get(ctx: Any, model: Any, record_id: uuid.UUID) -> Any:
     if row is None or getattr(row, "deleted_at", None) is not None:
         raise NotFound()
     return row
+
+
+@router.get("/me/applications", response_model=Page[ApplicationOut])
+def my_applications(ctx: ApplicantContext, page: PageQuery) -> Page[ApplicationOut]:
+    """Every application this applicant has started, newest first.
+
+    `list_applications` above cannot serve this: it takes a `StaffContext` and
+    narrows by the reviewer's faculties, which is the opposite of what is
+    wanted here. Separating them also keeps the office's ranking — merit order,
+    unscored last — out of a screen where it would read as a league table of
+    the applicant against themselves.
+
+    Ordered by when it was started, because to the person reading it this is a
+    list of their own attempts in the order they made them, not a ranking.
+
+    The row filter and the policy say the same thing twice on purpose. The
+    `applicant_id` clause is what actually scopes the query; the `authorize`
+    call is what records the read in the audit trail and would refuse an
+    account whose applicant link had been withdrawn.
+    """
+    authorize(
+        engine=ctx.engine,
+        action="application:list",
+        resource_type="application",
+        resource={"id": None, "applicant_id": str(ctx.applicant_id)},
+        category=AuditCategory.ADMISSION,
+    )
+
+    stmt = select(Application).where(
+        Application.applicant_id == ctx.applicant_id,
+        Application.deleted_at.is_(None),
+    )
+    found = keyset_page(
+        ctx.db,
+        stmt,
+        page=page,
+        key=Application.created_at,
+        ident=Application.id,
+        descending=True,
+    )
+    return Page.of(
+        [ApplicationOut.model_validate(r) for r in found.rows],
+        limit=page.limit,
+        next_cursor=found.next_cursor,
+        total=found.total,
+    )

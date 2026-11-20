@@ -275,6 +275,9 @@
 [data-module="portal"] {
   --module: oklch(0.498 0.128 174);
 } /* teal         */
+[data-module="apply"] {
+  --module: oklch(0.488 0.136 234);
+} /* applicant blue */
 
 .dark [data-module="admissions"],
 .dark[data-module="admissions"] {
@@ -323,6 +326,10 @@
 .dark [data-module="portal"],
 .dark[data-module="portal"] {
   --module: oklch(0.718 0.118 174);
+}
+.dark [data-module="apply"],
+.dark[data-module="apply"] {
+  --module: oklch(0.716 0.118 234);
 }
 
 @theme inline {

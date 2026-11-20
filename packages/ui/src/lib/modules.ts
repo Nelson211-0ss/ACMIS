@@ -186,6 +186,19 @@ export const MODULES: readonly ModuleDefinition[] = [
     audience: ["staff"],
   },
   {
+    key: "apply",
+    name: "Apply",
+    description:
+      "Create an application account, apply for a programme, and follow what happens to it.",
+    port: 3013,
+    icon: "FileSignature",
+    // No permission gates it. An applicant has no roles to speak of — the
+    // account exists so that somebody outside the institution can ask to come
+    // in, and `audience` is what keeps staff and students out of it.
+    permissions: [],
+    audience: ["applicant"],
+  },
+  {
     key: "portal",
     name: "Student Portal",
     description:
